@@ -1,0 +1,61 @@
+@use 'sass:map';
+
+// Jetons de design, côté SCSS uniquement (aucune sortie CSS ici).
+// Les valeurs réelles sont exposées en variables CSS dans base/_tokens-root.scss :
+// un futur habillage ne touchera que ce fichier-là.
+
+$color: (
+  ink: #0b1b2b,
+  ink-deep: #06111c,
+  ink-soft: #16293b,
+  gold: #c9992a,
+  gold-bright: #e7b23e,
+  pitch: #1f9d6b,
+  pitch-deep: #157a52,
+  sand: #f6f4ef,
+  paper: #fff,
+  slate: #5b6b7c,
+  line: #e2ded4,
+  danger: #c2452f,
+  warning: #b9791c,
+  success: #1f9d6b
+);
+
+$space: (
+  0: 0,
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 0.75rem,
+  4: 1rem,
+  5: 1.5rem,
+  6: 2rem,
+  7: 3rem,
+  8: 4rem,
+  9: 6rem
+);
+
+$radius: (
+  sm: 6px,
+  md: 12px,
+  lg: 20px,
+  xl: 28px,
+  pill: 999px
+);
+
+$font: (
+  display: ('Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif),
+  body: ('Inter', 'Segoe UI', system-ui, sans-serif),
+  arabic: ('Cairo', 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif)
+);
+
+@function space($key) {
+  @return map.get($space, $key);
+}
+
+@function radius($key) {
+  @return map.get($radius, $key);
+}
+
+@function color($key) {
+  @return map.get($color, $key);
+}

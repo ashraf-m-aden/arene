@@ -1,0 +1,16 @@
+{
+  "name": "@gm/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Schémas Zod, constantes et règles métier partagés entre l'API et le front",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./constants": "./src/constants.js",
+    "./rules": "./src/rules.js"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}

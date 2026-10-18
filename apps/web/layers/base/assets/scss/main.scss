@@ -1,0 +1,13 @@
+// Feuille de style globale : jetons, reset, typographie, mise en page, composants.
+// Chaque composant Vue ajoute son propre style en <style scoped lang="scss">
+// et n'importe que les abstracts (injectés automatiquement par la config Vite).
+
+@use 'base/tokens-root';
+@use 'base/reset';
+@use 'base/typography';
+@use 'layout/container';
+@use 'layout/grid';
+@use 'components/button';
+@use 'components/form';
+@use 'components/card';
+@use 'components/table';

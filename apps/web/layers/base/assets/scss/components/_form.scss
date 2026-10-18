@@ -1,0 +1,209 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.field__hint {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.field__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.field__required {
+  color: var(--color-danger);
+}
+
+.input,
+.select,
+.textarea {
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: var(--space-3);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition);
+
+  &::placeholder {
+    color: var(--color-muted);
+  }
+
+  &:focus {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgb(231 178 62 / 25%);
+    outline: none;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+}
+
+.textarea {
+  min-block-size: 7rem;
+  resize: vertical;
+}
+
+.select {
+  appearance: none;
+  padding-inline-end: var(--space-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-muted) 50%),
+    linear-gradient(135deg, var(--color-muted) 50%, transparent 50%);
+  background-position: calc(100% - 1.1rem) 1.2rem, calc(100% - 0.75rem) 1.2rem;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+[dir='rtl'] .select {
+  background-position: 1.1rem 1.2rem, 0.75rem 1.2rem;
+}
+
+/** Choix explicite : chaque case de consentement est distincte et cliquable en entier. */
+.check {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+
+  &:hover {
+    border-color: var(--color-gold);
+  }
+
+  input {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    margin-block-start: 0.15rem;
+    accent-color: var(--color-pitch);
+    flex: none;
+  }
+}
+
+.check--checked {
+  border-color: var(--color-pitch);
+  background: rgb(31 157 107 / 6%);
+}
+
+/** Choix de rôle ou de catégorie, en grosses cartes tapables. */
+.choice-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.choice {
+  padding: var(--space-4);
+  text-align: start;
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-line);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), transform var(--transition);
+
+  strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+  }
+
+  span {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  &:hover {
+    border-color: var(--color-gold);
+  }
+}
+
+.choice--active {
+  border-color: var(--color-pitch);
+  background: rgb(31 157 107 / 8%);
+}
+
+/** Dépôt de fichier : le bulletin scanné, 10 Mo maximum. */
+.dropzone {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  text-align: center;
+  background: var(--color-surface-2);
+  border: 1.5px dashed var(--color-line);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-gold);
+  }
+}
+
+.dropzone--filled {
+  border-style: solid;
+  border-color: var(--color-pitch);
+}
+
+/** Fil des étapes du formulaire d'inscription. */
+.steps {
+  display: flex;
+  gap: var(--space-2);
+  counter-reset: step;
+  overflow-x: auto;
+  padding-block-end: var(--space-2);
+}
+
+.steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  color: var(--color-muted);
+  background: var(--color-surface-2);
+
+  &::before {
+    counter-increment: step;
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border-radius: 50%;
+    background: var(--color-line);
+    color: var(--color-text);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+}
+
+.steps__item--active {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+
+  &::before {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+}
+
+.steps__item--done::before {
+  content: '✓';
+  background: var(--color-pitch);
+  color: #fff;
+}

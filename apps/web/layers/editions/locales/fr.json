@@ -1,0 +1,34 @@
+{
+  "editions": {
+    "title": "Les éditions",
+    "lead": "Chaque saison du tournoi, ses dates, ses règles et ses résultats.",
+    "seeEdition": "Voir l'édition",
+    "registrationWindow": "Inscriptions",
+    "closesIn": "Clôture dans {days} jour(s)",
+    "opensIn": "Ouverture dans {days} jour(s)",
+    "fee": "Frais d'inscription",
+    "threshold": "Moyenne minimale",
+    "venue": "Lieu",
+    "capacity": "Places",
+    "empty": "Aucune édition publiée pour l'instant.",
+    "tabs": {
+      "overview": "Présentation",
+      "rules": "Règlement",
+      "slots": "Créneaux",
+      "rankings": "Classements",
+      "galleries": "Galeries"
+    },
+    "slotsTitle": "Les créneaux",
+    "slotsLead": "Chaque créneau accueille environ 100 joueurs : 50 buteurs et 50 défenseurs.",
+    "slotStatus": {
+      "planned": "Prévu",
+      "open": "Ouvert",
+      "closed": "Clôturé",
+      "cancelled": "Annulé"
+    },
+    "seatsByRole": "Places par rôle",
+    "registerCta": "Inscrire mon enfant",
+    "closedNotice": "Les inscriptions de cette édition sont fermées.",
+    "soonNotice": "Les inscriptions ouvriront bientôt."
+  }
+}

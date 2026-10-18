@@ -1,0 +1,50 @@
+{
+  "checkin": {
+    "title": "Check-in",
+    "lead": "Scannez le badge, contrôlez l'identité et le bulletin, encaissez les frais, remettez le dossard.",
+    "slot": "Créneau du jour",
+    "loadRoster": "Charger la liste pour le hors ligne",
+    "rosterLoaded": "{count} joueur(s) en mémoire",
+    "offlineReady": "Liste chargée : le check-in fonctionne sans réseau.",
+    "pendingOps": "{count} opération(s) en attente de synchronisation",
+    "sync": "Synchroniser",
+    "synced": "{count} opération(s) synchronisée(s)",
+    "scan": "Scanner un badge",
+    "stopScan": "Arrêter le scan",
+    "scanUnsupported": "Le scan caméra n'est pas disponible sur cet appareil : utilisez la recherche par nom ou dossier.",
+    "manual": "Recherche par nom ou numéro de dossier",
+    "cameraError": "Caméra indisponible",
+    "player": "Joueur",
+    "identityCheck": "Identité contrôlée",
+    "bulletinCheck": "Bulletin original présenté",
+    "bulletinRequired": "Bulletin original exigé pour cette édition",
+    "randomCheck": "Dossier marqué pour vérification aléatoire",
+    "payment": "Encaissement",
+    "paid": "Payé",
+    "exempt": "Exonéré",
+    "amount": "Montant",
+    "exemptionReason": "Motif de l'exonération",
+    "confirm": "Valider le check-in",
+    "confirmed": "Check-in validé — dossard #{bib}",
+    "queued": "Enregistré hors ligne, à synchroniser",
+    "alreadyCheckedIn": "Ce joueur est déjà pointé",
+    "notFound": "Badge inconnu",
+    "closeSlot": "Clôturer le créneau",
+    "closeConfirm": "Clôturer le créneau ? Les inscrits non pointés passeront en absent.",
+    "closed": "Créneau clôturé — {count} absent(s)",
+    "status": {
+      "scheduled": "Attendu",
+      "checked_in": "Pointé",
+      "no_show": "Absent"
+    }
+  },
+  "cash": {
+    "title": "Caisse",
+    "lead": "Récapitulatif par créneau et par membre du staff, pour rapprocher l'espèce encaissée.",
+    "paidCount": "Payants",
+    "exemptCount": "Exonérés",
+    "expected": "Total attendu",
+    "staffMember": "Membre du staff",
+    "empty": "Aucun encaissement sur ce créneau."
+  }
+}

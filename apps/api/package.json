@@ -1,0 +1,48 @@
+{
+  "name": "@gm/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API REST Express de la plateforme Génération Mérite",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "worker": "node src/worker.js",
+    "seed": "node src/seed.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@gm/shared": "*",
+    "@node-rs/argon2": "^2.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.1",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.0.8",
+    "pdfkit": "^0.15.1",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "qrcode": "^1.5.4",
+    "zod": "^3.23.8"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.693.0",
+    "@aws-sdk/client-ses": "^3.693.0",
+    "@aws-sdk/s3-request-presigner": "^3.693.0",
+    "bullmq": "^5.26.1",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13.0.0",
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.5"
+  }
+}

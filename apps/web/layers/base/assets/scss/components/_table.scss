@@ -1,0 +1,131 @@
+/** Les tableaux défilent dans leur propre conteneur : la page ne bouge jamais. */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper);
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  thead th {
+    position: sticky;
+    inset-block-start: 0;
+    background: var(--color-surface-2);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    border-block-end: 1px solid var(--color-line);
+  }
+
+  tbody tr + tr {
+    border-block-start: 1px solid var(--color-line);
+  }
+
+  tbody tr:hover {
+    background: var(--color-surface-2);
+  }
+
+  td.numeric,
+  th.numeric {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.table__rank {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--color-muted);
+}
+
+.table__rank--1 {
+  color: var(--color-gold);
+}
+
+.table__rank--2,
+.table__rank--3 {
+  color: var(--color-text);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.15rem var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  border: 1px solid var(--color-line);
+  white-space: nowrap;
+}
+
+.badge--gold {
+  background: rgb(201 153 42 / 15%);
+  color: var(--color-gold);
+  border-color: rgb(201 153 42 / 35%);
+}
+
+.badge--pitch {
+  background: rgb(31 157 107 / 12%);
+  color: var(--color-pitch-deep);
+  border-color: rgb(31 157 107 / 35%);
+}
+
+.badge--danger {
+  background: rgb(194 69 47 / 12%);
+  color: var(--color-danger);
+  border-color: rgb(194 69 47 / 35%);
+}
+
+.badge--warning {
+  background: rgb(185 121 28 / 14%);
+  color: var(--color-warning);
+  border-color: rgb(185 121 28 / 35%);
+}
+
+.badge--ink {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  border-color: transparent;
+}
+
+/** Barre d'onglets d'une édition (règlement, créneaux, résultats, galeries). */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  border-block-end: 1px solid var(--color-line);
+}
+
+.tabs__link {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-block-end: 2px solid transparent;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.tabs__link--active {
+  color: var(--color-text);
+  border-block-end-color: var(--color-gold);
+}

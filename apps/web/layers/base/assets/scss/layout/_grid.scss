@@ -1,0 +1,39 @@
+.grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.grid--4 {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.grid--sidebar {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 56rem) {
+  .grid--sidebar {
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  }
+}
+
+/** Grille des galeries : première image mise en avant sur grand écran. */
+.grid--gallery {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+
+@media (min-width: 56rem) {
+  .grid--gallery > :first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+}

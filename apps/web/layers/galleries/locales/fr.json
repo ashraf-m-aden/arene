@@ -1,0 +1,34 @@
+{
+  "galleries": {
+    "title": "Galeries",
+    "lead": "Photos et vidéos des journées de tournoi.",
+    "photos": "photos",
+    "videos": "vidéos",
+    "empty": "Aucune galerie publiée pour l'instant.",
+    "playVideo": "Charger la vidéo",
+    "videoNotice": "La vidéo se charge depuis YouTube quand vous cliquez.",
+    "viewer": "Visionneuse",
+    "previous": "Précédente",
+    "next": "Suivante",
+    "closeViewer": "Fermer la visionneuse",
+    "featured": "Joueurs identifiés",
+    "staff": {
+      "title": "Gestion des galeries",
+      "lead": "Créez une galerie, ajoutez photos et vidéos, puis publiez.",
+      "create": "Nouvelle galerie",
+      "slug": "Identifiant d'URL",
+      "titleFr": "Titre (français)",
+      "titleAr": "Titre (arabe)",
+      "addPhotos": "Ajouter des photos",
+      "addVideo": "Ajouter une vidéo YouTube",
+      "youtubeUrl": "Lien ou identifiant YouTube",
+      "publish": "Publier",
+      "unpublish": "Dépublier",
+      "published": "Publiée",
+      "unpublished": "Brouillon",
+      "noConsent": "Ce joueur n'a pas donné le droit à l'image : identification refusée.",
+      "deleteItem": "Supprimer",
+      "saved": "Galerie enregistrée"
+    }
+  }
+}

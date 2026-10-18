@@ -1,0 +1,21 @@
+@use 'sass:map';
+
+// Mobile d'abord : la majorité des parents et tout le staff sont sur téléphone.
+$breakpoints: (
+  sm: 40rem,
+  md: 56rem,
+  lg: 72rem,
+  xl: 90rem
+);
+
+@mixin from($key) {
+  @media (min-width: map.get($breakpoints, $key)) {
+    @content;
+  }
+}
+
+@mixin until($key) {
+  @media (max-width: calc(#{map.get($breakpoints, $key)} - 0.0625rem)) {
+    @content;
+  }
+}

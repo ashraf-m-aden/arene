@@ -1,0 +1,162 @@
+{
+  "rules": {
+    "intro": "Ce règlement s'applique à toutes les éditions du tournoi Génération Mérite. Les montants, les dates et le seuil scolaire propres à une édition figurent sur sa page.",
+    "sections": [
+      {
+        "title": "Qui peut participer",
+        "items": [
+          "Les élèves de lycée âgés de 15 à 18 ans et les étudiants de 18 à 23 ans, scolarisés à Djibouti.",
+          "La catégorie suit le niveau d'études déclaré : Lycée ou Université. L'âge sert de contrôle d'éligibilité, ce qui règle le cas des jeunes de 18 ans.",
+          "Une moyenne d'au moins 12/20 au dernier bulletin du lycée ou au dernier relevé de notes universitaire.",
+          "Un seul dossier par joueur et par édition. Un doublon détecté est signalé à l'organisation."
+        ]
+      },
+      {
+        "title": "Le dossier d'inscription",
+        "items": [
+          "Le dossier est rempli par le parent ou le tuteur, qui crée le compte : le candidat mineur n'a pas de compte propre.",
+          "Pièces demandées : identité du joueur, établissement, rôle choisi (buteur ou défenseur), moyenne et bulletin scanné avec le cachet de l'établissement (PDF ou image, 10 Mo maximum).",
+          "Trois autorisations distinctes sont recueillies : participation, droit à l'image, diffusion des vidéos monétisées, ainsi qu'une attestation sur l'honneur de l'authenticité du bulletin.",
+          "Le brouillon est enregistré à chaque étape : le formulaire peut être repris plus tard, même après une coupure de connexion."
+        ]
+      },
+      {
+        "title": "Vérification et décision",
+        "items": [
+          "Le staff compare le bulletin déposé et la moyenne déclarée. Aucun refus n'est automatique : un dossier hors critères est signalé puis tranché par une personne.",
+          "Trois décisions possibles : accepté, correction demandée (avec le motif) ou refusé (avec le motif).",
+          "Une vérification aléatoire peut être menée par appel à l'établissement. Un bulletin falsifié entraîne la disqualification.",
+          "Chaque décision est notifiée au parent par email et par WhatsApp, dans la langue choisie à l'inscription."
+        ]
+      },
+      {
+        "title": "Places, créneaux et frais",
+        "items": [
+          "Le nombre de places est plafonné par rôle et par catégorie. Quand un rôle est complet, l'inscription se ferme pour ce rôle et une liste d'attente prend le relais.",
+          "Un dossier accepté reçoit automatiquement un créneau d'environ 100 joueurs, avec une convocation, un badge QR et le rappel des frais.",
+          "Le parent peut demander un autre créneau tant qu'il reste de la place, jusqu'à 48 heures avant.",
+          "Les frais d'inscription se règlent en espèces à l'accueil, le jour du créneau. Une exonération reste possible sur motif."
+        ]
+      },
+      {
+        "title": "Le jour du duel",
+        "items": [
+          "Présentez le badge QR, une pièce d'identité et le bulletin original. Sans bulletin original, le dossier peut être écarté.",
+          "Après le contrôle et l'encaissement, le joueur reçoit son dossard : il est officiellement pointé.",
+          "Un inscrit non pointé à la clôture de son créneau est noté absent et sa place peut être proposée à la liste d'attente."
+        ]
+      },
+      {
+        "title": "Déroulé des rencontres",
+        "items": [
+          "Une rencontre oppose un buteur à un défenseur et se joue en cinq tentatives : chacune est un but pour le buteur ou un arrêt pour le défenseur.",
+          "En qualification, chaque buteur affronte trois défenseurs différents de sa catégorie, répartis sur les terrains disponibles.",
+          "Les buteurs sont classés aux buts marqués, puis au ratio, puis à la dernière rencontre jouée ; les défenseurs aux arrêts, selon la même logique.",
+          "Les deux meilleurs de chaque rôle dans chaque catégorie, soit huit finalistes, accèdent à la finale.",
+          "En finale, chaque buteur finaliste affronte chaque défenseur finaliste. Le meilleur buteur et le meilleur défenseur de la catégorie sont sacrés champions."
+        ]
+      },
+      {
+        "title": "Classement des écoles",
+        "items": [
+          "Chaque joueur présent au check-in rapporte 1 point à son établissement, chaque rencontre gagnée en qualification 2 points, chaque qualifié pour la finale 5 points.",
+          "Le podium d'un rôle rapporte 15, 10 et 6 points ; un titre de champion buteur ou champion défenseur rapporte 25 points supplémentaires.",
+          "Deux vues sont publiées : les points totaux et les points par joueur inscrit, pour ne pas favoriser les très grandes écoles.",
+          "Le trophée « meilleure école » de chaque catégorie se base sur les points totaux."
+        ]
+      },
+      {
+        "title": "Images et discipline",
+        "items": [
+          "Un joueur n'est identifié dans une galerie que si son dossier porte le consentement au droit à l'image. Les vidéos identifient les joueurs par leur prénom seulement.",
+          "Le respect des arbitres, du staff et des adversaires est exigé. Tout comportement violent entraîne l'exclusion immédiate.",
+          "L'organisation peut modifier un créneau ou un terrain pour des raisons de sécurité ou de météo, en prévenant les familles."
+        ]
+      }
+    ]
+  },
+  "faq": {
+    "items": [
+      {
+        "q": "Qui crée le compte, le parent ou l'enfant ?",
+        "a": "Le parent ou le tuteur. Le compte est à son nom, avec son téléphone et son email ; le candidat mineur n'a pas de compte propre."
+      },
+      {
+        "q": "Mon enfant a 18 ans : lycée ou université ?",
+        "a": "La catégorie suit le niveau d'études déclaré. Un élève de 18 ans en terminale concourt en Lycée ; un étudiant de 18 ans en première année concourt en Université."
+      },
+      {
+        "q": "Je n'ai pas d'adresse email, puis-je inscrire mon enfant ?",
+        "a": "Oui. Le compte peut fonctionner avec le seul numéro de téléphone, et la connexion se fait par un code à six chiffres envoyé sur WhatsApp."
+      },
+      {
+        "q": "Quelle moyenne faut-il ?",
+        "a": "Au moins 12/20 au dernier bulletin du lycée ou au dernier relevé de notes universitaire. Le seuil exact est rappelé sur la page de l'édition."
+      },
+      {
+        "q": "Comment déposer le bulletin ?",
+        "a": "À l'étape « Les notes » du formulaire : un PDF ou une photo nette du bulletin portant le cachet de l'établissement, 10 Mo maximum. Le bulletin original est contrôlé le jour du duel."
+      },
+      {
+        "q": "Comment se règlent les frais ?",
+        "a": "En espèces à l'accueil, le jour du créneau. Le montant est rappelé dans la convocation et sur le badge."
+      },
+      {
+        "q": "Peut-on changer de créneau ?",
+        "a": "Oui, tant qu'il reste de la place dans un autre créneau de la même catégorie, jusqu'à 48 heures avant le début."
+      },
+      {
+        "q": "Que deviennent les documents de mon enfant ?",
+        "a": "Le bulletin et la photo sont stockés de façon privée, accessibles uniquement au parent et au staff, et supprimés à la clôture de l'édition. Vous pouvez les télécharger ou demander leur suppression depuis votre espace."
+      },
+      {
+        "q": "Mon enfant apparaîtra-t-il dans les photos et vidéos ?",
+        "a": "Uniquement si vous avez coché le consentement au droit à l'image. Sans ce consentement, il n'est jamais identifié, et vous pouvez retirer l'autorisation à tout moment."
+      }
+    ]
+  },
+  "about": {
+    "paragraphs": [
+      "Génération Mérite est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux élèves et aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
+      "Le format est pensé pour être juste et lisible. Chaque joueur affronte plusieurs adversaires, les classements se calculent sur les buts marqués et les arrêts réalisés, et chaque établissement suit la progression de ses joueurs au classement des écoles.",
+      "La plateforme gère le tournoi de bout en bout : inscriptions, vérification des dossiers, convocations, accueil le jour J, résultats, classements et galeries. Les familles suivent leur dossier depuis leur espace, en français ou en arabe."
+    ]
+  },
+  "privacy": {
+    "intro": "La plateforme traite des données d'enfants : bulletins, photos et dates de naissance. Ces données ne sont jamais publiques et sont supprimées à la clôture de l'édition.",
+    "sections": [
+      {
+        "title": "Ce que nous collectons",
+        "items": [
+          "Pour le parent : nom, prénom, téléphone, email éventuel et langue de contact.",
+          "Pour le joueur : nom, prénom, date de naissance, établissement, rôle, moyenne scolaire, bulletin scanné et photo.",
+          "Aucune adresse postale ni numéro de pièce d'identité n'est demandé."
+        ]
+      },
+      {
+        "title": "Qui y a accès",
+        "items": [
+          "Le parent, pour le dossier de son enfant.",
+          "Le staff de l'organisation, pour la vérification, l'accueil et la saisie des résultats. Chaque consultation d'un bulletin est tracée.",
+          "Les bulletins et photos sont stockés dans un espace privé et servis par des liens signés valables quelques minutes."
+        ]
+      },
+      {
+        "title": "Ce qui est public",
+        "items": [
+          "Les classements affichent le prénom, l'initiale du nom et l'établissement, jamais la date de naissance ni les notes.",
+          "Les galeries n'identifient un joueur que si le consentement au droit à l'image a été donné.",
+          "Les vidéos hébergées sur YouTube identifient les joueurs par leur prénom uniquement."
+        ]
+      },
+      {
+        "title": "Durée et droits",
+        "items": [
+          "Durée de conservation : une édition. À la clôture, bulletins, photos d'identité et coordonnées sont supprimés ; seuls les résultats et l'établissement restent, sans l'identité.",
+          "Depuis votre espace, vous pouvez télécharger les données de votre enfant ou demander leur suppression ; la suppression retire aussi l'identification dans les galeries.",
+          "Pour toute question : contact{'@'}generationmerite.dj"
+        ]
+      }
+    ]
+  }
+}

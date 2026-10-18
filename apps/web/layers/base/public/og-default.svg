@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0b1b2b"/>
+  <circle cx="1040" cy="90" r="260" fill="#e7b23e" opacity="0.14"/>
+  <text x="80" y="300" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="78" font-weight="700">
+    Génération Mérite
+  </text>
+  <text x="80" y="370" fill="#e7b23e" font-family="Helvetica,Arial,sans-serif" font-size="36" letter-spacing="4">
+    TOURNOI DE DUELS 1V1 · DJIBOUTI
+  </text>
+  <text x="80" y="450" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="30" opacity="0.8">
+    Un buteur, un défenseur, cinq tentatives — et 12/20 minimum.
+  </text>
+</svg>

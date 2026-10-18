@@ -1,0 +1,5 @@
+// Point d'entrée injecté dans chaque composant : uniquement des outils,
+// jamais de CSS, pour que rien ne soit dupliqué dans le bundle.
+@forward 'tokens';
+@forward 'breakpoints';
+@forward 'mixins';

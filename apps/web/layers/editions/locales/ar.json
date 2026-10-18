@@ -1,0 +1,34 @@
+{
+  "editions": {
+    "title": "النسخ",
+    "lead": "كل موسم من البطولة بمواعيده ولوائحه ونتائجه.",
+    "seeEdition": "عرض النسخة",
+    "registrationWindow": "التسجيل",
+    "closesIn": "الإغلاق بعد {days} يوم",
+    "opensIn": "الفتح بعد {days} يوم",
+    "fee": "رسوم التسجيل",
+    "threshold": "المعدل الأدنى",
+    "venue": "المكان",
+    "capacity": "المقاعد",
+    "empty": "لا توجد نسخة منشورة حاليًا.",
+    "tabs": {
+      "overview": "التقديم",
+      "rules": "اللائحة",
+      "slots": "المواعيد",
+      "rankings": "الترتيبات",
+      "galleries": "المعارض"
+    },
+    "slotsTitle": "المواعيد",
+    "slotsLead": "كل موعد يستقبل نحو 100 لاعب: 50 مهاجمًا و50 مدافعًا.",
+    "slotStatus": {
+      "planned": "مبرمج",
+      "open": "مفتوح",
+      "closed": "مغلق",
+      "cancelled": "ملغى"
+    },
+    "seatsByRole": "المقاعد حسب الدور",
+    "registerCta": "تسجيل ابني",
+    "closedNotice": "التسجيل في هذه النسخة مغلق.",
+    "soonNotice": "سيُفتح التسجيل قريبًا."
+  }
+}

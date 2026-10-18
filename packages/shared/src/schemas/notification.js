@@ -1,0 +1,55 @@
+import { z } from 'zod'
+import {
+  AGE_CATEGORIES,
+  LOCALES,
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_STATUSES,
+  PLAYER_ROLES,
+  REGISTRATION_STATUSES
+} from '../constants.js'
+import { i18nText, objectId } from './common.js'
+
+export const notificationQuerySchema = z.object({
+  editionId: objectId.optional(),
+  channel: z.enum(NOTIFICATION_CHANNELS).optional(),
+  status: z.enum(NOTIFICATION_STATUSES).optional(),
+  template: z.string().trim().max(60).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50)
+})
+
+export const broadcastSchema = z.object({
+  editionId: objectId,
+  channels: z.array(z.enum(NOTIFICATION_CHANNELS)).min(1).default(['email']),
+  template: z.string().trim().min(2).max(60).default('broadcast'),
+  segment: z
+    .object({
+      status: z.enum(REGISTRATION_STATUSES).optional(),
+      role: z.enum(PLAYER_ROLES).optional(),
+      ageCategory: z.enum(AGE_CATEGORIES).optional(),
+      slotId: objectId.optional(),
+      schoolId: objectId.optional()
+    })
+    .default({}),
+  payload: z.object({
+    subject: i18nText(2, 140),
+    body: i18nText(2, 4000)
+  })
+})
+
+export const templateSchema = z.object({
+  key: z.string().trim().min(2).max(60),
+  channels: z.array(z.enum(NOTIFICATION_CHANNELS)).min(1),
+  subject: i18nText(0, 140).optional(),
+  body: i18nText(2, 4000),
+  metaTemplateName: z.string().trim().max(80).optional(),
+  isActive: z.boolean().default(true)
+})
+
+export const webhookSchema = z.object({
+  providerMessageId: z.string().min(1).max(200),
+  status: z.enum(NOTIFICATION_STATUSES),
+  error: z.string().max(500).optional()
+})
+
+export const localeSchema = z.enum(LOCALES)

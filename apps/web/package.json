@@ -1,0 +1,28 @@
+{
+  "name": "@gm/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Front Nuxt 3 de la plateforme Génération Mérite",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "generate": "nuxt generate",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@gm/shared": "*",
+    "@nuxtjs/i18n": "^10.2.3",
+    "@pinia/nuxt": "^0.5.5",
+    "nuxt": "^3.14.159",
+    "pinia": "^2.2.6",
+    "pinia-plugin-persistedstate": "^4.1.3",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@nuxt/image": "^1.8.1",
+    "sass": "^1.80.6"
+  }
+}

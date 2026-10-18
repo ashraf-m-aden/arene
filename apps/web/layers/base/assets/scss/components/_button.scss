@@ -1,0 +1,106 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: 2.75rem; // confortable au doigt
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &[disabled],
+  &[aria-disabled='true'] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  // Les chevrons et flèches suivent le sens de lecture.
+  .icon-directional {
+    transition: transform var(--transition);
+  }
+
+  &:hover .icon-directional {
+    transform: translateX(2px);
+  }
+}
+
+[dir='rtl'] .btn .icon-directional {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .btn:hover .icon-directional {
+  transform: scaleX(-1) translateX(2px);
+}
+
+.btn--primary {
+  background: var(--color-gold);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
+
+  &:hover {
+    background: var(--color-gold-bright);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.btn--pitch {
+  background: var(--color-pitch);
+  color: #fff;
+
+  &:hover {
+    background: var(--color-pitch-deep);
+  }
+}
+
+.btn--ink {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+
+  &:hover {
+    background: var(--color-ink-soft);
+  }
+}
+
+.btn--ghost {
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentcolor;
+
+  &:hover {
+    background: rgb(201 153 42 / 12%);
+  }
+}
+
+.btn--quiet {
+  padding-inline: var(--space-3);
+  color: var(--color-muted);
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.btn--block {
+  inline-size: 100%;
+}
+
+.btn--lg {
+  min-block-size: 3.25rem;
+  padding-inline: var(--space-6);
+  font-size: var(--text-base);
+}
+
+.btn--sm {
+  min-block-size: 2.25rem;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+}

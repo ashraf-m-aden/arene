@@ -1,0 +1,133 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+}
+
+.card--link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.card--ink {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  border-color: transparent;
+}
+
+.card--flat {
+  background: var(--color-surface-2);
+  border: 0;
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+/** Chiffre clé : places restantes, inscrits, points. */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.stat__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/** Jauge de remplissage d'un rôle ou d'un créneau. */
+.meter {
+  block-size: 0.5rem;
+  background: var(--color-line);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.meter__fill {
+  block-size: 100%;
+  background: var(--color-pitch);
+  border-radius: inherit;
+  transition: inline-size var(--transition);
+}
+
+.meter__fill--warning {
+  background: var(--color-warning);
+}
+
+.meter__fill--full {
+  background: var(--color-danger);
+}
+
+.divider {
+  block-size: 1px;
+  background: var(--color-line);
+  border: 0;
+}
+
+/** Message d'état : liste vide, chargement, erreur. */
+.notice {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border-inline-start: 3px solid var(--color-gold);
+  background: var(--color-surface-2);
+  font-size: var(--text-sm);
+}
+
+.notice--danger {
+  border-color: var(--color-danger);
+  background: rgb(194 69 47 / 8%);
+}
+
+.notice--success {
+  border-color: var(--color-success);
+  background: rgb(31 157 107 / 8%);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-muted);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-lg);
+}

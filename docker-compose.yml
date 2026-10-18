@@ -1,0 +1,112 @@
+name: generationmerite
+
+# Les trois environnements (local, préproduction, production) partagent cette
+# composition ; seules les variables changent. Le proxy Caddy termine le HTTPS
+# et route /api vers l'API, le reste vers Nuxt.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost/api/v1}
+        NUXT_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
+    environment:
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost/api/v1}
+      NUXT_PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/generationmerite}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:?secret requis}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:-}
+      S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:-}
+      S3_REGION: ${S3_REGION:-eu-west-3}
+      CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-}
+      SES_REGION: ${SES_REGION:-eu-west-3}
+      SES_FROM: ${SES_FROM:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-fr}
+    volumes:
+      - api-storage:/app/apps/api/storage
+    depends_on:
+      mongo:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    command: ["node", "apps/api/src/worker.js"]
+    environment:
+      NODE_ENV: production
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/generationmerite}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:?secret requis}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      SES_REGION: ${SES_REGION:-eu-west-3}
+      SES_FROM: ${SES_FROM:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
+    volumes:
+      - api-storage:/app/apps/api/storage
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    command: ["--wiredTigerCacheSizeGB", "1"]
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  redis-data:
+  api-storage:
+  caddy-data:
+  caddy-config:

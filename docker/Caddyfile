@@ -1,0 +1,21 @@
+# HTTPS automatique en production (SITE_ADDRESS = le domaine), :80 en local.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Tout ce qui commence par /api part vers l'API Express.
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	# Le reste est rendu par Nuxt.
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

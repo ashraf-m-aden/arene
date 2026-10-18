@@ -1,0 +1,89 @@
+// Les jetons exposés en variables CSS : un seul fichier à toucher pour rhabiller le site.
+:root {
+  // Couleurs
+  --color-ink: #0b1b2b;
+  --color-ink-deep: #06111c;
+  --color-ink-soft: #16293b;
+  --color-gold: #c9992a;
+  --color-gold-bright: #e7b23e;
+  --color-pitch: #1f9d6b;
+  --color-pitch-deep: #157a52;
+  --color-sand: #f6f4ef;
+  --color-paper: #fff;
+  --color-text: #12202e;
+  --color-muted: #5b6b7c;
+  --color-line: #e2ded4;
+  --color-on-ink: #f3efe6;
+  --color-danger: #c2452f;
+  --color-warning: #b9791c;
+  --color-success: #1f9d6b;
+  --color-surface-2: #fbfaf6;
+
+  // Espacements
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  // Rayons et ombres
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(6 17 28 / 8%);
+  --shadow-md: 0 10px 30px -12px rgb(6 17 28 / 25%);
+  --shadow-lg: 0 24px 60px -24px rgb(6 17 28 / 40%);
+
+  // Typographie
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-arabic: 'Cairo', 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --text-xs: 0.78rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem);
+  --text-3xl: clamp(2rem, 1.3rem + 3vw, 3.25rem);
+  --text-4xl: clamp(2.4rem, 1.2rem + 5vw, 4.5rem);
+
+  // Divers
+  --container: 72rem;
+  --header-height: 4.25rem;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// L'arabe passe sur une police qui couvre la langue, chargée seulement sur ces pages.
+:root[dir='rtl'] {
+  --font-display: var(--font-arabic);
+  --font-body: var(--font-arabic);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-sand: #0a1724;
+    --color-paper: #0f1f2e;
+    --color-surface-2: #142536;
+    --color-text: #eef1f4;
+    --color-muted: #9fb0c0;
+    --color-line: #22394d;
+    --shadow-md: 0 10px 30px -12px rgb(0 0 0 / 60%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

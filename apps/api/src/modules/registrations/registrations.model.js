@@ -1,0 +1,122 @@
+import mongoose from 'mongoose'
+import {
+  AGE_CATEGORIES,
+  LOCALES,
+  PLAYER_ROLES,
+  REGISTRATION_STATUSES
+} from '@gm/shared/constants'
+
+const { ObjectId } = mongoose.Schema.Types
+
+const registrationSchema = new mongoose.Schema(
+  {
+    editionId: { type: ObjectId, ref: 'Edition', required: true, index: true },
+    parentId: { type: ObjectId, ref: 'User', required: true, index: true },
+    locale: { type: String, enum: LOCALES, default: 'fr' },
+
+    player: {
+      firstName: { type: String, trim: true },
+      lastName: { type: String, trim: true },
+      birthDate: Date,
+      gender: { type: String, enum: ['m', 'f'] },
+      photoFileId: { type: ObjectId, ref: 'File' }
+    },
+
+    schoolId: { type: ObjectId, ref: 'School', index: true },
+    role: { type: String, enum: PLAYER_ROLES },
+    ageCategory: { type: String, enum: AGE_CATEGORIES },
+
+    grades: {
+      average: Number,
+      term: String,
+      bulletinFileId: { type: ObjectId, ref: 'File' }
+    },
+
+    consents: {
+      participation: { type: Boolean, default: false },
+      imageRights: { type: Boolean, default: false },
+      monetizedVideos: { type: Boolean, default: false },
+      bulletinAuthenticity: { type: Boolean, default: false },
+      signerName: String,
+      signedAt: Date
+    },
+
+    status: { type: String, enum: REGISTRATION_STATUSES, default: 'draft', index: true },
+    step: { type: Number, default: 1, min: 1, max: 4 },
+    /** Signalements des contrôles automatiques : le staff tranche, rien n'est refusé seul. */
+    flags: [{ _id: false, code: String, field: String, detail: mongoose.Schema.Types.Mixed }],
+    reviewNotes: String,
+    reviewedBy: { type: ObjectId, ref: 'User' },
+    reviewedAt: Date,
+    randomCheck: { type: Boolean, default: false },
+
+    payment: {
+      status: { type: String, enum: ['due', 'paid', 'exempt'], default: 'due' },
+      amount: { type: Number, default: 0 },
+      receivedBy: { type: ObjectId, ref: 'User' },
+      receivedAt: Date,
+      exemptionReason: String
+    },
+
+    qrToken: { type: String },
+    slotId: { type: ObjectId, ref: 'Slot', index: true },
+    checkedInAt: Date,
+    checkedInBy: { type: ObjectId, ref: 'User' },
+    bibNumber: Number,
+
+    /** Même nom + même date de naissance + même école dans une édition = doublon. */
+    dedupeKey: { type: String, index: true },
+
+    history: [
+      {
+        _id: false,
+        from: String,
+        to: String,
+        by: { type: ObjectId, ref: 'User' },
+        at: { type: Date, default: Date.now },
+        note: String
+      }
+    ]
+  },
+  { timestamps: true }
+)
+
+registrationSchema.index({ editionId: 1, status: 1 })
+registrationSchema.index({ editionId: 1, slotId: 1 })
+registrationSchema.index({ editionId: 1, ageCategory: 1, role: 1, status: 1 })
+registrationSchema.index(
+  { qrToken: 1 },
+  { unique: true, partialFilterExpression: { qrToken: { $type: 'string' } } }
+)
+registrationSchema.index(
+  { editionId: 1, bibNumber: 1 },
+  { unique: true, partialFilterExpression: { bibNumber: { $type: 'number' } } }
+)
+registrationSchema.index(
+  { editionId: 1, dedupeKey: 1 },
+  { partialFilterExpression: { dedupeKey: { $type: 'string' } } }
+)
+
+registrationSchema.virtual('playerName').get(function playerName() {
+  return `${this.player?.firstName || ''} ${this.player?.lastName || ''}`.trim()
+})
+
+/** Nom affichable en public : prénom + initiale, jamais le nom complet d'un mineur. */
+registrationSchema.virtual('publicName').get(function publicName() {
+  const initial = this.player?.lastName ? `${this.player.lastName[0].toUpperCase()}.` : ''
+  return `${this.player?.firstName || ''} ${initial}`.trim()
+})
+
+registrationSchema.set('toJSON', {
+  virtuals: true,
+  transform(_doc, ret) {
+    delete ret.__v
+    delete ret.qrToken // le jeton du badge ne circule que dans le PDF
+    delete ret.dedupeKey
+    return ret
+  }
+})
+
+export const Registration =
+  mongoose.models.Registration || mongoose.model('Registration', registrationSchema)
+export default Registration

@@ -1,0 +1,17 @@
+{
+  "schools": {
+    "title": "Les écoles",
+    "lead": "Lycées et universités engagés dans le tournoi, et leurs joueurs qualifiés.",
+    "search": "Rechercher une école",
+    "type": "Type d'établissement",
+    "players": "Joueurs engagés",
+    "qualified": "Joueurs qualifiés",
+    "points": "Points",
+    "rank": "Rang",
+    "empty": "Aucune école ne correspond à cette recherche.",
+    "noPlayers": "Aucun joueur engagé pour l'édition en cours.",
+    "verified": "Vérifiée",
+    "pending": "En cours de vérification",
+    "seeRanking": "Voir le classement des écoles"
+  }
+}
