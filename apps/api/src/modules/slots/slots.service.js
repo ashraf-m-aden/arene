@@ -136,7 +136,8 @@ export async function confirmCheckin(registrationId, staffId, body) {
   const registrations = await registrationsService()
   const { registration, alreadyCheckedIn } = await registrations.checkIn(registrationId, staffId, {
     payment: body.payment,
-    bulletinChecked: body.bulletinChecked
+    bulletinChecked: body.bulletinChecked,
+    contractSigned: body.contractSigned
   })
   return { registration, alreadyCheckedIn }
 }
@@ -160,6 +161,7 @@ export async function syncCheckins(operations, staffId) {
         {
           payment: operation.payment,
           bulletinChecked: operation.bulletinChecked,
+          contractSigned: operation.contractSigned,
           occurredAt: operation.occurredAt
         }
       )

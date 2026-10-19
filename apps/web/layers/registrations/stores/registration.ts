@@ -24,7 +24,6 @@ interface DraftState {
     imageRights: boolean
     monetizedVideos: boolean
     bulletinAuthenticity: boolean
-    signerName: string
   }
 }
 
@@ -43,8 +42,7 @@ const emptyDraft = (): DraftState => ({
     participation: false,
     imageRights: false,
     monetizedVideos: false,
-    bulletinAuthenticity: false,
-    signerName: ''
+    bulletinAuthenticity: false
   }
 })
 
@@ -67,9 +65,7 @@ export const useRegistrationStore = defineStore('registration', {
       1: Boolean(state.draft.player.firstName && state.draft.player.birthDate && state.draft.role),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),
       3: Boolean(
-        state.draft.consents.participation &&
-          state.draft.consents.bulletinAuthenticity &&
-          state.draft.consents.signerName
+        state.draft.consents.participation && state.draft.consents.bulletinAuthenticity
       ),
       4: false
     }),
@@ -84,7 +80,6 @@ export const useRegistrationStore = defineStore('registration', {
       if (!draft.grades.bulletinFileId) missing.push('grades.bulletin')
       if (!draft.consents.participation) missing.push('consents.participation')
       if (!draft.consents.bulletinAuthenticity) missing.push('consents.authenticity')
-      if (!draft.consents.signerName) missing.push('consents.signerName')
       return missing
     }
   },

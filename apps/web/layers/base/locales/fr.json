@@ -174,7 +174,7 @@
     "rejected": "Refusé",
     "changes_requested": "Correction demandée",
     "scheduled": "Convoqué",
-    "checked_in": "Pointé",
+    "checked_in": "Inscrit",
     "no_show": "Absent",
     "eliminated": "Éliminé",
     "qualified": "Qualifié",
@@ -206,6 +206,7 @@
     "checkin": "Check-in",
     "results": "Résultats",
     "cash": "Caisse",
+    "editions": "Éditions",
     "admin": "Configuration",
     "messages": "Messages"
   },

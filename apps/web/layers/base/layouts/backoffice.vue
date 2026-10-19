@@ -13,6 +13,7 @@ const links = computed(() => {
   ]
   if (auth.isAdmin) {
     items.push(
+      { to: '/admin/editions', label: 'backoffice.editions', icon: '🏆' },
       { to: '/admin', label: 'backoffice.admin', icon: '⚙' },
       { to: '/admin/messages', label: 'backoffice.messages', icon: '✉' }
     )

@@ -40,7 +40,9 @@ export const checkinConfirmSchema = z.object({
     exemptionReason: z.string().trim().max(240).optional()
   }),
   identityChecked: z.literal(true),
-  bulletinChecked: z.boolean().default(false)
+  bulletinChecked: z.boolean().default(false),
+  /** Contrat papier signé sur place : condition de passage au statut inscrit. */
+  contractSigned: z.literal(true)
 })
 
 /** Lot d'opérations enregistrées hors ligne, rejouées au retour du réseau. */
@@ -53,7 +55,8 @@ export const checkinSyncSchema = z.object({
         occurredAt: isoDate,
         payment: checkinConfirmSchema.shape.payment,
         identityChecked: z.boolean(),
-        bulletinChecked: z.boolean().default(false)
+        bulletinChecked: z.boolean().default(false),
+        contractSigned: z.boolean().default(false)
       })
     )
     .min(1)

@@ -55,14 +55,11 @@
       "imageRights": "J'autorise la prise de photos et de vidéos de mon enfant et leur publication par l'organisation.",
       "monetizedVideos": "J'autorise la diffusion des vidéos sur une chaîne susceptible d'être monétisée.",
       "bulletinAuthenticity": "J'atteste sur l'honneur que le bulletin déposé est authentique.",
-      "signerName": "Nom du signataire",
-      "signerHint": "Parent ou tuteur légal qui signe les autorisations.",
-      "imageNotice": "Sans l'autorisation d'image, votre enfant ne sera jamais identifié dans les galeries.",
-      "signedAt": "Signé le"
+      "imageNotice": "Sans l'autorisation d'image, votre enfant ne sera jamais identifié dans les galeries."
     },
     "review": {
       "title": "Vérifiez avant d'envoyer",
-      "feeReminder": "Frais à régler en espèces au check-in : {amount}",
+      "feeReminder": "Aucune signature ici : le jour de votre convocation, présentez-vous pour signer le contrat et régler les frais en espèces ({amount}).",
       "submit": "Envoyer le dossier",
       "submitted": "Dossier envoyé. Vous recevrez la décision par email et WhatsApp.",
       "missing": "Il manque encore des informations : {fields}"

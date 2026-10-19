@@ -32,13 +32,13 @@ const registrationSchema = new mongoose.Schema(
       bulletinFileId: { type: ObjectId, ref: 'File' }
     },
 
+    /** Cases cochées par le parent en ligne : aucune signature, le contrat se signe sur place. */
     consents: {
       participation: { type: Boolean, default: false },
       imageRights: { type: Boolean, default: false },
       monetizedVideos: { type: Boolean, default: false },
       bulletinAuthenticity: { type: Boolean, default: false },
-      signerName: String,
-      signedAt: Date
+      submittedAt: Date
     },
 
     status: { type: String, enum: REGISTRATION_STATUSES, default: 'draft', index: true },
@@ -56,6 +56,13 @@ const registrationSchema = new mongoose.Schema(
       receivedBy: { type: ObjectId, ref: 'User' },
       receivedAt: Date,
       exemptionReason: String
+    },
+
+    /** Contrat papier signé sur place le jour de la convocation, avant le passage en inscrit. */
+    contract: {
+      signed: { type: Boolean, default: false },
+      signedAt: Date,
+      signedBy: { type: ObjectId, ref: 'User' }
     },
 
     qrToken: { type: String },

@@ -55,8 +55,8 @@ export const useCheckinStore = defineStore('checkin', {
       this.queue = await db.readQueue().catch(() => [])
     },
 
-    /** Enregistre un check-in : direct si le réseau répond, en file sinon. */
-    async checkIn(player: any, payload: { payment: any; bulletinChecked: boolean }) {
+    /** Enregistre une inscription (check-in) : direct si le réseau répond, en file sinon. */
+    async checkIn(player: any, payload: { payment: any; bulletinChecked: boolean; contractSigned: boolean }) {
       const { $api } = useNuxtApp()
       const db = useOfflineDb()
       const operation = {
@@ -65,7 +65,8 @@ export const useCheckinStore = defineStore('checkin', {
         occurredAt: new Date().toISOString(),
         payment: payload.payment,
         identityChecked: true,
-        bulletinChecked: payload.bulletinChecked
+        bulletinChecked: payload.bulletinChecked,
+        contractSigned: payload.contractSigned
       }
 
       if (this.online) {
@@ -73,7 +74,8 @@ export const useCheckinStore = defineStore('checkin', {
           const { data } = await $api.post<{ data: any }>(`/checkin/${player._id}`, {
             payment: payload.payment,
             identityChecked: true,
-            bulletinChecked: payload.bulletinChecked
+            bulletinChecked: payload.bulletinChecked,
+            contractSigned: payload.contractSigned
           })
           const updated = {
             ...player,
@@ -125,7 +127,8 @@ export const useCheckinStore = defineStore('checkin', {
             occurredAt: operation.occurredAt,
             payment: operation.payment,
             identityChecked: operation.identityChecked,
-            bulletinChecked: operation.bulletinChecked
+            bulletinChecked: operation.bulletinChecked,
+            contractSigned: operation.contractSigned
           }))
         })
 

@@ -22,7 +22,8 @@ let scanTimer: ReturnType<typeof setInterval> | null = null
 const form = reactive({
   paymentStatus: 'paid' as 'paid' | 'exempt',
   exemptionReason: '',
-  bulletinChecked: false
+  bulletinChecked: false,
+  contractSigned: false
 })
 
 const edition = computed(() => editions.current)
@@ -54,6 +55,7 @@ function select(player: any) {
   form.paymentStatus = 'paid'
   form.exemptionReason = ''
   form.bulletinChecked = false
+  form.contractSigned = false
   feedback.value = ''
 }
 
@@ -65,7 +67,8 @@ async function confirm() {
       amount: form.paymentStatus === 'paid' ? edition.value?.fee ?? 0 : 0,
       ...(form.paymentStatus === 'exempt' ? { exemptionReason: form.exemptionReason } : {})
     },
-    bulletinChecked: form.bulletinChecked
+    bulletinChecked: form.bulletinChecked,
+    contractSigned: form.contractSigned
   })
 
   if (!result.ok) return
@@ -265,6 +268,11 @@ async function closeSlot() {
         <span>{{ $t('checkin.bulletinCheck') }}</span>
       </label>
 
+      <label class="check" :class="{ 'check--checked': form.contractSigned }">
+        <input v-model="form.contractSigned" type="checkbox">
+        <span>{{ $t('checkin.contractCheck') }}</span>
+      </label>
+
       <GmField :label="$t('checkin.payment')">
         <div class="choice-grid">
           <button
@@ -297,9 +305,13 @@ async function closeSlot() {
         <input id="exemption" v-model="form.exemptionReason" class="input" required>
       </GmField>
 
+      <GmNotice v-if="!form.contractSigned" tone="info">
+        {{ $t('checkin.contractRequired') }}
+      </GmNotice>
+
       <button
         class="btn btn--primary btn--block btn--lg"
-        :disabled="selected.status === 'checked_in' || store.pending"
+        :disabled="selected.status === 'checked_in' || !form.contractSigned || store.pending"
         @click="confirm"
       >
         {{ $t('checkin.confirm') }}

@@ -74,7 +74,7 @@ export async function patch(id, user, input) {
     registration.consents = {
       ...registration.consents?.toObject?.(),
       ...input.consents,
-      signedAt: new Date()
+      submittedAt: new Date()
     }
   }
 
@@ -115,7 +115,6 @@ export async function submit(id, user) {
   if (!registration.grades?.bulletinFileId) missing.push('grades.bulletinFileId')
   if (!registration.consents?.participation) missing.push('consents.participation')
   if (!registration.consents?.bulletinAuthenticity) missing.push('consents.bulletinAuthenticity')
-  if (!registration.consents?.signerName) missing.push('consents.signerName')
   if (missing.length) throw badRequest('Dossier incomplet', { missing })
 
   const editions = await editionsService()
@@ -248,22 +247,32 @@ export async function findByQrToken(qrToken) {
   return registration
 }
 
-/** Check-in : encaissement des frais, numéro de dossard, statut checked_in. */
-export async function checkIn(registrationId, staffId, { payment, bulletinChecked, occurredAt }) {
+/**
+ * Check-in : signature du contrat sur place, encaissement des frais, numéro de
+ * dossard, statut inscrit (`checked_in`). Le contrat signé est une condition
+ * bloquante, au même titre que le contrôle d'identité côté validation.
+ */
+export async function checkIn(registrationId, staffId, { payment, bulletinChecked, contractSigned, occurredAt }) {
   const registration = await Registration.findById(registrationId)
   if (!registration) throw notFound('Dossier introuvable')
   if (registration.status === 'checked_in') {
     return { registration, alreadyCheckedIn: true }
   }
   if (!['approved', 'scheduled'].includes(registration.status)) {
-    throw badRequest(`Dossier au statut ${registration.status} : check-in impossible`)
+    throw badRequest(`Dossier au statut ${registration.status} : inscription impossible`)
   }
+  if (!contractSigned) throw badRequest('Le contrat doit être signé sur place avant l’inscription')
 
   registration.payment = {
     ...registration.payment?.toObject?.(),
     ...payment,
     receivedBy: staffId,
     receivedAt: occurredAt || new Date()
+  }
+  registration.contract = {
+    signed: true,
+    signedAt: occurredAt || new Date(),
+    signedBy: staffId
   }
   registration.bibNumber = await nextBibNumber(registration.editionId)
   registration.checkedInAt = occurredAt || new Date()
@@ -439,6 +448,7 @@ export async function exportRows(editionId) {
     { label: 'Créneau', get: (r) => r.slotId?.label },
     { label: 'Paiement', get: (r) => r.payment?.status },
     { label: 'Montant', get: (r) => r.payment?.amount },
+    { label: 'Contrat signé', get: (r) => (r.contract?.signed ? 'oui' : 'non') },
     { label: 'Check-in', get: (r) => r.checkedInAt?.toISOString?.() },
     { label: 'Droit à l’image', get: (r) => (r.consents?.imageRights ? 'oui' : 'non') },
     { label: 'Signalements', get: (r) => (r.flags || []).map((f) => f.code).join(' ') }
@@ -457,7 +467,7 @@ export async function anonymizeEdition(editionId) {
         qrToken: '',
         dedupeKey: ''
       },
-      $set: { 'player.lastName': '', 'consents.signerName': '' }
+      $set: { 'player.lastName': '' }
     }
   )
   return result.modifiedCount ?? 0

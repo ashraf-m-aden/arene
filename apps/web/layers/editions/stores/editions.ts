@@ -40,6 +40,20 @@ export const useEditionsStore = defineStore('editions', {
       return data
     },
 
+    async createEdition(payload: Record<string, unknown>) {
+      const { $api } = useNuxtApp()
+      const { data } = await $api.post<{ data: any }>('/editions', payload)
+      return data
+    },
+
+    async updateEdition(id: string, patch: Record<string, unknown>) {
+      const { $api } = useNuxtApp()
+      const { data } = await $api.patch<{ data: any }>(`/editions/${id}`, patch)
+      if (data?.slug) this.bySlug[data.slug] = data
+      if (this.current?._id === id) this.current = data
+      return data
+    },
+
     async fetchBySlug(slug: string, force = false) {
       if (this.bySlug[slug] && !force) return this.bySlug[slug]
       const { $api } = useNuxtApp()

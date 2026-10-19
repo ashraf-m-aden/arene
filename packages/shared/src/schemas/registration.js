@@ -31,14 +31,13 @@ export const gradesStepSchema = z.object({
   })
 })
 
-/** Étape 3 — les autorisations, chaque case distincte. */
+/** Étape 3 — les autorisations, chaque case distincte. Aucune signature : des cases à cocher. */
 export const consentsStepSchema = z.object({
   consents: z.object({
     participation: z.literal(true),
     imageRights: z.boolean(),
     monetizedVideos: z.boolean(),
-    bulletinAuthenticity: z.literal(true),
-    signerName: z.string().trim().min(3).max(120)
+    bulletinAuthenticity: z.literal(true)
   })
 })
 

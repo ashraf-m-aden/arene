@@ -5,8 +5,12 @@ const { t } = useI18n()
 const { $api } = useNuxtApp()
 const auth = useAuthStore()
 const config = useRuntimeConfig()
+const route = useRoute()
 const editions = useEditionsStore()
 const { text, date, statusLabel, statusTone, roleLabel, categoryLabel } = useFormat()
+
+/** Venu depuis une fiche d'édition : on reste sur ce dossier, sans retomber sur l'édition courante. */
+const editionIdParam = computed(() => (route.query.editionId as string | undefined) || '')
 
 useNoIndex(t('registrations.staff.queueTitle'))
 
@@ -29,9 +33,9 @@ async function load() {
   pending.value = true
   error.value = ''
   try {
-    const edition = await editions.fetchCurrent()
+    const editionId = editionIdParam.value || (await editions.fetchCurrent())?._id
     const query = new URLSearchParams()
-    if (edition?._id) query.set('editionId', edition._id)
+    if (editionId) query.set('editionId', editionId)
     for (const [key, value] of Object.entries(filters)) if (value) query.set(key, String(value))
     const response = await $api.get<{ data: any[]; meta: any }>(`/registrations?${query}`)
     items.value = response.data
@@ -98,10 +102,10 @@ async function submitDecision() {
 }
 
 async function exportCsv() {
-  const edition = await editions.fetchCurrent()
-  if (!edition?._id) return
+  const editionId = editionIdParam.value || (await editions.fetchCurrent())?._id
+  if (!editionId) return
   const response = await fetch(
-    `${config.public.apiBase}/registrations/export?editionId=${edition._id}`,
+    `${config.public.apiBase}/registrations/export?editionId=${editionId}`,
     { headers: { Authorization: `Bearer ${auth.accessToken}` }, credentials: 'include' }
   )
   if (!response.ok) return

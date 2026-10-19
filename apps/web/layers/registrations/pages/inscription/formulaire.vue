@@ -121,11 +121,7 @@ const canContinue = computed(() => {
     return store.draft.grades.average !== null && Boolean(store.draft.grades.bulletinFileId)
   }
   if (step.value === 3) {
-    return Boolean(
-      store.draft.consents.participation &&
-        store.draft.consents.bulletinAuthenticity &&
-        store.draft.consents.signerName
-    )
+    return Boolean(store.draft.consents.participation && store.draft.consents.bulletinAuthenticity)
   }
   return true
 })
@@ -392,21 +388,6 @@ function back() {
             <GmNotice v-if="!store.draft.consents.imageRights">
               {{ $t('registrations.consents.imageNotice') }}
             </GmNotice>
-
-            <GmField
-              :label="$t('registrations.consents.signerName')"
-              :hint="$t('registrations.consents.signerHint')"
-              for="signerName"
-              required
-            >
-              <input
-                id="signerName"
-                v-model="store.draft.consents.signerName"
-                class="input"
-                autocomplete="name"
-                required
-              >
-            </GmField>
           </template>
 
           <!-- Étape 4 : récapitulatif -->
@@ -436,10 +417,6 @@ function back() {
               <div>
                 <dt>{{ $t('registrations.staff.declaredAverage') }}</dt>
                 <dd class="numeric">{{ store.draft.grades.average }}/20</dd>
-              </div>
-              <div>
-                <dt>{{ $t('registrations.consents.signerName') }}</dt>
-                <dd>{{ store.draft.consents.signerName }}</dd>
               </div>
             </dl>
 

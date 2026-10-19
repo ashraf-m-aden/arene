@@ -174,7 +174,7 @@
     "rejected": "مرفوض",
     "changes_requested": "مطلوب تصحيح",
     "scheduled": "مدعو",
-    "checked_in": "تم الحضور",
+    "checked_in": "مسجَّل",
     "no_show": "غائب",
     "eliminated": "مُقصى",
     "qualified": "متأهل",
@@ -206,6 +206,7 @@
     "checkin": "الحضور",
     "results": "النتائج",
     "cash": "الصندوق",
+    "editions": "النسخ",
     "admin": "الإعدادات",
     "messages": "الرسائل"
   },
