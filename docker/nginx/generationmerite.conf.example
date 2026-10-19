@@ -1,0 +1,60 @@
+# ── GENERATION MERITE ──────────────────────────────────────
+# À copier dans le dossier conf.d de hms-nginx sur l'EC2
+# (ex. /home/ubuntu/hms-monorepo/deployments/nginx/conf.d/generationmerite.conf),
+# en remplaçant VOTRE-DOMAINE.tld par le nom de domaine réellement acheté.
+# Puis recharger nginx : docker kill --signal=HUP hms-nginx
+#
+# Prérequis : le certificat Let's Encrypt du nouveau domaine doit déjà exister
+# (voir docker/DEPLOY.md, étape certbot) — il est indépendant de celui de
+# totalis.clinic, Let's Encrypt gère plusieurs domaines sans conflit sur la
+# même machine.
+
+server {
+    listen 443 ssl;
+    ssl_certificate     /etc/letsencrypt/live/VOTRE-DOMAINE.tld/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/VOTRE-DOMAINE.tld/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    server_name VOTRE-DOMAINE.tld www.VOTRE-DOMAINE.tld;
+
+    client_max_body_size 15M;
+
+    resolver 127.0.0.11 valid=30s;
+    set $backend  generationmerite-api;
+    set $frontend generationmerite-web;
+
+    # ── API (Express) ──
+    location /api/ {
+        proxy_pass         http://$backend:4000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   X-Forwarded-Host $host;
+        proxy_buffering    off;
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 60s;
+    }
+
+    # ── Nuxt (Nitro) ──
+    location / {
+        proxy_pass         http://$frontend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection 'upgrade';
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering    off;
+    }
+}
+
+# ── Redirection HTTP → HTTPS pour ce domaine ──
+server {
+    listen 80;
+    server_name VOTRE-DOMAINE.tld www.VOTRE-DOMAINE.tld;
+    return 301 https://$host$request_uri;
+}

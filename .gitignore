@@ -10,6 +10,7 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+!docker/.env.ec2.example
 .DS_Store
 Thumbs.db
 apps/api/storage/
