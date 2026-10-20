@@ -58,8 +58,8 @@ Comptes créés par le seed (mot de passe `Merite2026!`, modifiable via `SEED_PA
 
 | Rôle | Identifiant |
 | --- | --- |
-| Administrateur | `admin@arene.dj` |
-| Staff | `staff@arene.dj` |
+| Administrateur | `admin@dj-arene.com` |
+| Staff | `staff@dj-arene.com` |
 | Parent | `parent@example.dj` |
 
 Autres commandes : `npm test` (Vitest), `npm run lint`, `npm run lint:style`,

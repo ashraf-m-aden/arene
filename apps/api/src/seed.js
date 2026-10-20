@@ -44,14 +44,14 @@ async function main() {
   registerEvents()
 
   const admin = await upsertUser({
-    email: 'admin@arene.dj',
+    email: 'admin@dj-arene.com',
     phone: '+25377000001',
     role: 'admin',
     firstName: 'Amina',
     lastName: 'Directrice'
   })
   await upsertUser({
-    email: 'staff@arene.dj',
+    email: 'staff@dj-arene.com',
     phone: '+25377000002',
     role: 'staff',
     firstName: 'Omar',

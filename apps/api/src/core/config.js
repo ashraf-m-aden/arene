@@ -40,7 +40,7 @@ export const config = {
 
   notifications: {
     sesRegion: process.env.SES_REGION || 'eu-west-3',
-    sesFrom: process.env.SES_FROM || "L'Arène <no-reply@arene.dj>",
+    sesFrom: process.env.SES_FROM || "L'Arène <no-reply@dj-arene.com>",
     whatsappToken: process.env.WHATSAPP_TOKEN || '',
     whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || '',
     maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5)

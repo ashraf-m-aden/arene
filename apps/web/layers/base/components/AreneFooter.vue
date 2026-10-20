@@ -33,7 +33,7 @@ const year = new Date().getFullYear()
         <a v-if="config.public.youtubeChannel" :href="config.public.youtubeChannel" rel="noopener">
           YouTube
         </a>
-        <a href="mailto:contact@arene.dj">contact@arene.dj</a>
+        <a href="mailto:contact@dj-arene.com">contact@dj-arene.com</a>
       </div>
     </div>
 
