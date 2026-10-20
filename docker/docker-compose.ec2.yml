@@ -129,6 +129,10 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?mot de passe root Mongo requis}
     networks:
       - arene-network
+    # Accès admin par tunnel SSH uniquement (jamais exposé sur Internet).
+    # 27017 est pris par hms-mongodb (Totalis).
+    ports:
+      - "127.0.0.1:27018:27017"
     volumes:
       - ${ARENE_DATA_DIR:-/home/ubuntu/arene/data}/mongo:/data/db
     mem_limit: 512m
