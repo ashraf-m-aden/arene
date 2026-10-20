@@ -9,15 +9,41 @@ set -eu
 SHA=$1
 MAX=${2:-1800}
 SHORT=$(echo "$SHA" | cut -c1-7)
-REPO=ashraf-m-aden/arene
+
+# Le dépôt GitHub est déduit du remote du checkout : un renommage du dépôt n'a
+# rien à casser ici. Hors checkout (essai à la main), on retombe sur le nom
+# courant ; ARENE_GITHUB_REPO force la valeur.
+github_repo() {
+  url=$(git config --get remote.origin.url 2>/dev/null || true)
+  case "$url" in
+    *github.com[:/]*) ;;
+    *) return 1 ;;
+  esac
+  url=${url##*github.com} # https://…/owner/repo.git ou git@github.com:owner/repo.git
+  url=${url#:}
+  url=${url#/}
+  echo "${url%.git}"
+}
+
+REPO=${ARENE_GITHUB_REPO:-$(github_repo || echo 'ashraf-m-aden/arene')}
+
+# Un dépôt injoignable (nom erroné, quota API atteint, réseau) ferait tourner la
+# boucle jusqu'au délai max sans rien dire : on le vérifie tout de suite.
+if ! curl -fsL -o /dev/null "https://api.github.com/repos/$REPO"; then
+  echo "API GitHub : $REPO injoignable (nom du dépôt ? quota ? réseau ?)"
+  exit 1
+fi
+echo "Dépôt suivi : $REPO"
 
 has_tag() {
   curl -fs -o /dev/null "https://hub.docker.com/v2/repositories/nejishow/$1/tags/$SHORT"
 }
 
 # Conclusion du workflow CI pour ce commit : vide tant qu'il tourne.
+# -L suit la redirection que GitHub sert tant que l'ancien nom d'un dépôt
+# renommé est utilisé.
 ci_conclusion() {
-  curl -fs "https://api.github.com/repos/$REPO/actions/runs?head_sha=$SHA&event=push" |
+  curl -fsL "https://api.github.com/repos/$REPO/actions/runs?head_sha=$SHA&event=push" |
     python3 -c "import sys, json
 runs = [r for r in json.load(sys.stdin)['workflow_runs'] if r['name'] == 'CI']
 print(runs[0]['conclusion'] or '' if runs else '')" 2>/dev/null || true
