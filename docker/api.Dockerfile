@@ -7,7 +7,7 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/
-RUN npm ci --omit=dev --workspace @arene/api --include-workspace-root
+RUN npm ci --omit=dev --workspace @arene/api --include-workspace-root --legacy-peer-deps
 
 FROM base AS runtime
 ENV NODE_ENV=production
