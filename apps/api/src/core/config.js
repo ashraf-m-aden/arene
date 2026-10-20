@@ -39,6 +39,8 @@ export const config = {
   },
 
   notifications: {
+    // Sans clé AWS (développement, tests), les e-mails sont simulés.
+    sesEnabled: Boolean(process.env.AWS_ACCESS_KEY_ID),
     sesRegion: process.env.SES_REGION || 'eu-west-3',
     sesFrom: process.env.SES_FROM || "L'Arène <no-reply@dj-arene.com>",
     whatsappToken: process.env.WHATSAPP_TOKEN || '',

@@ -8,10 +8,12 @@ import logger from '../../core/logger.js'
 let sesClient
 async function getSes() {
   if (sesClient !== undefined) return sesClient
+  if (!config.notifications.sesEnabled) return (sesClient = null)
   try {
-    const { SESv2Client } = await import('@aws-sdk/client-ses')
-    sesClient = new SESv2Client({ region: config.notifications.sesRegion })
-  } catch {
+    const { SESClient } = await import('@aws-sdk/client-ses')
+    sesClient = new SESClient({ region: config.notifications.sesRegion })
+  } catch (err) {
+    logger.warn({ err }, 'client SES indisponible : les e-mails seront simulés')
     sesClient = null
   }
   return sesClient
@@ -30,15 +32,13 @@ export const emailProvider = {
     const html = toHtml(body, locale)
     const result = await client.send(
       new SendEmailCommand({
-        FromEmailAddress: config.notifications.sesFrom,
+        Source: config.notifications.sesFrom,
         Destination: { ToAddresses: [to] },
-        Content: {
-          Simple: {
-            Subject: { Data: subject, Charset: 'UTF-8' },
-            Body: {
-              Text: { Data: body, Charset: 'UTF-8' },
-              Html: { Data: html, Charset: 'UTF-8' }
-            }
+        Message: {
+          Subject: { Data: subject, Charset: 'UTF-8' },
+          Body: {
+            Text: { Data: body, Charset: 'UTF-8' },
+            Html: { Data: html, Charset: 'UTF-8' }
           }
         }
       })
