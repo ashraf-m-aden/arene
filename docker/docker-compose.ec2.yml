@@ -101,7 +101,7 @@ services:
         "redis-server",
         "--requirepass", "${REDIS_PASSWORD:?mot de passe Redis requis}",
         "--maxmemory", "128mb",
-        "--maxmemory-policy", "allkeys-lru",
+        "--maxmemory-policy", "noeviction",
         "--appendonly", "yes"
       ]
     networks:
