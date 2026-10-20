@@ -9,7 +9,7 @@
 export const DEFAULT_TEMPLATES = {
   registration_received: {
     channels: ['email', 'whatsapp'],
-    metaTemplateName: 'gm_dossier_recu',
+    metaTemplateName: 'arene_dossier_recu',
     subject: {
       fr: 'Dossier bien reçu — {{edition}}',
       ar: 'تم استلام الملف — {{edition}}'
@@ -21,7 +21,7 @@ export const DEFAULT_TEMPLATES = {
   },
   registration_changes_requested: {
     channels: ['email', 'whatsapp'],
-    metaTemplateName: 'gm_correction_demandee',
+    metaTemplateName: 'arene_correction_demandee',
     subject: { fr: 'Correction demandée — {{edition}}', ar: 'طلب تصحيح — {{edition}}' },
     body: {
       fr: 'Le dossier de {{prenom}} demande une correction : {{motif}}. Reprenez le formulaire ici : {{lien}}',
@@ -30,7 +30,7 @@ export const DEFAULT_TEMPLATES = {
   },
   registration_approved: {
     channels: ['email', 'whatsapp'],
-    metaTemplateName: 'gm_dossier_accepte',
+    metaTemplateName: 'arene_dossier_accepte',
     subject: { fr: 'Dossier accepté — {{edition}}', ar: 'تم قبول الملف — {{edition}}' },
     body: {
       fr: 'Bonne nouvelle : le dossier de {{prenom}} est accepté. Votre convocation arrive avec le créneau et le badge. {{lien}}',
@@ -47,7 +47,7 @@ export const DEFAULT_TEMPLATES = {
   },
   slot_assigned: {
     channels: ['email', 'whatsapp'],
-    metaTemplateName: 'gm_convocation',
+    metaTemplateName: 'arene_convocation',
     subject: { fr: 'Convocation — {{edition}}', ar: 'دعوة — {{edition}}' },
     body: {
       fr: 'Convocation de {{prenom}} : {{creneau}}, le {{date}} à {{lieu}}. Frais à régler en espèces à l’accueil : {{frais}} DJF. Badge et documents : {{lien}}',
@@ -56,7 +56,7 @@ export const DEFAULT_TEMPLATES = {
   },
   slot_reminder: {
     channels: ['whatsapp'],
-    metaTemplateName: 'gm_rappel_convocation',
+    metaTemplateName: 'arene_rappel_convocation',
     subject: { fr: 'Rappel de convocation', ar: 'تذكير بالدعوة' },
     body: {
       fr: 'Rappel : {{prenom}} est attendu demain, {{creneau}}, à {{lieu}}. Pensez au badge, à la pièce d’identité, au bulletin original et aux {{frais}} DJF.',
@@ -65,7 +65,7 @@ export const DEFAULT_TEMPLATES = {
   },
   registration_qualified: {
     channels: ['email', 'whatsapp'],
-    metaTemplateName: 'gm_qualification_finale',
+    metaTemplateName: 'arene_qualification_finale',
     subject: { fr: 'Qualification pour la finale — {{edition}}', ar: 'التأهل للنهائي — {{edition}}' },
     body: {
       fr: 'Bravo : {{prenom}} est qualifié pour la finale de {{edition}}. Détails de la finale : {{lien}}',
@@ -74,7 +74,7 @@ export const DEFAULT_TEMPLATES = {
   },
   otp_code: {
     channels: ['whatsapp'],
-    metaTemplateName: 'gm_code_connexion',
+    metaTemplateName: 'arene_code_connexion',
     subject: { fr: 'Code de connexion', ar: 'رمز الدخول' },
     body: {
       fr: "Votre code de connexion à l'Arène : {{code}}. Il expire dans 10 minutes.",

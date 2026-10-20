@@ -1,117 +1,103 @@
-# Déploiement sur l'EC2 partagé (aux côtés de Totalis)
+# Déploiement de L'Arène sur l'EC2 partagé (dj-arene.com)
 
-Contexte : l'EC2 héberge déjà `totalis.clinic` derrière un `hms-nginx` conteneurisé
-(réseau Docker `hms-network`), avec un MongoDB déjà en place. L'Arène
-s'ajoute sur la **même machine**, sous un **second nom de domaine**, sans toucher
-à la config existante de Totalis.
+L'EC2 (t3.large, 50.19.46.247) héberge aussi Totalis. L'Arène en est **isolée** :
 
-Les images sont publiées automatiquement par `.github/workflows/build-and-push.yml`
-vers DockerHub (`nejishow/arene-api`, `nejishow/arene-web`) à
-chaque push sur `main`. Le déploiement sur l'EC2 ne fait que les récupérer — pas de
-build sur le serveur.
+| Ressource     | L'Arène                                              | Partagé avec Totalis ? |
+| ------------- | ---------------------------------------------------- | ---------------------- |
+| Dossier       | `~/arene` (dépôt cloné dans `~/arene/repo`)          | Non                    |
+| Réseau Docker | `arene-network`                                      | Non                    |
+| MongoDB       | `arene-mongodb`, base `arene`, `~/arene/data/mongo`  | Non                    |
+| Redis         | `arene-redis`, `~/arene/data/redis`                  | Non                    |
+| S3            | utilisateur IAM `arene-s3` (clés dans `.env.ec2`)    | Non                    |
+| Sauvegardes   | `docker/scripts/backup-mongo.sh` → `s3://dj-arene-backups` | Non              |
+| Entrée 80/443 | `hms-nginx`, fichier `conf.d/arene.conf`             | **Oui (une seule IP)** |
 
-## 1. Acheter le domaine et le pointer sur l'EC2
+Les images sont publiées par `.github/workflows/build-and-push.yml`
+(`nejishow/arene-api`, `nejishow/arene-web`) ; rien n'est construit sur le serveur.
+Ports internes : API 4000, web 3000. Aucun port publié sur l'hôte.
 
-Chez n'importe quel registrar (Namecheap, OVH, Route 53…), achetez le domaine puis
-créez un enregistrement DNS :
+Procédure détaillée, risques et rollback : document « Arène — Déploiement isolé
+sur l'EC2 partagé ». Résumé ci-dessous, à exécuter **hors heure de pointe**.
 
-```
-Type  A
-Nom   @ (et éventuellement www)
-Valeur <IP publique de l'EC2>   # la même IP que totalis.clinic
-TTL   automatique
-```
-
-Un second domaine sur la même IP ne pose aucun problème : nginx choisit le bon
-site via le `server_name` (SNI), exactement comme il le fait déjà pour chaque
-tenant `*.totalis.clinic`. Attendez la propagation DNS (`dig VOTRE-DOMAINE.tld`)
-avant l'étape certbot.
-
-## 2. Certificat Let's Encrypt du nouveau domaine
-
-Indépendant de celui de `totalis.clinic` — Let's Encrypt gère sans problème
-plusieurs domaines sur la même machine, un dossier par domaine sous
-`/etc/letsencrypt/live/`. Avec certbot déjà installé sur l'hôte (webroot ou
-standalone selon ce que vous utilisez pour totalis.clinic) :
+## 1. Préparation (sans impact sur Totalis)
 
 ```bash
-sudo certbot certonly --nginx -d VOTRE-DOMAINE.tld -d www.VOTRE-DOMAINE.tld
+# DNS : A @ et A www → 50.19.46.247 ; attendre `dig +short dj-arene.com`
+mkdir -p ~/arene/data/mongo ~/arene/data/redis ~/arene/backups ~/arene/secrets
+cp ~/arene/repo/docker/.env.ec2.example ~/arene/.env.ec2 && chmod 600 ~/arene/.env.ec2
+# renseigner les secrets (openssl rand -hex 32) et les clés arene-s3
+
+docker network create arene-network
+docker network connect arene-network hms-nginx      # sans redémarrage
 ```
 
-Si certbot tourne lui-même en conteneur chez vous, adaptez la commande à ce
-conteneur plutôt qu'à `--nginx`. Le résultat attendu dans tous les cas :
-`/etc/letsencrypt/live/VOTRE-DOMAINE.tld/{fullchain,privkey}.pem` présents sur
-l'hôte, dans le même volume que celui déjà monté dans `hms-nginx`.
-
-## 3. Secrets et buckets S3
-
-- Générez les secrets JWT : `openssl rand -hex 32` (deux fois, un par secret).
-- Créez les deux buckets S3 (public pour les médias publics, privé pour les
-  bulletins et photos d'identité) et attachez à l'instance EC2 un **rôle IAM**
-  autorisant `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` sur ces deux
-  buckets — ainsi l'API s'authentifie sans clé statique dans le conteneur.
-- Repérez le nom du conteneur Mongo existant : `docker ps | grep mongo`.
-
-## 4. Fichier d'environnement
+## 2. Base de données
 
 ```bash
-cd ~/hms-monorepo   # ou l'emplacement de ce dépôt sur l'EC2
-cp docker/.env.ec2.example .env.ec2
-# éditez .env.ec2 : domaine, MONGO_URI (nom du conteneur repéré à l'étape 3),
-# REDIS_PASSWORD, JWT_SECRET, JWT_REFRESH_SECRET, buckets S3
+cd ~/arene/repo
+docker compose -f docker/docker-compose.ec2.yml --env-file ~/arene/.env.ec2 up -d mongodb
+docker exec -it arene-mongodb sh -c 'mongosh -u "$MONGO_INITDB_ROOT_USERNAME" \
+  -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin'
+#   use arene
+#   db.createUser({ user: "arene_app", pwd: passwordPrompt(),
+#     roles: [{ role: "readWrite", db: "arene" }] })
 ```
 
-## 5. Lancer les conteneurs
+## 3. Certificat (webroot, sans coupure)
+
+`certbot --nginx` est impossible (nginx en conteneur) ; on passe par un webroot
+sous `/etc/letsencrypt`, déjà monté dans `hms-nginx`.
 
 ```bash
-docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 pull
-docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 up -d
-docker compose -f docker/docker-compose.ec2.yml ps
+sudo mkdir -p /etc/letsencrypt/webroot-arene
+sudo install -m 755 docker/scripts/certbot-deploy-hook.sh \
+  /etc/letsencrypt/renewal-hooks/deploy/arene-reload-nginx.sh
+echo 'deployments/nginx/conf.d/arene.conf' >> ~/hms-monorepo/.git/info/exclude
+
+cp docker/nginx/arene.phase1-http.conf.example ~/hms-monorepo/deployments/nginx/conf.d/arene.conf
+docker exec hms-nginx nginx -t && docker kill --signal=HUP hms-nginx
+sudo certbot certonly --webroot -w /etc/letsencrypt/webroot-arene \
+  -d dj-arene.com -d www.dj-arene.com
 ```
 
-Ces conteneurs rejoignent le réseau `hms-network` existant (déclaré `external`
-dans le compose) : pas de port publié sur l'hôte, `hms-nginx` les atteint
-directement par nom de conteneur (`arene-web`, `arene-api`),
-comme il le fait déjà pour `frontend-1`/`backend-1`.
+Si `nginx -t` échoue : supprimer `conf.d/arene.conf` immédiatement, sans `HUP`.
 
-## 6. Brancher nginx sur le nouveau domaine
+## 4. Application et HTTPS
 
 ```bash
-cp docker/nginx/arene.conf.example \
-   /chemin/vers/deployments/nginx/conf.d/arene.conf
-# remplacez VOTRE-DOMAINE.tld par le vrai domaine dans ce fichier
-docker kill --signal=HUP hms-nginx   # recharge nginx sans coupure
+docker compose -f docker/docker-compose.ec2.yml --env-file ~/arene/.env.ec2 pull
+docker compose -f docker/docker-compose.ec2.yml --env-file ~/arene/.env.ec2 up -d
+
+cp docker/nginx/arene.conf.example ~/hms-monorepo/deployments/nginx/conf.d/arene.conf
+docker exec hms-nginx nginx -t && docker kill --signal=HUP hms-nginx
 ```
 
-C'est le même mécanisme que celui qu'utilise `hms-provisioning` pour chaque
-tenant (`nginx.service.js` → écrit un `.conf` dans `conf.d`, puis `HUP` sur
-`hms-nginx`).
-
-## 7. Vérifier
+## 5. Sauvegardes
 
 ```bash
-curl -I https://VOTRE-DOMAINE.tld
-curl -I https://VOTRE-DOMAINE.tld/api/v1/editions/current
+install -m 755 docker/scripts/backup-mongo.sh ~/arene/scripts/backup-mongo.sh
+# ~/arene/secrets/aws-backup.ini (chmod 600), profil [arene-backup]
+~/arene/scripts/backup-mongo.sh        # test manuel : doit finir par « OK »
+(crontab -l; echo '30 3 * * * /home/ubuntu/arene/scripts/backup-mongo.sh >> /home/ubuntu/arene/backups/backup.log 2>&1') | crontab -
 ```
 
-Et que `totalis.clinic` répond toujours normalement — le rechargement nginx
-(`HUP`) ne coupe aucune connexion existante et ne touche aucun autre vhost.
-
-## Mises à jour ultérieures
+## 6. Vérification
 
 ```bash
-docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 pull
-docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 up -d
+curl -I http://dj-arene.com                            # 301 vers https
+curl -I https://www.dj-arene.com                       # 301 vers l'apex
+curl -I https://dj-arene.com/api/v1/editions/current   # 200
+docker exec arene-api getent hosts hms-mongodb         # ne doit rien renvoyer
+curl -I https://totalis.clinic                         # inchangé
 ```
 
-Pour figer une version précise plutôt que `latest`, mettez `IMAGE_TAG` dans
-`.env.ec2` au sha court voulu (tag poussé par la CI à chaque commit sur `main`).
-
-## Première mise en données
+## Mises à jour et rollback
 
 ```bash
-docker exec -it arene-api node apps/api/src/seed.js
+# mise à jour : IMAGE_TAG=<sha court> dans ~/arene/.env.ec2, puis pull + up -d
+# rollback complet, sans effet sur Totalis :
+rm ~/hms-monorepo/deployments/nginx/conf.d/arene.conf
+docker exec hms-nginx nginx -t && docker kill --signal=HUP hms-nginx
+docker compose -f docker/docker-compose.ec2.yml --env-file ~/arene/.env.ec2 down
+docker network disconnect arene-network hms-nginx
 ```
-
-(à adapter si vous préférez partir sans jeu de démonstration en production —
-dans ce cas, créez simplement le premier compte admin via les routes `auth`.)

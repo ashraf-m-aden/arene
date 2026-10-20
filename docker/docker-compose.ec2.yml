@@ -1,13 +1,15 @@
-# Déploiement sur l'EC2 partagé avec Totalis : on réutilise le nginx (hms-nginx)
-# et le MongoDB déjà en place sur le réseau Docker `hms-network`. Ce fichier ne
-# lance donc ni proxy, ni base Mongo — seulement web, api, worker et un Redis
-# dédié à L'Arène. Voir docker/DEPLOY.md pour la procédure complète.
+# Déploiement sur l'EC2 partagé avec Totalis, isolé de lui : réseau, MongoDB,
+# Redis et identifiants S3 propres à L'Arène. Seul hms-nginx (ports 80/443) est
+# commun ; il est branché sur arene-network par `docker network connect`.
+# Données en bind mount sous ARENE_DATA_DIR : le `prune --volumes` de l'hôte
+# ne peut pas les effacer. Voir docker/DEPLOY.md pour la procédure complète.
 #
+# Prérequis : docker network create arene-network
 # Usage : docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 up -d
 name: arene
 
 networks:
-  hms-network:
+  arene-network:
     external: true
 
 services:
@@ -18,11 +20,12 @@ services:
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:?domaine requis}
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
     networks:
-      - hms-network
+      - arene-network
     expose:
       - "3000"
     depends_on:
       - api
+    mem_limit: 256m
     restart: unless-stopped
 
   api:
@@ -39,6 +42,8 @@ services:
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:?bucket requis}
       S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:?bucket requis}
       S3_REGION: ${S3_REGION:-eu-west-3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?clé arene-s3 requise}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?clé arene-s3 requise}
       CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
@@ -48,11 +53,13 @@ services:
       API_PUBLIC_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
       DEFAULT_LOCALE: fr
     networks:
-      - hms-network
+      - arene-network
     expose:
       - "4000"
     depends_on:
+      - mongodb
       - redis
+    mem_limit: 512m
     restart: unless-stopped
 
   worker:
@@ -69,15 +76,19 @@ services:
       S3_BUCKET_PUBLIC: ${S3_BUCKET_PUBLIC:?bucket requis}
       S3_BUCKET_PRIVATE: ${S3_BUCKET_PRIVATE:?bucket requis}
       S3_REGION: ${S3_REGION:-eu-west-3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?clé arene-s3 requise}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?clé arene-s3 requise}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
       WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
       WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
     networks:
-      - hms-network
+      - arene-network
     depends_on:
+      - mongodb
       - redis
+    mem_limit: 384m
     restart: unless-stopped
 
   # Redis dédié : même logique que vos conteneurs HMS par tenant (mot de passe,
@@ -94,10 +105,24 @@ services:
         "--appendonly", "yes"
       ]
     networks:
-      - hms-network
+      - arene-network
     volumes:
-      - arene-redis-data:/data
+      - ${ARENE_DATA_DIR:-/home/ubuntu/arene/data}/redis:/data
+    mem_limit: 160m
     restart: unless-stopped
 
-volumes:
-  arene-redis-data:
+  # MongoDB dédié : aucune donnée partagée avec hms-mongodb (Totalis).
+  # Le compte root n'est créé qu'au premier démarrage (dossier de données vide).
+  mongodb:
+    image: mongo:7
+    container_name: arene-mongodb
+    command: ["--auth", "--wiredTigerCacheSizeGB", "0.25"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: arene_root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?mot de passe root Mongo requis}
+    networks:
+      - arene-network
+    volumes:
+      - ${ARENE_DATA_DIR:-/home/ubuntu/arene/data}/mongo:/data/db
+    mem_limit: 512m
+    restart: unless-stopped

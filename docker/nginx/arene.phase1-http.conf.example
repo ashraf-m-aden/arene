@@ -1,0 +1,22 @@
+# ── ARÈNE — PHASE 1 (HTTP seul, avant le certificat) ──────────
+# À copier dans conf.d UNIQUEMENT pour obtenir le premier certificat.
+# Ne référence aucun certificat : nginx -t passe même si
+# /etc/letsencrypt/live/dj-arene.com n'existe pas encore.
+#
+# Webroot = /etc/letsencrypt/webroot-arene : ce dossier est déjà visible dans
+# hms-nginx via le montage /etc/letsencrypt (ro) → pas besoin de recréer
+# le conteneur hms-nginx.
+server {
+    listen 80;
+    server_name dj-arene.com www.dj-arene.com;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /etc/letsencrypt/webroot-arene;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
+    location / {
+        return 404;
+    }
+}
