@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/web/package.json apps/web/
-RUN npm ci --workspace @arene/web --include-workspace-root --legacy-peer-deps
+RUN npm ci --workspace @arene/web --include-workspace-root
 
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
