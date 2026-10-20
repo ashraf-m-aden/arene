@@ -1,14 +1,24 @@
 name: Build & Push Docker Images
 
+# Sur main : seulement après un CI vert (lint + tests). Jenkins déploie
+# ensuite l'image nejishow/arene-*:<sha court> dès qu'elle est publiée.
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   push:
     branches:
-      - main
       - "**staging**" # toutes les branches contenant "staging"
   workflow_dispatch:
 
 jobs:
   build-and-push:
+    # Un CI rouge, ou lancé par une pull request, ne publie rien.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,17 +27,23 @@ jobs:
             file: docker/api.Dockerfile
           - name: web
             file: docker/web.Dockerfile
+    env:
+      # workflow_run s'exécute sur la branche par défaut : le commit testé est head_sha.
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
 
       - name: Compute tags
         id: tags
         run: |
-          SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+          SHA_SHORT=$(echo "$SHA" | cut -c1-7)
           IMAGE="nejishow/arene-${{ matrix.name }}"
 
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "$BRANCH" == "main" ]]; then
             echo "tags=$IMAGE:latest,$IMAGE:$SHA_SHORT" >> $GITHUB_OUTPUT
           else
             echo "tags=$IMAGE:staging,$IMAGE:staging-$SHA_SHORT" >> $GITHUB_OUTPUT
@@ -55,6 +71,6 @@ jobs:
       - name: Summary
         run: |
           echo "✅ Image: ${{ matrix.name }}"
-          echo "✅ Branch: ${{ github.ref_name }}"
+          echo "✅ Branch: $BRANCH"
           echo "✅ Pushed tags:"
           echo "${{ steps.tags.outputs.tags }}" | tr ',' '\n' | sed 's/^/   - /'
