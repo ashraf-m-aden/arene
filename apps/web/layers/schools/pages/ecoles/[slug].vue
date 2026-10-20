@@ -21,8 +21,8 @@ const ranking = computed(() => data.value?.ranking)
 const edition = computed(() => data.value?.edition)
 
 useSeoPage({
-  title: `${text(school.value.name)} — Génération Mérite`,
-  description: `${text(school.value.name)} au tournoi de duels 1v1 Génération Mérite : joueurs engagés, points et classement.`,
+  title: `${text(school.value.name)} — L'Arène`,
+  description: `${text(school.value.name)} au tournoi de duels 1v1 L'Arène : joueurs engagés, points et classement.`,
   jsonLd: [
     {
       '@context': 'https://schema.org',
@@ -31,7 +31,7 @@ useSeoPage({
       address: { '@type': 'PostalAddress', addressLocality: school.value.city, addressCountry: 'DJ' }
     },
     breadcrumbLd([
-      { name: 'Génération Mérite', path: '/' },
+      { name: "L'Arène", path: '/' },
       { name: t('schools.title'), path: '/ecoles' },
       { name: text(school.value.name), path: `/ecoles/${slug.value}` }
     ])
@@ -93,7 +93,7 @@ useSeoPage({
           </table>
         </div>
 
-        <GmEmpty v-else :title="$t('schools.noPlayers')" />
+        <AreneEmpty v-else :title="$t('schools.noPlayers')" />
       </div>
     </section>
   </div>

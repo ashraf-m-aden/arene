@@ -21,7 +21,7 @@ async function main() {
   const server = app.listen(config.port, () => {
     logger.info(
       { port: config.port, env: config.env, prefix: config.apiPrefix },
-      'API Génération Mérite démarrée'
+      "API de l'Arène démarrée"
     )
   })
 

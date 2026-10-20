@@ -149,7 +149,7 @@ function back() {
   <section class="section">
     <div class="container container--narrow">
       <template v-if="submitted">
-        <GmNotice tone="success" :title="$t('registrations.review.submitted')" />
+        <AreneNotice tone="success" :title="$t('registrations.review.submitted')" />
         <div class="cluster form-done">
           <NuxtLink :to="localePath('/compte')" class="btn btn--primary">
             {{ $t('registrations.account.title') }}
@@ -158,11 +158,11 @@ function back() {
       </template>
 
       <template v-else-if="!edition || edition.status !== 'registration_open'">
-        <GmNotice tone="danger">{{ $t('registrations.closed') }}</GmNotice>
+        <AreneNotice tone="danger">{{ $t('registrations.closed') }}</AreneNotice>
       </template>
 
       <template v-else>
-        <GmSectionHead
+        <AreneSectionHead
           :eyebrow="text(edition.title)"
           :title="$t(`registrations.steps.${stepKeys[step - 1]}`)"
         />
@@ -181,23 +181,23 @@ function back() {
           </li>
         </ol>
 
-        <GmNotice v-if="store.error" tone="danger">{{ store.error }}</GmNotice>
-        <GmNotice v-if="uploadError" tone="danger">{{ uploadError }}</GmNotice>
+        <AreneNotice v-if="store.error" tone="danger">{{ store.error }}</AreneNotice>
+        <AreneNotice v-if="uploadError" tone="danger">{{ uploadError }}</AreneNotice>
 
         <form class="card stack form" @submit.prevent="next">
           <!-- Étape 1 : le joueur -->
           <template v-if="step === 1">
             <div class="two">
-              <GmField :label="$t('registrations.player.firstName')" for="firstName" required>
+              <AreneField :label="$t('registrations.player.firstName')" for="firstName" required>
                 <input id="firstName" v-model="store.draft.player.firstName" class="input" required>
-              </GmField>
-              <GmField :label="$t('registrations.player.lastName')" for="lastName" required>
+              </AreneField>
+              <AreneField :label="$t('registrations.player.lastName')" for="lastName" required>
                 <input id="lastName" v-model="store.draft.player.lastName" class="input" required>
-              </GmField>
+              </AreneField>
             </div>
 
             <div class="two">
-              <GmField :label="$t('registrations.player.birthDate')" for="birthDate" required>
+              <AreneField :label="$t('registrations.player.birthDate')" for="birthDate" required>
                 <input
                   id="birthDate"
                   v-model="store.draft.player.birthDate"
@@ -205,17 +205,17 @@ function back() {
                   type="date"
                   required
                 >
-              </GmField>
-              <GmField :label="$t('registrations.player.gender')" for="gender" required>
+              </AreneField>
+              <AreneField :label="$t('registrations.player.gender')" for="gender" required>
                 <select id="gender" v-model="store.draft.player.gender" class="select" required>
                   <option value="" disabled>—</option>
                   <option value="m">{{ $t('registrations.player.male') }}</option>
                   <option value="f">{{ $t('registrations.player.female') }}</option>
                 </select>
-              </GmField>
+              </AreneField>
             </div>
 
-            <GmField
+            <AreneField
               :label="$t('registrations.player.school')"
               :hint="$t('registrations.player.schoolSearch')"
               for="school"
@@ -236,7 +236,7 @@ function back() {
                   </button>
                 </li>
               </ul>
-            </GmField>
+            </AreneField>
 
             <label class="check" :class="{ 'check--checked': schoolOther }">
               <input v-model="schoolOther" type="checkbox">
@@ -245,20 +245,20 @@ function back() {
 
             <template v-if="schoolOther">
               <div class="two">
-                <GmField :label="$t('registrations.player.schoolOtherName')" for="otherName" required>
+                <AreneField :label="$t('registrations.player.schoolOtherName')" for="otherName" required>
                   <input id="otherName" v-model="otherSchool.name" class="input" required>
-                </GmField>
-                <GmField :label="$t('registrations.player.schoolOtherType')" for="otherType" required>
+                </AreneField>
+                <AreneField :label="$t('registrations.player.schoolOtherType')" for="otherType" required>
                   <select id="otherType" v-model="otherSchool.type" class="select">
                     <option value="lycee">{{ $t('category.lycee') }}</option>
                     <option value="universite">{{ $t('category.universite') }}</option>
                   </select>
-                </GmField>
+                </AreneField>
               </div>
               <p class="field__hint">{{ $t('registrations.player.schoolPending') }}</p>
             </template>
 
-            <GmField :label="$t('registrations.player.role')" required>
+            <AreneField :label="$t('registrations.player.role')" required>
               <div class="choice-grid">
                 <button
                   v-for="role in ['striker', 'defender']"
@@ -272,9 +272,9 @@ function back() {
                   <span>{{ $t(`registrations.player.${role}Hint`) }}</span>
                 </button>
               </div>
-            </GmField>
+            </AreneField>
 
-            <GmField
+            <AreneField
               :label="$t('registrations.player.photo')"
               :hint="$t('registrations.player.photoHint')"
               for="photo"
@@ -288,7 +288,7 @@ function back() {
                 }}</strong>
                 <span v-if="uploading === 'photo'" class="muted">{{ $t('common.loading') }}</span>
               </label>
-            </GmField>
+            </AreneField>
 
             <p v-if="store.draft.ageCategory" class="field__hint">
               {{
@@ -302,7 +302,7 @@ function back() {
           <!-- Étape 2 : les notes -->
           <template v-else-if="step === 2">
             <div class="two">
-              <GmField
+              <AreneField
                 :label="$t('registrations.grades.average')"
                 :hint="$t('registrations.grades.averageHint')"
                 for="average"
@@ -319,21 +319,21 @@ function back() {
                   inputmode="decimal"
                   required
                 >
-              </GmField>
-              <GmField
+              </AreneField>
+              <AreneField
                 :label="$t('registrations.grades.term')"
                 :hint="$t('registrations.grades.termHint')"
                 for="term"
               >
                 <input id="term" v-model="store.draft.grades.term" class="input">
-              </GmField>
+              </AreneField>
             </div>
 
-            <GmNotice v-if="belowThreshold" tone="danger">
+            <AreneNotice v-if="belowThreshold" tone="danger">
               {{ $t('registrations.grades.belowThreshold') }}
-            </GmNotice>
+            </AreneNotice>
 
-            <GmField
+            <AreneField
               :label="$t('registrations.grades.bulletin')"
               :hint="$t('registrations.grades.bulletinHint')"
               for="bulletin"
@@ -357,7 +357,7 @@ function back() {
                 </span>
                 <span v-if="uploading === 'bulletin'" class="muted">{{ $t('common.loading') }}</span>
               </label>
-            </GmField>
+            </AreneField>
           </template>
 
           <!-- Étape 3 : les autorisations -->
@@ -385,9 +385,9 @@ function back() {
               <span>{{ $t('registrations.consents.bulletinAuthenticity') }}</span>
             </label>
 
-            <GmNotice v-if="!store.draft.consents.imageRights">
+            <AreneNotice v-if="!store.draft.consents.imageRights">
               {{ $t('registrations.consents.imageNotice') }}
-            </GmNotice>
+            </AreneNotice>
           </template>
 
           <!-- Étape 4 : récapitulatif -->
@@ -420,15 +420,15 @@ function back() {
               </div>
             </dl>
 
-            <GmNotice tone="info">
+            <AreneNotice tone="info">
               {{ $t('registrations.review.feeReminder', { amount: money(edition.fee) }) }}
-            </GmNotice>
+            </AreneNotice>
 
-            <GmNotice v-if="store.missingFields.length" tone="danger">
+            <AreneNotice v-if="store.missingFields.length" tone="danger">
               {{ $t('registrations.review.missing', { fields: store.missingFields.join(', ') }) }}
-            </GmNotice>
+            </AreneNotice>
 
-            <GmNotice v-if="submitError" tone="danger">{{ submitError }}</GmNotice>
+            <AreneNotice v-if="submitError" tone="danger">{{ submitError }}</AreneNotice>
           </template>
 
           <div class="form__actions">

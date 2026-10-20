@@ -1,9 +1,9 @@
 {
-  "name": "@gm/web",
+  "name": "@arene/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Front Nuxt 3 de la plateforme Génération Mérite",
+  "description": "Front Nuxt 3 de la plateforme L'Arène",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
@@ -12,7 +12,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@gm/shared": "*",
+    "@arene/shared": "*",
     "@nuxtjs/i18n": "^10.2.3",
     "@pinia/nuxt": "^0.5.5",
     "nuxt": "^3.14.159",

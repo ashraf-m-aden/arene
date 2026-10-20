@@ -35,7 +35,7 @@ useSeoPage({
     </section>
 
     <div class="container">
-      <GmEditionTabs :slug="edition.slug" />
+      <AreneEditionTabs :slug="edition.slug" />
     </div>
 
     <section class="section">
@@ -51,12 +51,12 @@ useSeoPage({
             <p v-if="slot.venue" class="muted">{{ slot.venue }}</p>
 
             <template v-if="slot.occupancy">
-              <GmMeter
+              <AreneMeter
                 :label="$t('role.striker')"
                 :used="slot.occupancy.striker.used"
                 :capacity="slot.occupancy.striker.capacity"
               />
-              <GmMeter
+              <AreneMeter
                 :label="$t('role.defender')"
                 :used="slot.occupancy.defender.used"
                 :capacity="slot.occupancy.defender.capacity"
@@ -65,7 +65,7 @@ useSeoPage({
           </article>
         </div>
 
-        <GmEmpty v-else :title="$t('editions.empty')" />
+        <AreneEmpty v-else :title="$t('editions.empty')" />
       </div>
     </section>
   </div>

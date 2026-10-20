@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { AGE_CATEGORIES, SLOT_STATUSES } from '@gm/shared/constants'
+import { AGE_CATEGORIES, SLOT_STATUSES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 

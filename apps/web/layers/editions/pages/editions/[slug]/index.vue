@@ -22,7 +22,7 @@ const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
 const categories = computed(() => Object.entries(edition.value?.seats || {}))
 
 useSeoPage({
-  title: `${text(edition.value.title)} — Génération Mérite`,
+  title: `${text(edition.value.title)} — L'Arène`,
   description: text(edition.value.description).slice(0, 155),
   type: 'article',
   jsonLd: [
@@ -40,7 +40,7 @@ useSeoPage({
         name: edition.value.venue?.name,
         address: edition.value.venue?.address || 'Djibouti'
       },
-      organizer: { '@type': 'Organization', name: 'Génération Mérite', url: siteUrl },
+      organizer: { '@type': 'Organization', name: "L'Arène", url: siteUrl },
       offers: {
         '@type': 'Offer',
         price: edition.value.fee,
@@ -50,7 +50,7 @@ useSeoPage({
       }
     },
     breadcrumbLd([
-      { name: 'Génération Mérite', path: '/' },
+      { name: "L'Arène", path: '/' },
       { name: t('editions.title'), path: '/editions' },
       { name: text(edition.value.title), path: `/editions/${slug.value}` }
     ])
@@ -81,7 +81,7 @@ useSeoPage({
     </section>
 
     <div class="container">
-      <GmEditionTabs :slug="edition.slug" />
+      <AreneEditionTabs :slug="edition.slug" />
     </div>
 
     <section class="section">
@@ -91,7 +91,7 @@ useSeoPage({
           <div class="grid grid--2">
             <article v-for="[category, roles] in categories" :key="category" class="card">
               <h3 class="card__title">{{ $t(`category.${category}`) }}</h3>
-              <GmMeter
+              <AreneMeter
                 v-for="(seat, role) in roles"
                 :key="role"
                 :label="$t(`role.${role}`)"

@@ -25,10 +25,10 @@ watch(query, () => {
 })
 
 useSeoPage({
-  title: `${t('schools.title')} — Génération Mérite`,
+  title: `${t('schools.title')} — L'Arène`,
   description: t('schools.lead'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('schools.title'), path: '/ecoles' }
   ])
 })
@@ -37,19 +37,19 @@ useSeoPage({
 <template>
   <section class="section">
     <div class="container">
-      <GmSectionHead :eyebrow="$t('nav.schools')" :title="$t('schools.title')" :lead="$t('schools.lead')" />
+      <AreneSectionHead :eyebrow="$t('nav.schools')" :title="$t('schools.title')" :lead="$t('schools.lead')" />
 
       <div class="filters card card--flat">
-        <GmField :label="$t('schools.search')" for="q">
+        <AreneField :label="$t('schools.search')" for="q">
           <input id="q" v-model="query" class="input" type="search">
-        </GmField>
-        <GmField :label="$t('schools.type')" for="type">
+        </AreneField>
+        <AreneField :label="$t('schools.type')" for="type">
           <select id="type" v-model="type" class="select">
             <option value="">{{ $t('common.all') }}</option>
             <option value="lycee">{{ $t('category.lycee') }}</option>
             <option value="universite">{{ $t('category.universite') }}</option>
           </select>
-        </GmField>
+        </AreneField>
       </div>
 
       <ul v-if="schools?.length" class="grid grid--3 school-list">
@@ -66,7 +66,7 @@ useSeoPage({
         </li>
       </ul>
 
-      <GmEmpty v-else :title="$t('schools.empty')" />
+      <AreneEmpty v-else :title="$t('schools.empty')" />
     </div>
   </section>
 </template>

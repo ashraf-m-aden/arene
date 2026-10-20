@@ -4,7 +4,7 @@ import {
   LOCALES,
   PLAYER_ROLES,
   REGISTRATION_STATUSES
-} from '@gm/shared/constants'
+} from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 

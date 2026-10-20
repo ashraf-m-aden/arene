@@ -3,7 +3,7 @@ import config from './config.js'
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || (config.isTest ? 'silent' : 'info'),
-  base: { service: 'gm-api' },
+  base: { service: 'arene-api' },
   redact: {
     paths: [
       'req.headers.authorization',

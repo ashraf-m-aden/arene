@@ -44,21 +44,21 @@ async function submit() {
 <template>
   <section class="section">
     <div class="container container--narrow">
-      <GmSectionHead :title="$t('auth.registerTitle')" :lead="$t('auth.registerLead')" />
+      <AreneSectionHead :title="$t('auth.registerTitle')" :lead="$t('auth.registerLead')" />
 
-      <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
+      <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
 
       <form class="card stack" @submit.prevent="submit">
         <div class="two">
-          <GmField :label="$t('auth.firstName')" for="firstName" required :error="fieldErrors.firstName">
+          <AreneField :label="$t('auth.firstName')" for="firstName" required :error="fieldErrors.firstName">
             <input id="firstName" v-model="form.firstName" class="input" autocomplete="given-name" required>
-          </GmField>
-          <GmField :label="$t('auth.lastName')" for="lastName" required :error="fieldErrors.lastName">
+          </AreneField>
+          <AreneField :label="$t('auth.lastName')" for="lastName" required :error="fieldErrors.lastName">
             <input id="lastName" v-model="form.lastName" class="input" autocomplete="family-name" required>
-          </GmField>
+          </AreneField>
         </div>
 
-        <GmField
+        <AreneField
           :label="$t('auth.phone')"
           :hint="$t('auth.phoneHint')"
           for="phone"
@@ -74,13 +74,13 @@ async function submit() {
             placeholder="+25377123456"
             required
           >
-        </GmField>
+        </AreneField>
 
-        <GmField :label="$t('auth.email')" for="email" :error="fieldErrors.email">
+        <AreneField :label="$t('auth.email')" for="email" :error="fieldErrors.email">
           <input id="email" v-model="form.email" class="input" type="email" autocomplete="email">
-        </GmField>
+        </AreneField>
 
-        <GmField
+        <AreneField
           :label="$t('auth.password')"
           :hint="$t('auth.passwordHint')"
           for="password"
@@ -96,14 +96,14 @@ async function submit() {
             autocomplete="new-password"
             required
           >
-        </GmField>
+        </AreneField>
 
-        <GmField :label="$t('auth.localeChoice')" for="locale">
+        <AreneField :label="$t('auth.localeChoice')" for="locale">
           <select id="locale" v-model="form.locale" class="select">
             <option value="fr">Français</option>
             <option value="ar">العربية</option>
           </select>
-        </GmField>
+        </AreneField>
 
         <label class="check" :class="{ 'check--checked': form.acceptsWhatsapp }">
           <input v-model="form.acceptsWhatsapp" type="checkbox">

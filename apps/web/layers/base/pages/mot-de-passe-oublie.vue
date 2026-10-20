@@ -27,15 +27,15 @@ async function submit() {
 <template>
   <section class="section">
     <div class="container container--narrow">
-      <GmSectionHead :title="$t('auth.forgotTitle')" :lead="$t('auth.forgotLead')" />
+      <AreneSectionHead :title="$t('auth.forgotTitle')" :lead="$t('auth.forgotLead')" />
 
-      <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-      <GmNotice v-else-if="sent" tone="success">{{ $t('auth.forgotSent') }}</GmNotice>
+      <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+      <AreneNotice v-else-if="sent" tone="success">{{ $t('auth.forgotSent') }}</AreneNotice>
 
       <form v-if="!sent" class="card stack" @submit.prevent="submit">
-        <GmField :label="$t('auth.identifier')" for="identifier" required>
+        <AreneField :label="$t('auth.identifier')" for="identifier" required>
           <input id="identifier" v-model="identifier" class="input" required>
-        </GmField>
+        </AreneField>
         <button class="btn btn--primary btn--block" type="submit" :disabled="pending">
           {{ $t('common.continue') }}
         </button>

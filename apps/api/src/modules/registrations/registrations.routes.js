@@ -7,7 +7,7 @@ import {
   registrationQuerySchema,
   registrationSubmitSchema,
   reviewSchema
-} from '@gm/shared'
+} from '@arene/shared'
 import { requireAuth, requireRole } from '../../core/middlewares/auth.js'
 import { validate } from '../../core/middlewares/validate.js'
 import { writeLimiter } from '../../core/middlewares/rateLimit.js'

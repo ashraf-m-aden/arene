@@ -1,9 +1,9 @@
 {
-  "name": "@gm/api",
+  "name": "@arene/api",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "API REST Express de la plateforme Génération Mérite",
+  "description": "API REST Express de la plateforme L'Arène",
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
@@ -14,7 +14,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@gm/shared": "*",
+    "@arene/shared": "*",
     "@node-rs/argon2": "^2.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

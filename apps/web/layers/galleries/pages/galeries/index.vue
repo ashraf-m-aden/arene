@@ -18,10 +18,10 @@ const { data: galleries } = await useAsyncData('galleries-list', async () => {
 })
 
 useSeoPage({
-  title: `${t('galleries.title')} — Génération Mérite`,
+  title: `${t('galleries.title')} — L'Arène`,
   description: t('galleries.lead'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('galleries.title'), path: '/galeries' }
   ])
 })
@@ -30,7 +30,7 @@ useSeoPage({
 <template>
   <section class="section">
     <div class="container">
-      <GmSectionHead
+      <AreneSectionHead
         :eyebrow="$t('nav.galleries')"
         :title="$t('galleries.title')"
         :lead="$t('galleries.lead')"
@@ -60,7 +60,7 @@ useSeoPage({
         </li>
       </ul>
 
-      <GmEmpty v-else :title="$t('galleries.empty')" />
+      <AreneEmpty v-else :title="$t('galleries.empty')" />
     </div>
   </section>
 </template>

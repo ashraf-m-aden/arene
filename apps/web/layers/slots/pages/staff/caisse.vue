@@ -43,18 +43,18 @@ watch(slotId, async (value) => {
     </div>
 
     <div class="card card--flat">
-      <GmField :label="$t('checkin.slot')" for="slot">
+      <AreneField :label="$t('checkin.slot')" for="slot">
         <select id="slot" v-model="slotId" class="select">
           <option value="">—</option>
           <option v-for="slot in slots" :key="slot._id" :value="slot._id">
             {{ slot.label }} — {{ date(slot.startsAt) }}
           </option>
         </select>
-      </GmField>
+      </AreneField>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmSpinner v-if="pending" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneSpinner v-if="pending" />
 
     <template v-if="report">
       <div class="grid grid--3">
@@ -93,7 +93,7 @@ watch(slotId, async (value) => {
         </table>
       </div>
 
-      <GmEmpty v-else :title="$t('cash.empty')" />
+      <AreneEmpty v-else :title="$t('cash.empty')" />
     </template>
   </div>
 </template>

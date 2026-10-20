@@ -124,20 +124,20 @@ async function createEdition() {
       </button>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
 
     <form v-if="showCreate" class="card stack create-form" @submit.prevent="createEdition">
       <div class="two">
-        <GmField :label="$t('editions.titleFr')" for="titleFr" required>
+        <AreneField :label="$t('editions.titleFr')" for="titleFr" required>
           <input id="titleFr" v-model="form.titleFr" class="input" required>
-        </GmField>
-        <GmField :label="$t('editions.titleAr')" for="titleAr">
+        </AreneField>
+        <AreneField :label="$t('editions.titleAr')" for="titleAr">
           <input id="titleAr" v-model="form.titleAr" class="input" dir="rtl">
-        </GmField>
+        </AreneField>
       </div>
 
-      <GmField :label="$t('admin.slug')" :hint="$t('admin.slugHint')" for="slug" required>
+      <AreneField :label="$t('admin.slug')" :hint="$t('admin.slugHint')" for="slug" required>
         <input
           id="slug"
           v-model="form.slug"
@@ -145,19 +145,19 @@ async function createEdition() {
           required
           @input="slugTouched = true"
         >
-      </GmField>
+      </AreneField>
 
       <div class="two">
-        <GmField :label="$t('editions.descriptionFr')" for="descFr">
+        <AreneField :label="$t('editions.descriptionFr')" for="descFr">
           <textarea id="descFr" v-model="form.descriptionFr" class="textarea" rows="3" />
-        </GmField>
-        <GmField :label="$t('editions.descriptionAr')" for="descAr">
+        </AreneField>
+        <AreneField :label="$t('editions.descriptionAr')" for="descAr">
           <textarea id="descAr" v-model="form.descriptionAr" class="textarea" rows="3" dir="rtl" />
-        </GmField>
+        </AreneField>
       </div>
 
       <div class="two">
-        <GmField :label="$t('admin.startsAt')" for="opensAt" required>
+        <AreneField :label="$t('admin.startsAt')" for="opensAt" required>
           <input
             id="opensAt"
             v-model="form.registrationOpensAt"
@@ -165,8 +165,8 @@ async function createEdition() {
             type="datetime-local"
             required
           >
-        </GmField>
-        <GmField :label="$t('admin.endsAt')" for="closesAt" required>
+        </AreneField>
+        <AreneField :label="$t('admin.endsAt')" for="closesAt" required>
           <input
             id="closesAt"
             v-model="form.registrationClosesAt"
@@ -174,56 +174,56 @@ async function createEdition() {
             type="datetime-local"
             required
           >
-        </GmField>
+        </AreneField>
       </div>
 
       <div class="two">
-        <GmField :label="$t('editions.season')" for="season">
+        <AreneField :label="$t('editions.season')" for="season">
           <input id="season" v-model="form.season" class="input" placeholder="2026">
-        </GmField>
-        <GmField :label="$t('editions.fee')" for="fee" required>
+        </AreneField>
+        <AreneField :label="$t('editions.fee')" for="fee" required>
           <input id="fee" v-model.number="form.fee" class="input numeric" type="number" min="0">
-        </GmField>
+        </AreneField>
       </div>
 
       <div class="two">
-        <GmField :label="$t('admin.venueName')" for="venueName" required>
+        <AreneField :label="$t('admin.venueName')" for="venueName" required>
           <input id="venueName" v-model="form.venueName" class="input" required>
-        </GmField>
-        <GmField :label="$t('admin.venueCity')" for="venueCity">
+        </AreneField>
+        <AreneField :label="$t('admin.venueCity')" for="venueCity">
           <input id="venueCity" v-model="form.venueCity" class="input">
-        </GmField>
+        </AreneField>
       </div>
 
       <fieldset class="quotas">
         <legend>{{ $t('editions.capacity') }}</legend>
         <div class="quotas__grid">
-          <GmField :label="`${$t('category.lycee')} · ${$t('role.striker')}`" for="qls">
+          <AreneField :label="`${$t('category.lycee')} · ${$t('role.striker')}`" for="qls">
             <input id="qls" v-model.number="form.capacity.lycee.striker" class="input numeric" type="number" min="0">
-          </GmField>
-          <GmField :label="`${$t('category.lycee')} · ${$t('role.defender')}`" for="qld">
+          </AreneField>
+          <AreneField :label="`${$t('category.lycee')} · ${$t('role.defender')}`" for="qld">
             <input id="qld" v-model.number="form.capacity.lycee.defender" class="input numeric" type="number" min="0">
-          </GmField>
-          <GmField :label="`${$t('category.universite')} · ${$t('role.striker')}`" for="qus">
+          </AreneField>
+          <AreneField :label="`${$t('category.universite')} · ${$t('role.striker')}`" for="qus">
             <input id="qus" v-model.number="form.capacity.universite.striker" class="input numeric" type="number" min="0">
-          </GmField>
-          <GmField :label="`${$t('category.universite')} · ${$t('role.defender')}`" for="qud">
+          </AreneField>
+          <AreneField :label="`${$t('category.universite')} · ${$t('role.defender')}`" for="qud">
             <input id="qud" v-model.number="form.capacity.universite.defender" class="input numeric" type="number" min="0">
-          </GmField>
+          </AreneField>
         </div>
       </fieldset>
 
-      <GmField :label="$t('admin.gradeThreshold')" for="threshold">
+      <AreneField :label="$t('admin.gradeThreshold')" for="threshold">
         <input id="threshold" v-model.number="form.gradeThreshold" class="input numeric" type="number" min="0" max="20" step="0.5">
-      </GmField>
+      </AreneField>
 
       <button class="btn btn--ink" type="submit" :disabled="pending">
         {{ $t('admin.createEdition') }}
       </button>
     </form>
 
-    <GmSpinner v-if="pending && !items.length" />
-    <GmEmpty v-else-if="!items.length" :title="$t('admin.noEditions')" />
+    <AreneSpinner v-if="pending && !items.length" />
+    <AreneEmpty v-else-if="!items.length" :title="$t('admin.noEditions')" />
 
     <div v-else class="table-wrap">
       <table class="table">

@@ -8,7 +8,7 @@ const year = new Date().getFullYear()
   <footer class="footer">
     <div class="container footer__inner">
       <div class="footer__brand">
-        <GmLogo class="footer__mark" />
+        <AreneLogo class="footer__mark" />
         <p class="footer__pitch">{{ $t('footer.pitch') }}</p>
       </div>
 
@@ -33,12 +33,12 @@ const year = new Date().getFullYear()
         <a v-if="config.public.youtubeChannel" :href="config.public.youtubeChannel" rel="noopener">
           YouTube
         </a>
-        <a href="mailto:contact@generationmerite.dj">contact@generationmerite.dj</a>
+        <a href="mailto:contact@arene.dj">contact@arene.dj</a>
       </div>
     </div>
 
     <div class="container footer__legal">
-      <p class="numeric">© {{ year }} Génération Mérite — Djibouti</p>
+      <p class="numeric">© {{ year }} L'Arène — Djibouti</p>
       <p>{{ $t('footer.minors') }}</p>
     </div>
   </footer>

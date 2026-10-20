@@ -97,8 +97,8 @@ async function importSchools(event: Event) {
       </NuxtLink>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
 
     <section class="stack">
       <h2>{{ $t('admin.importSchools') }}</h2>
@@ -145,27 +145,27 @@ async function importSchools(event: Event) {
       </div>
 
       <form class="card card--flat staff-form" @submit.prevent="createStaff">
-        <GmField :label="$t('auth.firstName')" for="sFirst" required>
+        <AreneField :label="$t('auth.firstName')" for="sFirst" required>
           <input id="sFirst" v-model="staffForm.firstName" class="input" required>
-        </GmField>
-        <GmField :label="$t('auth.lastName')" for="sLast" required>
+        </AreneField>
+        <AreneField :label="$t('auth.lastName')" for="sLast" required>
           <input id="sLast" v-model="staffForm.lastName" class="input" required>
-        </GmField>
-        <GmField :label="$t('auth.email')" for="sEmail" required>
+        </AreneField>
+        <AreneField :label="$t('auth.email')" for="sEmail" required>
           <input id="sEmail" v-model="staffForm.email" class="input" type="email" required>
-        </GmField>
-        <GmField :label="$t('auth.phone')" for="sPhone">
+        </AreneField>
+        <AreneField :label="$t('auth.phone')" for="sPhone">
           <input id="sPhone" v-model="staffForm.phone" class="input numeric" type="tel">
-        </GmField>
-        <GmField :label="$t('auth.password')" for="sPassword" required>
+        </AreneField>
+        <AreneField :label="$t('auth.password')" for="sPassword" required>
           <input id="sPassword" v-model="staffForm.password" class="input" type="password" minlength="8" required>
-        </GmField>
-        <GmField :label="$t('admin.status')" for="sRole">
+        </AreneField>
+        <AreneField :label="$t('admin.status')" for="sRole">
           <select id="sRole" v-model="staffForm.role" class="select">
             <option value="staff">staff</option>
             <option value="admin">admin</option>
           </select>
-        </GmField>
+        </AreneField>
         <button class="btn btn--primary" type="submit" :disabled="pending">
           {{ $t('admin.newStaff') }}
         </button>

@@ -33,13 +33,13 @@ async function submit() {
 <template>
   <section class="section">
     <div class="container container--narrow">
-      <GmSectionHead :title="$t('auth.resetTitle')" />
+      <AreneSectionHead :title="$t('auth.resetTitle')" />
 
-      <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-      <GmNotice v-else-if="!token" tone="danger">{{ $t('common.error') }}</GmNotice>
+      <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+      <AreneNotice v-else-if="!token" tone="danger">{{ $t('common.error') }}</AreneNotice>
 
       <form v-if="token" class="card stack" @submit.prevent="submit">
-        <GmField :label="$t('auth.password')" :hint="$t('auth.passwordHint')" for="password" required>
+        <AreneField :label="$t('auth.password')" :hint="$t('auth.passwordHint')" for="password" required>
           <input
             id="password"
             v-model="password"
@@ -49,7 +49,7 @@ async function submit() {
             autocomplete="new-password"
             required
           >
-        </GmField>
+        </AreneField>
         <button class="btn btn--primary btn--block" type="submit" :disabled="pending">
           {{ $t('common.save') }}
         </button>

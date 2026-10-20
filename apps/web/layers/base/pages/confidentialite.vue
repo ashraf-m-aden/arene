@@ -9,7 +9,7 @@ const sections = computed(() =>
 )
 
 useSeoPage({
-  title: `${t('legal.privacyTitle')} — Génération Mérite`,
+  title: `${t('legal.privacyTitle')} — L'Arène`,
   description: t('privacy.intro')
 })
 </script>

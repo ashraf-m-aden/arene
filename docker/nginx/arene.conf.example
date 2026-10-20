@@ -1,6 +1,6 @@
-# ── GENERATION MERITE ──────────────────────────────────────
+# ── L'ARÈNE ──────────────────────────────────────
 # À copier dans le dossier conf.d de hms-nginx sur l'EC2
-# (ex. /home/ubuntu/hms-monorepo/deployments/nginx/conf.d/generationmerite.conf),
+# (ex. /home/ubuntu/hms-monorepo/deployments/nginx/conf.d/arene.conf),
 # en remplaçant VOTRE-DOMAINE.tld par le nom de domaine réellement acheté.
 # Puis recharger nginx : docker kill --signal=HUP hms-nginx
 #
@@ -20,8 +20,8 @@ server {
     client_max_body_size 15M;
 
     resolver 127.0.0.11 valid=30s;
-    set $backend  generationmerite-api;
-    set $frontend generationmerite-web;
+    set $backend  arene-api;
+    set $frontend arene-web;
 
     # ── API (Express) ──
     location /api/ {

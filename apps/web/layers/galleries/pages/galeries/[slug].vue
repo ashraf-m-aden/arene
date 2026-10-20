@@ -40,7 +40,7 @@ const photos = computed(() => items.value.filter((item: any) => item.type === 'p
 const videos = computed(() => items.value.filter((item: any) => item.type === 'youtube'))
 
 useSeoPage({
-  title: `${text(gallery.value.title)} — Génération Mérite`,
+  title: `${text(gallery.value.title)} — L'Arène`,
   description: text(gallery.value.description) || t('galleries.lead'),
   image: gallery.value.coverUrl || items.value[0]?.thumbUrl,
   type: 'article',
@@ -62,7 +62,7 @@ useSeoPage({
       embedUrl: `https://www.youtube-nocookie.com/embed/${item.youtubeId}`
     })),
     breadcrumbLd([
-      { name: 'Génération Mérite', path: '/' },
+      { name: "L'Arène", path: '/' },
       { name: t('galleries.title'), path: '/galeries' },
       { name: text(gallery.value.title), path: `/galeries/${slug.value}` }
     ])
@@ -104,12 +104,12 @@ useSeoPage({
           </li>
         </ul>
 
-        <GmEmpty v-else :title="$t('galleries.empty')" />
+        <AreneEmpty v-else :title="$t('galleries.empty')" />
         <p class="muted video-note">{{ $t('galleries.videoNotice') }}</p>
       </div>
     </section>
 
-    <GmGalleryViewer
+    <AreneGalleryViewer
       v-if="viewerOpen"
       :items="items"
       :index="viewerIndex"

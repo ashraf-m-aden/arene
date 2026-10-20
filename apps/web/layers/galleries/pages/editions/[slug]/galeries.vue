@@ -35,7 +35,7 @@ useSeoPage({
     </section>
 
     <div class="container">
-      <GmEditionTabs :slug="edition.slug" />
+      <AreneEditionTabs :slug="edition.slug" />
     </div>
 
     <section class="section">
@@ -62,7 +62,7 @@ useSeoPage({
           </li>
         </ul>
 
-        <GmEmpty v-else :title="$t('galleries.empty')" />
+        <AreneEmpty v-else :title="$t('galleries.empty')" />
       </div>
     </section>
   </div>

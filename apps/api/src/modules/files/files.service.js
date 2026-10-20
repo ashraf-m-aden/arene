@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { MAX_BULLETIN_SIZE } from '@gm/shared/constants'
+import { MAX_BULLETIN_SIZE } from '@arene/shared/constants'
 import { badRequest, forbidden, notFound } from '../../core/errors.js'
 import storage from '../../core/storage.js'
 import logger from '../../core/logger.js'

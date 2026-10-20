@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { LOCALES, USER_ROLES } from '@gm/shared/constants'
+import { LOCALES, USER_ROLES } from '@arene/shared/constants'
 
 const userSchema = new mongoose.Schema(
   {

@@ -9,10 +9,10 @@ const { data: editions } = await useAsyncData('editions-list', () => {
 })
 
 useSeoPage({
-  title: `${t('editions.title')} — Génération Mérite`,
+  title: `${t('editions.title')} — L'Arène`,
   description: t('editions.lead'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('editions.title'), path: '/editions' }
   ])
 })
@@ -21,7 +21,7 @@ useSeoPage({
 <template>
   <section class="section">
     <div class="container">
-      <GmSectionHead :eyebrow="$t('nav.editions')" :title="$t('editions.title')" :lead="$t('editions.lead')" />
+      <AreneSectionHead :eyebrow="$t('nav.editions')" :title="$t('editions.title')" :lead="$t('editions.lead')" />
 
       <div v-if="editions?.length" class="grid grid--2">
         <NuxtLink
@@ -49,7 +49,7 @@ useSeoPage({
         </NuxtLink>
       </div>
 
-      <GmEmpty v-else :title="$t('editions.empty')" :hint="$t('home.noEditionHint')" />
+      <AreneEmpty v-else :title="$t('editions.empty')" :hint="$t('home.noEditionHint')" />
     </div>
   </section>
 </template>

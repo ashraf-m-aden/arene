@@ -164,14 +164,14 @@ async function closeSlot() {
     </div>
 
     <div class="card card--flat controls">
-      <GmField :label="$t('checkin.slot')" for="slot">
+      <AreneField :label="$t('checkin.slot')" for="slot">
         <select id="slot" v-model="slotId" class="select">
           <option value="">—</option>
           <option v-for="slot in slots" :key="slot._id" :value="slot._id">
             {{ slot.label }} — {{ date(slot.startsAt) }}
           </option>
         </select>
-      </GmField>
+      </AreneField>
 
       <button class="btn btn--ghost" :disabled="!slotId" @click="store.loadRoster(slotId)">
         {{ $t('checkin.loadRoster') }}
@@ -198,18 +198,18 @@ async function closeSlot() {
       <button class="btn btn--ghost btn--sm" @click="closeSlot">{{ $t('checkin.closeSlot') }}</button>
     </div>
 
-    <GmNotice v-if="scanError" tone="danger">{{ scanError }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
-    <GmNotice v-if="store.error" tone="danger">{{ store.error }}</GmNotice>
+    <AreneNotice v-if="scanError" tone="danger">{{ scanError }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
+    <AreneNotice v-if="store.error" tone="danger">{{ store.error }}</AreneNotice>
 
     <div v-if="scanning" class="scanner">
       <video ref="videoEl" muted playsinline />
       <p class="muted">{{ $t('checkin.scan') }}</p>
     </div>
 
-    <GmField v-if="store.roster.length" :label="$t('checkin.manual')" for="search">
+    <AreneField v-if="store.roster.length" :label="$t('checkin.manual')" for="search">
       <input id="search" v-model="search" class="input" type="search">
-    </GmField>
+    </AreneField>
 
     <div v-if="filtered.length" class="roster">
       <button
@@ -237,8 +237,8 @@ async function closeSlot() {
       </button>
     </div>
 
-    <GmEmpty v-else-if="slotId && !store.pending" :title="$t('results.staff.noMatches')" />
-    <GmEmpty v-else-if="!slotId" :title="$t('results.staff.selectSlot')" />
+    <AreneEmpty v-else-if="slotId && !store.pending" :title="$t('results.staff.noMatches')" />
+    <AreneEmpty v-else-if="!slotId" :title="$t('results.staff.selectSlot')" />
 
     <!-- Fiche du joueur scanné -->
     <aside v-if="selected" class="sheet card">
@@ -255,13 +255,13 @@ async function closeSlot() {
         <span v-if="selected.schoolId" class="badge">{{ text(selected.schoolId.name) }}</span>
       </div>
 
-      <GmNotice v-if="selected.status === 'checked_in'" tone="info">
+      <AreneNotice v-if="selected.status === 'checked_in'" tone="info">
         {{ $t('checkin.alreadyCheckedIn') }}
-      </GmNotice>
-      <GmNotice v-if="selected.randomCheck" tone="danger">{{ $t('checkin.randomCheck') }}</GmNotice>
-      <GmNotice v-if="edition?.rules?.requiresOriginalBulletin" tone="info">
+      </AreneNotice>
+      <AreneNotice v-if="selected.randomCheck" tone="danger">{{ $t('checkin.randomCheck') }}</AreneNotice>
+      <AreneNotice v-if="edition?.rules?.requiresOriginalBulletin" tone="info">
         {{ $t('checkin.bulletinRequired') }}
-      </GmNotice>
+      </AreneNotice>
 
       <label class="check" :class="{ 'check--checked': form.bulletinChecked }">
         <input v-model="form.bulletinChecked" type="checkbox">
@@ -273,7 +273,7 @@ async function closeSlot() {
         <span>{{ $t('checkin.contractCheck') }}</span>
       </label>
 
-      <GmField :label="$t('checkin.payment')">
+      <AreneField :label="$t('checkin.payment')">
         <div class="choice-grid">
           <button
             type="button"
@@ -294,20 +294,20 @@ async function closeSlot() {
             <span>{{ $t('checkin.exemptionReason') }}</span>
           </button>
         </div>
-      </GmField>
+      </AreneField>
 
-      <GmField
+      <AreneField
         v-if="form.paymentStatus === 'exempt'"
         :label="$t('checkin.exemptionReason')"
         for="exemption"
         required
       >
         <input id="exemption" v-model="form.exemptionReason" class="input" required>
-      </GmField>
+      </AreneField>
 
-      <GmNotice v-if="!form.contractSigned" tone="info">
+      <AreneNotice v-if="!form.contractSigned" tone="info">
         {{ $t('checkin.contractRequired') }}
-      </GmNotice>
+      </AreneNotice>
 
       <button
         class="btn btn--primary btn--block btn--lg"

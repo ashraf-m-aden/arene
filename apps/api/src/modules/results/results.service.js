@@ -7,7 +7,7 @@ import {
   rankDefenders,
   rankStrikers,
   SCHOOL_POINTS
-} from '@gm/shared'
+} from '@arene/shared'
 import { badRequest, notFound } from '../../core/errors.js'
 import bus from '../../core/events.js'
 import { Match } from './results.model.js'

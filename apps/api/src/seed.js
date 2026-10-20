@@ -44,14 +44,14 @@ async function main() {
   registerEvents()
 
   const admin = await upsertUser({
-    email: 'admin@generationmerite.dj',
+    email: 'admin@arene.dj',
     phone: '+25377000001',
     role: 'admin',
     firstName: 'Amina',
     lastName: 'Directrice'
   })
   await upsertUser({
-    email: 'staff@generationmerite.dj',
+    email: 'staff@arene.dj',
     phone: '+25377000002',
     role: 'staff',
     firstName: 'Omar',
@@ -91,7 +91,7 @@ async function main() {
     { slug: 'edition-2026' },
     {
       slug: 'edition-2026',
-      title: { fr: 'Génération Mérite 2026', ar: 'جيل الاستحقاق 2026' },
+      title: { fr: "L'Arène 2026", ar: 'الحلبة 2026' },
       description: {
         fr: 'Le tournoi de duels 1v1 réservé aux élèves et étudiants de Djibouti qui tiennent leurs résultats scolaires.',
         ar: 'بطولة المبارزات الفردية المخصصة لتلاميذ وطلبة جيبوتي المتفوقين دراسيًا.'

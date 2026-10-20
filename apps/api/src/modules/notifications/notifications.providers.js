@@ -58,7 +58,7 @@ function toHtml(body, locale = 'fr') {
   return `<!doctype html><html lang="${locale}" dir="${dir}"><body style="margin:0;background:#f5f3ee;padding:24px;font-family:Helvetica,Arial,sans-serif;color:#1b2430">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden">
-<tr><td style="background:#0b1b2b;padding:20px 24px;color:#c9992a;font-size:18px;letter-spacing:.08em">GÉNÉRATION MÉRITE</td></tr>
+<tr><td style="background:#0b1b2b;padding:20px 24px;color:#c9992a;font-size:18px;letter-spacing:.08em">L'ARÈNE</td></tr>
 <tr><td style="padding:24px;font-size:15px">${paragraphs}</td></tr>
 <tr><td style="padding:16px 24px;background:#f5f3ee;font-size:12px;color:#6b7280">${
     locale === 'ar' ? 'بطولة المبارزات الفردية — جيبوتي' : 'Tournoi de duels 1v1 — Djibouti'

@@ -1,12 +1,12 @@
 # Déploiement sur l'EC2 partagé (aux côtés de Totalis)
 
 Contexte : l'EC2 héberge déjà `totalis.clinic` derrière un `hms-nginx` conteneurisé
-(réseau Docker `hms-network`), avec un MongoDB déjà en place. Génération Mérite
+(réseau Docker `hms-network`), avec un MongoDB déjà en place. L'Arène
 s'ajoute sur la **même machine**, sous un **second nom de domaine**, sans toucher
 à la config existante de Totalis.
 
 Les images sont publiées automatiquement par `.github/workflows/build-and-push.yml`
-vers DockerHub (`nejishow/generationmerite-api`, `nejishow/generationmerite-web`) à
+vers DockerHub (`nejishow/arene-api`, `nejishow/arene-web`) à
 chaque push sur `main`. Le déploiement sur l'EC2 ne fait que les récupérer — pas de
 build sur le serveur.
 
@@ -71,14 +71,14 @@ docker compose -f docker/docker-compose.ec2.yml ps
 
 Ces conteneurs rejoignent le réseau `hms-network` existant (déclaré `external`
 dans le compose) : pas de port publié sur l'hôte, `hms-nginx` les atteint
-directement par nom de conteneur (`generationmerite-web`, `generationmerite-api`),
+directement par nom de conteneur (`arene-web`, `arene-api`),
 comme il le fait déjà pour `frontend-1`/`backend-1`.
 
 ## 6. Brancher nginx sur le nouveau domaine
 
 ```bash
-cp docker/nginx/generationmerite.conf.example \
-   /chemin/vers/deployments/nginx/conf.d/generationmerite.conf
+cp docker/nginx/arene.conf.example \
+   /chemin/vers/deployments/nginx/conf.d/arene.conf
 # remplacez VOTRE-DOMAINE.tld par le vrai domaine dans ce fichier
 docker kill --signal=HUP hms-nginx   # recharge nginx sans coupure
 ```
@@ -110,7 +110,7 @@ Pour figer une version précise plutôt que `latest`, mettez `IMAGE_TAG` dans
 ## Première mise en données
 
 ```bash
-docker exec -it generationmerite-api node apps/api/src/seed.js
+docker exec -it arene-api node apps/api/src/seed.js
 ```
 
 (à adapter si vous préférez partir sans jeu de démonstration en production —

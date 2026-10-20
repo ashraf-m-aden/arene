@@ -15,7 +15,7 @@ useHead({ meta: [{ name: 'robots', content: 'noindex' }] })
 
 <template>
   <div class="shell">
-    <GmHeader />
+    <AreneHeader />
     <main class="section">
       <div class="container container--narrow stack">
         <p class="eyebrow numeric">{{ error?.statusCode }}</p>
@@ -26,7 +26,7 @@ useHead({ meta: [{ name: 'robots', content: 'noindex' }] })
         </NuxtLink>
       </div>
     </main>
-    <GmFooter />
+    <AreneFooter />
   </div>
 </template>
 

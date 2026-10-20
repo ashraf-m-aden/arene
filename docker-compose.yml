@@ -1,4 +1,4 @@
-name: generationmerite
+name: arene
 
 # Les trois environnements (local, préproduction, production) partagent cette
 # composition ; seules les variables changent. Le proxy Caddy termine le HTTPS
@@ -25,7 +25,7 @@ services:
     environment:
       NODE_ENV: production
       API_PORT: 4000
-      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/generationmerite}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/arene}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?secret requis}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}
@@ -57,7 +57,7 @@ services:
     command: ["node", "apps/api/src/worker.js"]
     environment:
       NODE_ENV: production
-      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/generationmerite}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/arene}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?secret requis}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { ATTEMPT_OUTCOMES, MATCH_PHASES } from '@gm/shared/constants'
+import { ATTEMPT_OUTCOMES, MATCH_PHASES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 

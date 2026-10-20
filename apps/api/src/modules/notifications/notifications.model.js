@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { NOTIFICATION_CHANNELS, NOTIFICATION_STATUSES } from '@gm/shared/constants'
+import { NOTIFICATION_CHANNELS, NOTIFICATION_STATUSES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 const i18n = { fr: { type: String, default: '' }, ar: { type: String, default: '' } }

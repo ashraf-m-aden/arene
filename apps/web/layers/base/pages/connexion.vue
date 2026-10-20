@@ -64,7 +64,7 @@ async function submitCode() {
 <template>
   <section class="section">
     <div class="container container--narrow">
-      <GmSectionHead :title="$t('auth.loginTitle')" :lead="$t('auth.loginLead')" />
+      <AreneSectionHead :title="$t('auth.loginTitle')" :lead="$t('auth.loginLead')" />
 
       <div class="tabs auth-tabs">
         <button
@@ -83,10 +83,10 @@ async function submitCode() {
         </button>
       </div>
 
-      <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
+      <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
 
       <form v-if="mode === 'password'" class="card stack" @submit.prevent="submitPassword">
-        <GmField :label="$t('auth.identifier')" for="identifier" required>
+        <AreneField :label="$t('auth.identifier')" for="identifier" required>
           <input
             id="identifier"
             v-model="identifier"
@@ -95,9 +95,9 @@ async function submitCode() {
             autocomplete="username"
             required
           >
-        </GmField>
+        </AreneField>
 
-        <GmField :label="$t('auth.password')" for="password" required>
+        <AreneField :label="$t('auth.password')" for="password" required>
           <input
             id="password"
             v-model="password"
@@ -106,7 +106,7 @@ async function submitCode() {
             autocomplete="current-password"
             required
           >
-        </GmField>
+        </AreneField>
 
         <button class="btn btn--primary btn--block" type="submit" :disabled="pending">
           {{ pending ? $t('common.loading') : $t('auth.submit') }}
@@ -125,7 +125,7 @@ async function submitCode() {
       <form v-else class="card stack" @submit.prevent="otpSent ? submitCode() : requestCode()">
         <p class="muted">{{ $t('auth.otpLead') }}</p>
 
-        <GmField :label="$t('auth.phone')" :hint="$t('auth.phoneHint')" for="phone" required>
+        <AreneField :label="$t('auth.phone')" :hint="$t('auth.phoneHint')" for="phone" required>
           <input
             id="phone"
             v-model="phone"
@@ -135,11 +135,11 @@ async function submitCode() {
             placeholder="+25377123456"
             required
           >
-        </GmField>
+        </AreneField>
 
         <template v-if="otpSent">
-          <GmNotice tone="success">{{ $t('auth.otpSent') }}</GmNotice>
-          <GmField :label="$t('auth.otpCode')" for="code" required>
+          <AreneNotice tone="success">{{ $t('auth.otpSent') }}</AreneNotice>
+          <AreneField :label="$t('auth.otpCode')" for="code" required>
             <input
               id="code"
               v-model="code"
@@ -150,7 +150,7 @@ async function submitCode() {
               autocomplete="one-time-code"
               required
             >
-          </GmField>
+          </AreneField>
         </template>
 
         <button class="btn btn--primary btn--block" type="submit" :disabled="pending">

@@ -251,10 +251,10 @@ async function createSlot() {
       </div>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
-    <GmSpinner v-if="pending && !edition" />
-    <GmEmpty v-else-if="!edition && !pending" :title="$t('admin.noEdition')" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
+    <AreneSpinner v-if="pending && !edition" />
+    <AreneEmpty v-else-if="!edition && !pending" :title="$t('admin.noEdition')" />
 
     <template v-if="edition">
       <!-- Statut -->
@@ -278,53 +278,53 @@ async function createSlot() {
         <h2>{{ $t('admin.editionInfo') }}</h2>
         <form class="card stack" @submit.prevent="saveInfo">
           <div class="two">
-            <GmField :label="$t('editions.titleFr')" for="iTitleFr" required>
+            <AreneField :label="$t('editions.titleFr')" for="iTitleFr" required>
               <input id="iTitleFr" v-model="info.titleFr" class="input" required>
-            </GmField>
-            <GmField :label="$t('editions.titleAr')" for="iTitleAr">
+            </AreneField>
+            <AreneField :label="$t('editions.titleAr')" for="iTitleAr">
               <input id="iTitleAr" v-model="info.titleAr" class="input" dir="rtl">
-            </GmField>
+            </AreneField>
           </div>
 
           <div class="two">
-            <GmField :label="$t('editions.descriptionFr')" for="iDescFr">
+            <AreneField :label="$t('editions.descriptionFr')" for="iDescFr">
               <textarea id="iDescFr" v-model="info.descriptionFr" class="textarea" rows="4" />
-            </GmField>
-            <GmField :label="$t('editions.descriptionAr')" for="iDescAr">
+            </AreneField>
+            <AreneField :label="$t('editions.descriptionAr')" for="iDescAr">
               <textarea id="iDescAr" v-model="info.descriptionAr" class="textarea" rows="4" dir="rtl" />
-            </GmField>
+            </AreneField>
           </div>
 
           <div class="two">
-            <GmField :label="$t('admin.startsAt')" for="iOpens" required>
+            <AreneField :label="$t('admin.startsAt')" for="iOpens" required>
               <input id="iOpens" v-model="info.registrationOpensAt" class="input numeric" type="datetime-local" required>
-            </GmField>
-            <GmField :label="$t('admin.endsAt')" for="iCloses" required>
+            </AreneField>
+            <AreneField :label="$t('admin.endsAt')" for="iCloses" required>
               <input id="iCloses" v-model="info.registrationClosesAt" class="input numeric" type="datetime-local" required>
-            </GmField>
+            </AreneField>
           </div>
 
           <div class="two">
-            <GmField :label="$t('editions.season')" for="iSeason">
+            <AreneField :label="$t('editions.season')" for="iSeason">
               <input id="iSeason" v-model="info.season" class="input">
-            </GmField>
-            <GmField :label="$t('editions.fee')" for="iFee" required>
+            </AreneField>
+            <AreneField :label="$t('editions.fee')" for="iFee" required>
               <input id="iFee" v-model.number="info.fee" class="input numeric" type="number" min="0">
-            </GmField>
+            </AreneField>
           </div>
 
           <div class="two">
-            <GmField :label="$t('admin.venueName')" for="iVenueName" required>
+            <AreneField :label="$t('admin.venueName')" for="iVenueName" required>
               <input id="iVenueName" v-model="info.venueName" class="input" required>
-            </GmField>
-            <GmField :label="$t('admin.venueCity')" for="iVenueCity">
+            </AreneField>
+            <AreneField :label="$t('admin.venueCity')" for="iVenueCity">
               <input id="iVenueCity" v-model="info.venueCity" class="input">
-            </GmField>
+            </AreneField>
           </div>
 
-          <GmField :label="$t('admin.gradeThreshold')" for="iThreshold">
+          <AreneField :label="$t('admin.gradeThreshold')" for="iThreshold">
             <input id="iThreshold" v-model.number="info.gradeThreshold" class="input numeric" type="number" min="0" max="20" step="0.5">
-          </GmField>
+          </AreneField>
 
           <button class="btn btn--primary" type="submit" :disabled="pending">
             {{ $t('common.save') }}
@@ -338,45 +338,45 @@ async function createSlot() {
         <div class="grid grid--2">
           <article class="card stack">
             <h3 class="card__title">{{ $t('category.lycee') }}</h3>
-            <GmMeter
+            <AreneMeter
               :label="$t('role.striker')"
               :used="stats?.seats?.lycee?.striker?.used ?? 0"
               :capacity="quotas.lycee.striker"
             />
-            <GmMeter
+            <AreneMeter
               :label="$t('role.defender')"
               :used="stats?.seats?.lycee?.defender?.used ?? 0"
               :capacity="quotas.lycee.defender"
             />
             <div class="two">
-              <GmField :label="$t('role.striker')" for="qLs">
+              <AreneField :label="$t('role.striker')" for="qLs">
                 <input id="qLs" v-model.number="quotas.lycee.striker" class="input numeric" type="number" min="0">
-              </GmField>
-              <GmField :label="$t('role.defender')" for="qLd">
+              </AreneField>
+              <AreneField :label="$t('role.defender')" for="qLd">
                 <input id="qLd" v-model.number="quotas.lycee.defender" class="input numeric" type="number" min="0">
-              </GmField>
+              </AreneField>
             </div>
           </article>
 
           <article class="card stack">
             <h3 class="card__title">{{ $t('category.universite') }}</h3>
-            <GmMeter
+            <AreneMeter
               :label="$t('role.striker')"
               :used="stats?.seats?.universite?.striker?.used ?? 0"
               :capacity="quotas.universite.striker"
             />
-            <GmMeter
+            <AreneMeter
               :label="$t('role.defender')"
               :used="stats?.seats?.universite?.defender?.used ?? 0"
               :capacity="quotas.universite.defender"
             />
             <div class="two">
-              <GmField :label="$t('role.striker')" for="qUs">
+              <AreneField :label="$t('role.striker')" for="qUs">
                 <input id="qUs" v-model.number="quotas.universite.striker" class="input numeric" type="number" min="0">
-              </GmField>
-              <GmField :label="$t('role.defender')" for="qUd">
+              </AreneField>
+              <AreneField :label="$t('role.defender')" for="qUd">
                 <input id="qUd" v-model.number="quotas.universite.defender" class="input numeric" type="number" min="0">
-              </GmField>
+              </AreneField>
             </div>
           </article>
         </div>
@@ -400,7 +400,7 @@ async function createSlot() {
         </div>
         <p class="muted numeric">{{ $t('admin.totalCandidatures', { count: number(totalCandidatures) }) }}</p>
         <div class="card">
-          <GmBarChart :items="funnelItems" />
+          <AreneBarChart :items="funnelItems" />
         </div>
       </section>
 
@@ -408,7 +408,7 @@ async function createSlot() {
       <section v-if="paymentItems.length" class="stack">
         <h2>{{ $t('admin.payments') }}</h2>
         <div class="card">
-          <GmBarChart :items="paymentItems" :format-value="money" />
+          <AreneBarChart :items="paymentItems" :format-value="money" />
         </div>
       </section>
 
@@ -466,30 +466,30 @@ async function createSlot() {
         </div>
 
         <form class="card card--flat slot-form" @submit.prevent="createSlot">
-          <GmField :label="$t('admin.slotLabel')" for="label" required>
+          <AreneField :label="$t('admin.slotLabel')" for="label" required>
             <input id="label" v-model="slotForm.label" class="input" required>
-          </GmField>
-          <GmField :label="$t('admin.startsAt')" for="startsAt" required>
+          </AreneField>
+          <AreneField :label="$t('admin.startsAt')" for="startsAt" required>
             <input id="startsAt" v-model="slotForm.startsAt" class="input numeric" type="datetime-local" required>
-          </GmField>
-          <GmField :label="$t('admin.endsAt')" for="endsAt" required>
+          </AreneField>
+          <AreneField :label="$t('admin.endsAt')" for="endsAt" required>
             <input id="endsAt" v-model="slotForm.endsAt" class="input numeric" type="datetime-local" required>
-          </GmField>
-          <GmField :label="$t('admin.ageCategory')" for="ageCategory">
+          </AreneField>
+          <AreneField :label="$t('admin.ageCategory')" for="ageCategory">
             <select id="ageCategory" v-model="slotForm.ageCategory" class="select">
               <option value="lycee">{{ $t('category.lycee') }}</option>
               <option value="universite">{{ $t('category.universite') }}</option>
             </select>
-          </GmField>
-          <GmField :label="$t('admin.capacityStriker')" for="striker">
+          </AreneField>
+          <AreneField :label="$t('admin.capacityStriker')" for="striker">
             <input id="striker" v-model.number="slotForm.striker" class="input numeric" type="number" min="1">
-          </GmField>
-          <GmField :label="$t('admin.capacityDefender')" for="defender">
+          </AreneField>
+          <AreneField :label="$t('admin.capacityDefender')" for="defender">
             <input id="defender" v-model.number="slotForm.defender" class="input numeric" type="number" min="1">
-          </GmField>
-          <GmField :label="$t('admin.pitches')" for="pitches">
+          </AreneField>
+          <AreneField :label="$t('admin.pitches')" for="pitches">
             <input id="pitches" v-model.number="slotForm.pitches" class="input numeric" type="number" min="1">
-          </GmField>
+          </AreneField>
           <button class="btn btn--primary" type="submit" :disabled="pending">
             {{ $t('admin.newSlot') }}
           </button>

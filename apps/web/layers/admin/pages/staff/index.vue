@@ -42,9 +42,9 @@ const payments = computed(() => Object.entries(stats.value?.payments ?? {}))
       </div>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmSpinner v-if="pending" />
-    <GmEmpty v-else-if="!edition" :title="$t('admin.noEdition')" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneSpinner v-if="pending" />
+    <AreneEmpty v-else-if="!edition" :title="$t('admin.noEdition')" />
 
     <template v-else-if="stats">
       <section class="stack">
@@ -62,7 +62,7 @@ const payments = computed(() => Object.entries(stats.value?.payments ?? {}))
         <div class="grid grid--2">
           <article v-for="[category, roles] in seats" :key="category" class="card">
             <h3 class="card__title">{{ $t(`category.${category}`) }}</h3>
-            <GmMeter
+            <AreneMeter
               v-for="(seat, role) in roles"
               :key="role"
               :label="$t(`role.${role}`)"

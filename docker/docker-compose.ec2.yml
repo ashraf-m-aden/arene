@@ -1,10 +1,10 @@
 # Déploiement sur l'EC2 partagé avec Totalis : on réutilise le nginx (hms-nginx)
 # et le MongoDB déjà en place sur le réseau Docker `hms-network`. Ce fichier ne
 # lance donc ni proxy, ni base Mongo — seulement web, api, worker et un Redis
-# dédié à Génération Mérite. Voir docker/DEPLOY.md pour la procédure complète.
+# dédié à L'Arène. Voir docker/DEPLOY.md pour la procédure complète.
 #
 # Usage : docker compose -f docker/docker-compose.ec2.yml --env-file .env.ec2 up -d
-name: generationmerite
+name: arene
 
 networks:
   hms-network:
@@ -12,8 +12,8 @@ networks:
 
 services:
   web:
-    image: nejishow/generationmerite-web:${IMAGE_TAG:-latest}
-    container_name: generationmerite-web
+    image: nejishow/arene-web:${IMAGE_TAG:-latest}
+    container_name: arene-web
     environment:
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:?domaine requis}
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
@@ -26,13 +26,13 @@ services:
     restart: unless-stopped
 
   api:
-    image: nejishow/generationmerite-api:${IMAGE_TAG:-latest}
-    container_name: generationmerite-api
+    image: nejishow/arene-api:${IMAGE_TAG:-latest}
+    container_name: arene-api
     environment:
       NODE_ENV: production
       API_PORT: 4000
       MONGO_URI: ${MONGO_URI:?URI Mongo requise}
-      REDIS_URL: redis://:${REDIS_PASSWORD:?mot de passe Redis requis}@generationmerite-redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD:?mot de passe Redis requis}@arene-redis:6379
       JWT_SECRET: ${JWT_SECRET:?secret requis}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}
       STORAGE_DRIVER: s3
@@ -56,13 +56,13 @@ services:
     restart: unless-stopped
 
   worker:
-    image: nejishow/generationmerite-api:${IMAGE_TAG:-latest}
-    container_name: generationmerite-worker
+    image: nejishow/arene-api:${IMAGE_TAG:-latest}
+    container_name: arene-worker
     command: ["node", "apps/api/src/worker.js"]
     environment:
       NODE_ENV: production
       MONGO_URI: ${MONGO_URI:?URI Mongo requise}
-      REDIS_URL: redis://:${REDIS_PASSWORD:?mot de passe Redis requis}@generationmerite-redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD:?mot de passe Redis requis}@arene-redis:6379
       JWT_SECRET: ${JWT_SECRET:?secret requis}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?secret requis}
       STORAGE_DRIVER: s3
@@ -84,7 +84,7 @@ services:
   # mémoire plafonnée), pour ne pas dépendre d'un Redis partagé avec une autre appli.
   redis:
     image: redis:7-alpine
-    container_name: generationmerite-redis
+    container_name: arene-redis
     command:
       [
         "redis-server",
@@ -96,8 +96,8 @@ services:
     networks:
       - hms-network
     volumes:
-      - generationmerite-redis-data:/data
+      - arene-redis-data:/data
     restart: unless-stopped
 
 volumes:
-  generationmerite-redis-data:
+  arene-redis-data:

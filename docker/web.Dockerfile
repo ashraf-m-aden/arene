@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/web/package.json apps/web/
-RUN npm ci --workspace @gm/web --include-workspace-root
+RUN npm ci --workspace @arene/web --include-workspace-root
 
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
@@ -12,7 +12,7 @@ ARG NUXT_PUBLIC_API_BASE=http://api:4000/api/v1
 ARG NUXT_PUBLIC_SITE_URL=http://localhost:3000
 ENV NUXT_PUBLIC_API_BASE=$NUXT_PUBLIC_API_BASE \
     NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
-RUN npm run build --workspace @gm/web
+RUN npm run build --workspace @arene/web
 
 FROM node:22-alpine AS runtime
 WORKDIR /app

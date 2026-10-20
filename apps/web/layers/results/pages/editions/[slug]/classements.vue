@@ -53,7 +53,7 @@ useSeoPage({
   title: `${t('results.title')} — ${text(edition.value?.title)}`,
   description: t('results.lead'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('editions.title'), path: '/editions' },
     { name: text(edition.value?.title), path: `/editions/${slug.value}` },
     { name: t('results.title'), path: `/editions/${slug.value}/classements` }
@@ -78,7 +78,7 @@ const ratio = (part: number, total: number) =>
     </section>
 
     <div class="container">
-      <GmEditionTabs :slug="edition.slug" />
+      <AreneEditionTabs :slug="edition.slug" />
     </div>
 
     <section class="section">
@@ -127,7 +127,7 @@ const ratio = (part: number, total: number) =>
                 </tbody>
               </table>
             </div>
-            <GmEmpty v-else :title="$t('results.empty')" />
+            <AreneEmpty v-else :title="$t('results.empty')" />
           </div>
 
           <div>
@@ -161,7 +161,7 @@ const ratio = (part: number, total: number) =>
                 </tbody>
               </table>
             </div>
-            <GmEmpty v-else :title="$t('results.empty')" />
+            <AreneEmpty v-else :title="$t('results.empty')" />
           </div>
         </div>
 
@@ -214,7 +214,7 @@ const ratio = (part: number, total: number) =>
               </tbody>
             </table>
           </div>
-          <GmEmpty v-else :title="$t('results.empty')" />
+          <AreneEmpty v-else :title="$t('results.empty')" />
         </div>
       </div>
     </section>

@@ -18,7 +18,7 @@ export const config = {
   port: Number(process.env.API_PORT || 4000),
   apiPrefix: '/api/v1',
 
-  mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/generationmerite',
+  mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/arene',
   redisUrl: process.env.REDIS_URL || '',
 
   jwt: {
@@ -40,7 +40,7 @@ export const config = {
 
   notifications: {
     sesRegion: process.env.SES_REGION || 'eu-west-3',
-    sesFrom: process.env.SES_FROM || 'Génération Mérite <no-reply@generationmerite.dj>',
+    sesFrom: process.env.SES_FROM || "L'Arène <no-reply@arene.dj>",
     whatsappToken: process.env.WHATSAPP_TOKEN || '',
     whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || '',
     maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5)

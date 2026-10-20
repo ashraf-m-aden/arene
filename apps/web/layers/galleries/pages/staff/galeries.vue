@@ -133,19 +133,19 @@ async function togglePublish(gallery: any) {
       <p class="muted">{{ $t('galleries.staff.lead') }}</p>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
 
     <form class="card card--flat creator" @submit.prevent="create">
-      <GmField :label="$t('galleries.staff.titleFr')" for="titleFr" required>
+      <AreneField :label="$t('galleries.staff.titleFr')" for="titleFr" required>
         <input id="titleFr" v-model="form.titleFr" class="input" required>
-      </GmField>
-      <GmField :label="$t('galleries.staff.titleAr')" for="titleAr">
+      </AreneField>
+      <AreneField :label="$t('galleries.staff.titleAr')" for="titleAr">
         <input id="titleAr" v-model="form.titleAr" class="input" dir="rtl">
-      </GmField>
-      <GmField :label="$t('galleries.staff.slug')" for="slug" required>
+      </AreneField>
+      <AreneField :label="$t('galleries.staff.slug')" for="slug" required>
         <input id="slug" v-model="form.slug" class="input" pattern="[a-z0-9-]+" required>
-      </GmField>
+      </AreneField>
       <button class="btn btn--primary" type="submit" :disabled="pending">
         {{ $t('galleries.staff.create') }}
       </button>
@@ -176,7 +176,7 @@ async function togglePublish(gallery: any) {
       </article>
     </div>
 
-    <GmEmpty v-else-if="!pending" :title="$t('galleries.empty')" />
+    <AreneEmpty v-else-if="!pending" :title="$t('galleries.empty')" />
 
     <aside v-if="selected" class="card editor">
       <div class="spread">
@@ -184,21 +184,21 @@ async function togglePublish(gallery: any) {
         <button class="btn btn--quiet btn--sm" @click="selected = null">{{ $t('common.close') }}</button>
       </div>
 
-      <GmField :label="$t('galleries.staff.addPhotos')" for="photos">
+      <AreneField :label="$t('galleries.staff.addPhotos')" for="photos">
         <label class="dropzone">
           <input id="photos" type="file" accept="image/*" multiple hidden @change="addPhotos">
           <strong>{{ $t('galleries.staff.addPhotos') }}</strong>
         </label>
-      </GmField>
+      </AreneField>
 
-      <GmField :label="$t('galleries.staff.youtubeUrl')" for="youtube">
+      <AreneField :label="$t('galleries.staff.youtubeUrl')" for="youtube">
         <div class="cluster">
           <input id="youtube" v-model="youtubeUrl" class="input" placeholder="https://youtu.be/…">
           <button class="btn btn--ink btn--sm" :disabled="pending" @click="addVideo">
             {{ $t('galleries.staff.addVideo') }}
           </button>
         </div>
-      </GmField>
+      </AreneField>
 
       <ul v-if="selected.items?.length" class="grid grid--gallery items">
         <li v-for="item in selected.items" :key="item._id">

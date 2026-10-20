@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { AGE_CATEGORIES, DEFAULT_GRADE_THRESHOLD, EDITION_STATUSES } from '@gm/shared/constants'
+import { AGE_CATEGORIES, DEFAULT_GRADE_THRESHOLD, EDITION_STATUSES } from '@arene/shared/constants'
 
 const i18n = { fr: { type: String, default: '' }, ar: { type: String, default: '' } }
 

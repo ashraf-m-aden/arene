@@ -19,9 +19,9 @@ watch(() => route.fullPath, () => { open.value = false })
   <header class="header">
     <div class="container header__inner">
       <NuxtLink :to="localePath('/')" class="brand">
-        <GmLogo class="brand__mark" />
+        <AreneLogo class="brand__mark" />
         <span class="brand__text">
-          <strong>Génération Mérite</strong>
+          <strong>L'Arène</strong>
           <small>{{ $t('brand.tagline') }}</small>
         </span>
       </NuxtLink>
@@ -43,7 +43,7 @@ watch(() => route.fullPath, () => { open.value = false })
         </NuxtLink>
 
         <div class="header__actions">
-          <GmLocaleSwitch />
+          <AreneLocaleSwitch />
           <NuxtLink
             v-if="!auth.isLoggedIn"
             :to="localePath('/connexion')"

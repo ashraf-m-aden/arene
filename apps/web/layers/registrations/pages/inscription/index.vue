@@ -13,10 +13,10 @@ const { data: edition } = await useAsyncData('inscription-edition', () => {
 const isOpen = computed(() => edition.value?.status === 'registration_open')
 
 useSeoPage({
-  title: `${t('registrations.pitchTitle')} — Génération Mérite`,
+  title: `${t('registrations.pitchTitle')} — L'Arène`,
   description: t('registrations.pitchLead'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('registrations.pitchTitle'), path: '/inscription' }
   ])
 })
@@ -50,7 +50,7 @@ const needs = ['needPhoto', 'needBulletin', 'needAverage', 'needPhone']
           </template>
         </div>
 
-        <GmNotice v-else tone="danger">{{ $t('registrations.closed') }}</GmNotice>
+        <AreneNotice v-else tone="danger">{{ $t('registrations.closed') }}</AreneNotice>
         <p v-if="!auth.isLoggedIn && isOpen" class="muted">{{ $t('registrations.loginFirst') }}</p>
       </div>
     </section>

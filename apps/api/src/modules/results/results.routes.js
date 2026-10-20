@@ -5,7 +5,7 @@ import {
   generateMatchesSchema,
   matchResultSchema,
   rankingQuerySchema
-} from '@gm/shared'
+} from '@arene/shared'
 import { requireRole } from '../../core/middlewares/auth.js'
 import { validate } from '../../core/middlewares/validate.js'
 import { asyncHandler, created, ok } from '../../core/utils/http.js'

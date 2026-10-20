@@ -124,24 +124,24 @@ const playerName = (registration: any) =>
     </div>
 
     <div class="card card--flat controls">
-      <GmField :label="$t('results.staff.slot')" for="slot">
+      <AreneField :label="$t('results.staff.slot')" for="slot">
         <select id="slot" v-model="slotId" class="select">
           <option value="">—</option>
           <option v-for="slot in slots" :key="slot._id" :value="slot._id">
             {{ slot.label }} — {{ date(slot.startsAt) }}
           </option>
         </select>
-      </GmField>
+      </AreneField>
       <button class="btn btn--ink" :disabled="!slotId || pending" @click="generate">
         {{ $t('results.staff.generate') }}
       </button>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
-    <GmSpinner v-if="pending && !matches.length" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
+    <AreneSpinner v-if="pending && !matches.length" />
 
-    <GmEmpty v-if="!slotId" :title="$t('results.staff.selectSlot')" />
+    <AreneEmpty v-if="!slotId" :title="$t('results.staff.selectSlot')" />
 
     <div v-else-if="matches.length" class="table-wrap">
       <table class="table">
@@ -185,7 +185,7 @@ const playerName = (registration: any) =>
       </table>
     </div>
 
-    <GmEmpty v-else-if="!pending" :title="$t('results.staff.noMatches')" />
+    <AreneEmpty v-else-if="!pending" :title="$t('results.staff.noMatches')" />
 
     <!-- Saisie des cinq tentatives, pensée pour le pouce -->
     <aside v-if="selected" class="scoring card">
@@ -224,14 +224,14 @@ const playerName = (registration: any) =>
         {{ strikerScore }} — {{ 5 - strikerScore }}
       </p>
 
-      <GmField
+      <AreneField
         v-if="selected.isRecorded"
         :label="$t('results.staff.correctionReason')"
         for="note"
         required
       >
         <input id="note" v-model="note" class="input" required>
-      </GmField>
+      </AreneField>
 
       <button class="btn btn--primary btn--block" :disabled="pending" @click="save">
         {{ $t('results.staff.save') }}

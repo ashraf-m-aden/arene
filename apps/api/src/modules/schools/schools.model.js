@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { SCHOOL_TYPES } from '@gm/shared/constants'
+import { SCHOOL_TYPES } from '@arene/shared/constants'
 
 const schoolSchema = new mongoose.Schema(
   {

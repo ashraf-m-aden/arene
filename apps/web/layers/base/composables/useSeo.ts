@@ -29,7 +29,7 @@ export function useSeoPage(options: {
     ogUrl: canonical,
     ogImage: image,
     ogLocale: locale.value === 'ar' ? 'ar_DJ' : 'fr_DJ',
-    ogSiteName: 'Génération Mérite',
+    ogSiteName: "L'Arène",
     twitterCard: 'summary_large_image',
     twitterTitle: title,
     twitterDescription: description,

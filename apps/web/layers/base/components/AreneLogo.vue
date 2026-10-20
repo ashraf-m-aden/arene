@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <svg viewBox="0 0 48 48" role="img" aria-label="Génération Mérite" fill="none">
+  <svg viewBox="0 0 48 48" role="img" aria-label="L'Arène" fill="none">
     <path
       d="M24 2 44 9v16.5C44 36.4 35.5 44.4 24 46 12.5 44.4 4 36.4 4 25.5V9L24 2Z"
       fill="currentColor"

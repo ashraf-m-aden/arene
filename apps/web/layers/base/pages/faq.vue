@@ -6,7 +6,7 @@ const items = computed(() =>
 )
 
 useSeoPage({
-  title: `${t('legal.faqTitle')} — Génération Mérite`,
+  title: `${t('legal.faqTitle')} — L'Arène`,
   description: items.value[0]?.a,
   jsonLd: {
     '@context': 'https://schema.org',
@@ -23,7 +23,7 @@ useSeoPage({
 <template>
   <section class="section">
     <div class="container container--narrow">
-      <GmSectionHead :title="$t('legal.faqTitle')" />
+      <AreneSectionHead :title="$t('legal.faqTitle')" />
 
       <div class="faq">
         <details v-for="(item, index) in items" :key="index" class="faq__item">

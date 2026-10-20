@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { FILE_KINDS, FILE_VISIBILITIES } from '@gm/shared/constants'
+import { FILE_KINDS, FILE_VISIBILITIES } from '@arene/shared/constants'
 
 const variantSchema = new mongoose.Schema(
   {

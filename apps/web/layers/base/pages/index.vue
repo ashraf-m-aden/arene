@@ -139,8 +139,8 @@ const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
 
 useSeoPage({
   title: edition.value
-    ? `${text(edition.value.title)} — Génération Mérite`
-    : 'Génération Mérite — tournoi de foot jeunes Djibouti',
+    ? `${text(edition.value.title)} — L'Arène`
+    : "L'Arène — tournoi de foot jeunes Djibouti",
   description: edition.value
     ? text(edition.value.description).slice(0, 155)
     : t('home.heroLead'),
@@ -148,7 +148,7 @@ useSeoPage({
     {
       '@context': 'https://schema.org',
       '@type': 'Organization',
-      name: 'Génération Mérite',
+      name: "L'Arène",
       url: siteUrl,
       sameAs: [config.public.youtubeChannel].filter(Boolean),
       areaServed: 'DJ'
@@ -168,7 +168,7 @@ useSeoPage({
               name: edition.value.venue?.name,
               address: edition.value.venue?.address || 'Djibouti'
             },
-            organizer: { '@type': 'Organization', name: 'Génération Mérite', url: siteUrl },
+            organizer: { '@type': 'Organization', name: "L'Arène", url: siteUrl },
             offers: {
               '@type': 'Offer',
               price: edition.value.fee,
@@ -307,7 +307,7 @@ useSeoPage({
           </div>
 
           <ClientOnly v-if="isOpen && edition.registrationClosesAt">
-            <GmCountdown
+            <AreneCountdown
               :target="edition.registrationClosesAt"
               :label="$t('home.countdownTitle')"
             />
@@ -338,16 +338,16 @@ useSeoPage({
           </NuxtLink>
         </aside>
 
-        <GmEmpty v-else :title="$t('home.noEdition')" :hint="$t('home.noEditionHint')" />
+        <AreneEmpty v-else :title="$t('home.noEdition')" :hint="$t('home.noEditionHint')" />
       </div>
     </section>
 
-    <GmTicker :items="tickerItems" />
+    <AreneTicker :items="tickerItems" />
 
     <!-- ───────── Le duel : cinq tentatives, un score ───────── -->
     <section class="section duel">
       <div class="container">
-        <GmSectionHead
+        <AreneSectionHead
           :eyebrow="$t('home.duelEyebrow')"
           :title="$t('home.duelTitle')"
           :lead="$t('home.duelLead')"
@@ -417,7 +417,7 @@ useSeoPage({
     <!-- ───────── La route vers le titre ───────── -->
     <section class="section section--sand road">
       <div class="container">
-        <GmSectionHead
+        <AreneSectionHead
           :eyebrow="$t('home.roadEyebrow')"
           :title="$t('home.roadTitle')"
           :lead="$t('home.roadLead')"
@@ -439,7 +439,7 @@ useSeoPage({
     <!-- ───────── Le parcours du parent ───────── -->
     <section class="section section--ink steps">
       <div class="container">
-        <GmSectionHead :eyebrow="$t('home.howTitle')" :title="$t('home.howLead')" />
+        <AreneSectionHead :eyebrow="$t('home.howTitle')" :title="$t('home.howLead')" />
 
         <ol class="steps__grid">
           <li v-for="step in steps" :key="step" class="ticket">
@@ -454,7 +454,7 @@ useSeoPage({
     <!-- ───────── Le direct : vrais classements, seulement quand il y a des résultats ───────── -->
     <section v-if="hasLive" class="section live">
       <div class="container">
-        <GmSectionHead
+        <AreneSectionHead
           :eyebrow="$t('home.liveEyebrow')"
           :title="$t('home.liveTitle')"
           :lead="$t('home.liveLead')"

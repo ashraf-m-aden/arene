@@ -1,6 +1,6 @@
 {
   "rules": {
-    "intro": "Ce règlement s'applique à toutes les éditions du tournoi Génération Mérite. Les montants, les dates et le seuil scolaire propres à une édition figurent sur sa page.",
+    "intro": "Ce règlement s'applique à toutes les éditions du tournoi de l'Arène. Les montants, les dates et le seuil scolaire propres à une édition figurent sur sa page.",
     "sections": [
       {
         "title": "Qui peut participer",
@@ -117,7 +117,7 @@
   },
   "about": {
     "paragraphs": [
-      "Génération Mérite est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux élèves et aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
+      "L'Arène est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux élèves et aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
       "Le format est pensé pour être juste et lisible. Chaque joueur affronte plusieurs adversaires, les classements se calculent sur les buts marqués et les arrêts réalisés, et chaque établissement suit la progression de ses joueurs au classement des écoles.",
       "La plateforme gère le tournoi de bout en bout : inscriptions, vérification des dossiers, convocations, accueil le jour J, résultats, classements et galeries. Les familles suivent leur dossier depuis leur espace, en français ou en arabe."
     ]
@@ -154,7 +154,7 @@
         "items": [
           "Durée de conservation : une édition. À la clôture, bulletins, photos d'identité et coordonnées sont supprimés ; seuls les résultats et l'établissement restent, sans l'identité.",
           "Depuis votre espace, vous pouvez télécharger les données de votre enfant ou demander leur suppression ; la suppression retire aussi l'identification dans les galeries.",
-          "Pour toute question : contact{'@'}generationmerite.dj"
+          "Pour toute question : contact{'@'}arene.dj"
         ]
       }
     ]

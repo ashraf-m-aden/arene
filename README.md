@@ -1,4 +1,4 @@
-# Génération Mérite
+# L'Arène
 
 Plateforme du tournoi de duels de football 1v1 réservé aux élèves et étudiants de Djibouti qui
 tiennent leurs résultats scolaires. Elle gère le tournoi de bout en bout : inscriptions,
@@ -22,7 +22,7 @@ Implémentation de la *Documentation technique – Plateforme Tournoi de Duels 1
 ## Structure du dépôt
 
 ```
-generationmerite/
+arene/
 ├── apps/
 │   ├── api/                  # API Express
 │   │   └── src/
@@ -58,8 +58,8 @@ Comptes créés par le seed (mot de passe `Merite2026!`, modifiable via `SEED_PA
 
 | Rôle | Identifiant |
 | --- | --- |
-| Administrateur | `admin@generationmerite.dj` |
-| Staff | `staff@generationmerite.dj` |
+| Administrateur | `admin@arene.dj` |
+| Staff | `staff@arene.dj` |
 | Parent | `parent@example.dj` |
 
 Autres commandes : `npm test` (Vitest), `npm run lint`, `npm run lint:style`,

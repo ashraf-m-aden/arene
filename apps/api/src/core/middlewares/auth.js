@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken'
 import config from '../config.js'
 import { forbidden, unauthorized } from '../errors.js'
 
-export const ACCESS_COOKIE = 'gm_at'
-export const REFRESH_COOKIE = 'gm_rt'
+export const ACCESS_COOKIE = 'arene_at'
+export const REFRESH_COOKIE = 'arene_rt'
 
 export function signAccessToken(user) {
   return jwt.sign(

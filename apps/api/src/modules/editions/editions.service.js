@@ -1,4 +1,4 @@
-import { canTransitionEdition, EDITION_TRANSITIONS } from '@gm/shared'
+import { canTransitionEdition, EDITION_TRANSITIONS } from '@arene/shared'
 import { badRequest, conflict, notFound } from '../../core/errors.js'
 import { slugify } from '../../core/utils/text.js'
 import bus from '../../core/events.js'

@@ -141,39 +141,39 @@ const statuses = [
     </div>
 
     <div class="filters card card--flat">
-      <GmField :label="$t('registrations.staff.filterStatus')" for="status">
+      <AreneField :label="$t('registrations.staff.filterStatus')" for="status">
         <select id="status" v-model="filters.status" class="select">
           <option value="">{{ $t('common.all') }}</option>
           <option v-for="status in statuses" :key="status" :value="status">
             {{ $t(`status.${status}`) }}
           </option>
         </select>
-      </GmField>
+      </AreneField>
 
-      <GmField :label="$t('registrations.staff.filterRole')" for="role">
+      <AreneField :label="$t('registrations.staff.filterRole')" for="role">
         <select id="role" v-model="filters.role" class="select">
           <option value="">{{ $t('common.all') }}</option>
           <option value="striker">{{ $t('role.striker') }}</option>
           <option value="defender">{{ $t('role.defender') }}</option>
         </select>
-      </GmField>
+      </AreneField>
 
-      <GmField :label="$t('registrations.staff.filterCategory')" for="category">
+      <AreneField :label="$t('registrations.staff.filterCategory')" for="category">
         <select id="category" v-model="filters.ageCategory" class="select">
           <option value="">{{ $t('common.all') }}</option>
           <option value="lycee">{{ $t('category.lycee') }}</option>
           <option value="universite">{{ $t('category.universite') }}</option>
         </select>
-      </GmField>
+      </AreneField>
 
-      <GmField :label="$t('registrations.staff.search')" for="q">
+      <AreneField :label="$t('registrations.staff.search')" for="q">
         <input id="q" v-model="filters.q" class="input" type="search">
-      </GmField>
+      </AreneField>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
-    <GmSpinner v-if="pending && !items.length" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
+    <AreneSpinner v-if="pending && !items.length" />
 
     <p v-if="meta" class="muted numeric">{{ meta.total }}</p>
 
@@ -223,7 +223,7 @@ const statuses = [
       </table>
     </div>
 
-    <GmEmpty v-else-if="!pending" :title="$t('registrations.staff.empty')" />
+    <AreneEmpty v-else-if="!pending" :title="$t('registrations.staff.empty')" />
 
     <!-- Panneau de décision -->
     <aside v-if="selected" class="decision card">
@@ -257,7 +257,7 @@ const statuses = [
         </li>
       </ul>
 
-      <GmField :label="$t('registrations.staff.filterStatus')" for="decision">
+      <AreneField :label="$t('registrations.staff.filterStatus')" for="decision">
         <div class="choice-grid">
           <button
             v-for="option in ['approve', 'request_changes', 'reject']"
@@ -278,16 +278,16 @@ const statuses = [
             </strong>
           </button>
         </div>
-      </GmField>
+      </AreneField>
 
-      <GmField
+      <AreneField
         v-if="decision.decision !== 'approve'"
         :label="$t('registrations.staff.reason')"
         for="reason"
         required
       >
         <textarea id="reason" v-model="decision.reason" class="textarea" required />
-      </GmField>
+      </AreneField>
 
       <label class="check" :class="{ 'check--checked': decision.randomCheck }">
         <input v-model="decision.randomCheck" type="checkbox">

@@ -5,7 +5,7 @@ import {
   editionSchema,
   editionTransitionSchema,
   editionUpdateSchema
-} from '@gm/shared'
+} from '@arene/shared'
 import { requireRole } from '../../core/middlewares/auth.js'
 import { validate } from '../../core/middlewares/validate.js'
 import * as controller from './editions.controller.js'

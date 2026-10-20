@@ -2,7 +2,7 @@
  * Petit accès IndexedDB sans dépendance : la liste du créneau et la file
  * d'opérations de check-in survivent à une coupure réseau et à un rechargement.
  */
-const DB_NAME = 'gm-checkin'
+const DB_NAME = 'arene-checkin'
 const DB_VERSION = 1
 const STORES = { roster: 'roster', queue: 'queue' } as const
 

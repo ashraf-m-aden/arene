@@ -25,7 +25,7 @@ jobs:
         id: tags
         run: |
           SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE="nejishow/generationmerite-${{ matrix.name }}"
+          IMAGE="nejishow/arene-${{ matrix.name }}"
 
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "tags=$IMAGE:latest,$IMAGE:$SHA_SHORT" >> $GITHUB_OUTPUT

@@ -8,7 +8,7 @@ import {
   registerSchema,
   resetPasswordSchema,
   common
-} from '@gm/shared'
+} from '@arene/shared'
 import { requireAuth, requireRole } from '../../core/middlewares/auth.js'
 import { validate, validateBody } from '../../core/middlewares/validate.js'
 import { authLimiter, otpLimiter } from '../../core/middlewares/rateLimit.js'

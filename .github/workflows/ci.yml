@@ -37,7 +37,7 @@ jobs:
           --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       NODE_ENV: test
-      MONGO_TEST_URI: mongodb://127.0.0.1:27017/gm-test
+      MONGO_TEST_URI: mongodb://127.0.0.1:27017/arene-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -60,7 +60,7 @@ jobs:
           context: .
           file: docker/api.Dockerfile
           push: false
-          tags: gm-api:${{ github.sha }}
+          tags: arene-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Image web
@@ -69,7 +69,7 @@ jobs:
           context: .
           file: docker/web.Dockerfile
           push: false
-          tags: gm-web:${{ github.sha }}
+          tags: arene-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -4,7 +4,7 @@ import {
   checkEligibility,
   SEAT_HOLDING_STATUSES,
   canTransitionRegistration
-} from '@gm/shared'
+} from '@arene/shared'
 import { badRequest, conflict, forbidden, notFound } from '../../core/errors.js'
 import { dedupeKey as buildDedupeKey, toCsv } from '../../core/utils/text.js'
 import bus from '../../core/events.js'

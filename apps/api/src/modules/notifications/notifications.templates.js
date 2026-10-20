@@ -77,7 +77,7 @@ export const DEFAULT_TEMPLATES = {
     metaTemplateName: 'gm_code_connexion',
     subject: { fr: 'Code de connexion', ar: 'رمز الدخول' },
     body: {
-      fr: 'Votre code de connexion Génération Mérite : {{code}}. Il expire dans 10 minutes.',
+      fr: "Votre code de connexion à l'Arène : {{code}}. Il expire dans 10 minutes.",
       ar: 'رمز الدخول الخاص بكم: {{code}}. تنتهي صلاحيته خلال 10 دقائق.'
     }
   },

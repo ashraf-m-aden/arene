@@ -128,9 +128,9 @@ function toggleChannel(channel: string) {
       <p class="muted">{{ $t('admin.messagesLead') }}</p>
     </div>
 
-    <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-    <GmNotice v-if="feedback" tone="success">{{ feedback }}</GmNotice>
-    <GmSpinner v-if="pending && !templates.length" />
+    <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+    <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
+    <AreneSpinner v-if="pending && !templates.length" />
 
     <section class="stack">
       <h2>{{ $t('admin.templates') }}</h2>
@@ -170,26 +170,26 @@ function toggleChannel(channel: string) {
         <button class="btn btn--quiet btn--sm" @click="selected = null">{{ $t('common.close') }}</button>
       </div>
 
-      <GmField :label="$t('admin.metaTemplate')" for="meta">
+      <AreneField :label="$t('admin.metaTemplate')" for="meta">
         <input id="meta" v-model="selected.metaTemplateName" class="input">
-      </GmField>
+      </AreneField>
 
       <div class="two">
-        <GmField :label="$t('admin.subjectFr')" for="subjectFr">
+        <AreneField :label="$t('admin.subjectFr')" for="subjectFr">
           <input id="subjectFr" v-model="selected.subject.fr" class="input">
-        </GmField>
-        <GmField :label="$t('admin.subjectAr')" for="subjectAr">
+        </AreneField>
+        <AreneField :label="$t('admin.subjectAr')" for="subjectAr">
           <input id="subjectAr" v-model="selected.subject.ar" class="input" dir="rtl">
-        </GmField>
+        </AreneField>
       </div>
 
       <div class="two">
-        <GmField :label="$t('admin.bodyFr')" for="bodyFr" required>
+        <AreneField :label="$t('admin.bodyFr')" for="bodyFr" required>
           <textarea id="bodyFr" v-model="selected.body.fr" class="textarea" required />
-        </GmField>
-        <GmField :label="$t('admin.bodyAr')" for="bodyAr">
+        </AreneField>
+        <AreneField :label="$t('admin.bodyAr')" for="bodyAr">
           <textarea id="bodyAr" v-model="selected.body.ar" class="textarea" dir="rtl" />
-        </GmField>
+        </AreneField>
       </div>
 
       <button class="btn btn--primary" :disabled="pending" @click="saveTemplate">
@@ -214,46 +214,46 @@ function toggleChannel(channel: string) {
         </div>
 
         <div class="three">
-          <GmField :label="$t('registrations.staff.filterStatus')" for="bStatus">
+          <AreneField :label="$t('registrations.staff.filterStatus')" for="bStatus">
             <select id="bStatus" v-model="broadcast.status" class="select">
               <option value="">{{ $t('common.all') }}</option>
               <option v-for="status in ['approved', 'scheduled', 'checked_in', 'qualified']" :key="status" :value="status">
                 {{ $t(`status.${status}`) }}
               </option>
             </select>
-          </GmField>
-          <GmField :label="$t('registrations.staff.filterRole')" for="bRole">
+          </AreneField>
+          <AreneField :label="$t('registrations.staff.filterRole')" for="bRole">
             <select id="bRole" v-model="broadcast.role" class="select">
               <option value="">{{ $t('common.all') }}</option>
               <option value="striker">{{ $t('role.striker') }}</option>
               <option value="defender">{{ $t('role.defender') }}</option>
             </select>
-          </GmField>
-          <GmField :label="$t('registrations.staff.filterCategory')" for="bCategory">
+          </AreneField>
+          <AreneField :label="$t('registrations.staff.filterCategory')" for="bCategory">
             <select id="bCategory" v-model="broadcast.ageCategory" class="select">
               <option value="">{{ $t('common.all') }}</option>
               <option value="lycee">{{ $t('category.lycee') }}</option>
               <option value="universite">{{ $t('category.universite') }}</option>
             </select>
-          </GmField>
+          </AreneField>
         </div>
 
         <div class="two">
-          <GmField :label="$t('admin.subjectFr')" for="bSubjectFr" required>
+          <AreneField :label="$t('admin.subjectFr')" for="bSubjectFr" required>
             <input id="bSubjectFr" v-model="broadcast.subjectFr" class="input" required>
-          </GmField>
-          <GmField :label="$t('admin.subjectAr')" for="bSubjectAr">
+          </AreneField>
+          <AreneField :label="$t('admin.subjectAr')" for="bSubjectAr">
             <input id="bSubjectAr" v-model="broadcast.subjectAr" class="input" dir="rtl">
-          </GmField>
+          </AreneField>
         </div>
 
         <div class="two">
-          <GmField :label="$t('admin.bodyFr')" for="bBodyFr" required>
+          <AreneField :label="$t('admin.bodyFr')" for="bBodyFr" required>
             <textarea id="bBodyFr" v-model="broadcast.bodyFr" class="textarea" required />
-          </GmField>
-          <GmField :label="$t('admin.bodyAr')" for="bBodyAr">
+          </AreneField>
+          <AreneField :label="$t('admin.bodyAr')" for="bBodyAr">
             <textarea id="bBodyAr" v-model="broadcast.bodyAr" class="textarea" dir="rtl" />
-          </GmField>
+          </AreneField>
         </div>
 
         <button class="btn btn--primary" type="submit" :disabled="pending || !broadcast.channels.length">
@@ -299,7 +299,7 @@ function toggleChannel(channel: string) {
           </tbody>
         </table>
       </div>
-      <GmEmpty v-else :title="$t('admin.journal')" />
+      <AreneEmpty v-else :title="$t('admin.journal')" />
     </section>
   </div>
 </template>

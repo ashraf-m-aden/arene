@@ -1,11 +1,11 @@
 <template>
   <div class="shell">
     <a class="skip-link" href="#contenu">{{ $t('nav.skip') }}</a>
-    <GmHeader />
+    <AreneHeader />
     <main id="contenu" class="shell__main">
       <slot />
     </main>
-    <GmFooter />
+    <AreneFooter />
   </div>
 </template>
 

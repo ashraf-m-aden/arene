@@ -1,4 +1,4 @@
-# CLAUDE.md — Génération Mérite
+# CLAUDE.md — L'Arène
 
 Contexte projet pour Claude Code. Complète le `README.md` (pile technique, démarrage, routes) :
 ce fichier documente les règles métier qui ne se lisent pas facilement dans le code, en
@@ -56,9 +56,9 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   - Présentation : titre, description (fr/ar), saison, fenêtre d'inscription, lieu, frais,
     moyenne minimale — édition en place via `PATCH /editions/:id`.
   - Quotas : capacité par catégorie (lycée/université) et par rôle (buteur/défenseur), avec
-    une jauge (`GmMeter`) comparant places utilisées / places ouvertes
+    une jauge (`AreneMeter`) comparant places utilisées / places ouvertes
     (`GET /editions/:id/stats` → `seats`), et un formulaire pour ajuster les quotas.
-  - Candidatures : tunnel de statuts (`GmBarChart`, voir plus bas) du dépôt au podium, total de
+  - Candidatures : tunnel de statuts (`AreneBarChart`, voir plus bas) du dépôt au podium, total de
     dossiers, lien direct vers `/staff/dossiers?editionId=<id>` pour la liste détaillée des
     dossiers de **cette** édition précisément (le filtre `editionId` de query string prime sur
     l'édition courante).
@@ -69,9 +69,9 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   aux éditions — comptes de l'organisation (staff/admin) et import du référentiel des écoles.
   La gestion par édition (statut, créneaux, quotas, candidatures) vit désormais dans
   `/admin/editions/*`.
-- **`GmBarChart`** (`base/components/GmBarChart.vue`) : diagramme en barres horizontales
+- **`AreneBarChart`** (`base/components/AreneBarChart.vue`) : diagramme en barres horizontales
   générique (label, valeur, teinte), utilisé pour le tunnel de candidatures et la répartition
-  des paiements. Pas de dépendance externe — SVG/CSS maison, cohérent avec `GmMeter`.
+  des paiements. Pas de dépendance externe — SVG/CSS maison, cohérent avec `AreneMeter`.
 
 ## Écarts assumés par rapport à la description initiale
 

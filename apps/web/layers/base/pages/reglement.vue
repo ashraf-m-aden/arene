@@ -9,10 +9,10 @@ const sections = computed(() =>
 )
 
 useSeoPage({
-  title: `${t('legal.rulesTitle')} — Génération Mérite`,
+  title: `${t('legal.rulesTitle')} — L'Arène`,
   description: t('rules.intro'),
   jsonLd: breadcrumbLd([
-    { name: 'Génération Mérite', path: '/' },
+    { name: "L'Arène", path: '/' },
     { name: t('legal.rulesTitle'), path: '/reglement' }
   ])
 })

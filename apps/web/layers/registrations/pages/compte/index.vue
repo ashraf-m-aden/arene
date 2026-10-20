@@ -66,7 +66,7 @@ async function remove(id: string) {
   <section class="section">
     <div class="container">
       <div class="spread">
-        <GmSectionHead
+        <AreneSectionHead
           :eyebrow="auth.user?.firstName"
           :title="$t('registrations.account.title')"
           :lead="$t('registrations.account.lead')"
@@ -81,8 +81,8 @@ async function remove(id: string) {
         </div>
       </div>
 
-      <GmNotice v-if="error" tone="danger">{{ error }}</GmNotice>
-      <GmSpinner v-if="pending" />
+      <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
+      <AreneSpinner v-if="pending" />
 
       <div v-else-if="store.mine.length" class="grid grid--2">
         <article v-for="file in store.mine" :key="file._id" class="card">
@@ -115,9 +115,9 @@ async function remove(id: string) {
             {{ $t('registrations.account.bib') }} <strong>#{{ file.bibNumber }}</strong>
           </p>
 
-          <GmNotice v-if="file.reviewNotes" tone="info" :title="$t('registrations.account.reviewNotes')">
+          <AreneNotice v-if="file.reviewNotes" tone="info" :title="$t('registrations.account.reviewNotes')">
             {{ file.reviewNotes }}
-          </GmNotice>
+          </AreneNotice>
 
           <ul v-if="file.flags?.length" class="flags">
             <li v-for="flag in file.flags" :key="flag.code" class="badge badge--warning">
@@ -150,11 +150,11 @@ async function remove(id: string) {
         </article>
       </div>
 
-      <GmEmpty v-else :title="$t('registrations.account.noFiles')">
+      <AreneEmpty v-else :title="$t('registrations.account.noFiles')">
         <NuxtLink :to="localePath('/inscription')" class="btn btn--primary btn--sm">
           {{ $t('registrations.startCta') }}
         </NuxtLink>
-      </GmEmpty>
+      </AreneEmpty>
     </div>
   </section>
 </template>

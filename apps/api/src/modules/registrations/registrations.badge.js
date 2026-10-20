@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit'
 import QRCode from 'qrcode'
-import { CURRENCY } from '@gm/shared/constants'
+import { CURRENCY } from '@arene/shared/constants'
 
 const INK = '#0b1b2b'
 const GOLD = '#c9992a'
@@ -24,7 +24,7 @@ export async function buildBadgePdf({ registration, edition, slot }) {
   const width = doc.page.width - 64
 
   doc.rect(0, 0, doc.page.width, 86).fill(INK)
-  doc.fillColor(GOLD).fontSize(20).text('GÉNÉRATION MÉRITE', 32, 28, { width })
+  doc.fillColor(GOLD).fontSize(20).text("L'ARÈNE", 32, 28, { width })
   doc.fillColor('#ffffff').fontSize(11).text(edition?.title?.fr || 'Tournoi de duels 1v1', 32, 54, {
     width
   })

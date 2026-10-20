@@ -27,7 +27,7 @@ const links = computed(() => {
     <header class="bo__top">
       <div class="container bo__top-inner">
         <NuxtLink :to="localePath('/')" class="bo__brand">
-          <GmLogo class="bo__mark" />
+          <AreneLogo class="bo__mark" />
           <span>{{ $t('backoffice.title') }}</span>
         </NuxtLink>
         <div class="cluster">
