@@ -66,6 +66,13 @@ services:
     image: nejishow/arene-api:${IMAGE_TAG:-latest}
     container_name: arene-worker
     command: ["node", "apps/api/src/worker.js"]
+    # Le worker ne sert pas de HTTP : le healthcheck hérité de l'image API
+    # (/health sur :4000) le laisserait toujours « unhealthy ».
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const R=require('ioredis');const r=new R(process.env.REDIS_URL,{lazyConnect:true,maxRetriesPerRequest:1,connectTimeout:3000});r.connect().then(()=>r.ping()).then(p=>process.exit(p==='PONG'?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
     environment:
       NODE_ENV: production
       MONGO_URI: ${MONGO_URI:?URI Mongo requise}
