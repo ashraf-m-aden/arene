@@ -36,7 +36,7 @@ export async function upsertTemplate(key, input) {
 
 /**
  * Met un message en file. Le canal et la langue sont choisis ici :
- * langue du parent, canaux du modèle, numéro normalisé en E.164.
+ * langue du candidat, canaux du modèle, numéro normalisé en E.164.
  */
 export async function queueMessage({
   template,
@@ -186,18 +186,18 @@ export async function broadcast({ editionId, channels, template, segment, payloa
 
   let queued = 0
   for (const registration of items) {
-    const parent = registration.parentId
-    const recipients = { email: parent?.email, whatsapp: parent?.phone }
+    const candidate = registration.candidateId
+    const recipients = { email: candidate?.email, whatsapp: candidate?.phone }
     for (const channel of channels) {
       if (!recipients[channel]) continue
       const sent = await queueMessage({
         template,
         channel,
         to: recipients[channel],
-        locale: registration.locale || parent?.locale,
+        locale: registration.locale || candidate?.locale,
         editionId,
         registrationId: registration._id,
-        userId: parent?._id,
+        userId: candidate?._id,
         payload: {
           prenom: registration.player?.firstName,
           sujet: payload.subject?.[registration.locale || 'fr'] || payload.subject?.fr,

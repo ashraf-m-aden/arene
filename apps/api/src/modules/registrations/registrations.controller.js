@@ -66,7 +66,7 @@ export const exportCsv = asyncHandler(async (req, res) => {
   res.send(csv)
 })
 
-/** Espace parent : téléchargement des données de son enfant (RGPD). */
+/** Mon espace : téléchargement de ses propres données (RGPD). */
 export const myData = asyncHandler(async (req, res) => {
   const registration = await service.getById(req.params.id, req.user)
   res.type('application/json')
@@ -74,7 +74,7 @@ export const myData = asyncHandler(async (req, res) => {
   res.send(JSON.stringify(registration.toJSON(), null, 2))
 })
 
-/** Espace parent : suppression du dossier et des identifications associées. */
+/** Mon espace : suppression du dossier et des identifications associées. */
 export const remove = asyncHandler(async (req, res) => {
-  ok(res, await service.deleteByParent(req.params.id, req.user))
+  ok(res, await service.deleteByCandidate(req.params.id, req.user))
 })

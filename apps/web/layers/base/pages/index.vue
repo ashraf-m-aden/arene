@@ -436,7 +436,7 @@ useSeoPage({
       </div>
     </section>
 
-    <!-- ───────── Le parcours du parent ───────── -->
+    <!-- ───────── Le parcours du candidat ───────── -->
     <section class="section section--ink steps">
       <div class="container">
         <AreneSectionHead :eyebrow="$t('home.howTitle')" :title="$t('home.howLead')" />
@@ -1301,7 +1301,7 @@ useSeoPage({
   font-size: var(--text-lg);
 }
 
-/* ======================= Le parcours du parent ======================= */
+/* ======================= Le parcours du candidat ======================= */
 
 .steps__grid {
   position: relative;

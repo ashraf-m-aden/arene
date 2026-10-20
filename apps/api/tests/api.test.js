@@ -46,11 +46,11 @@ maybe('API', () => {
     expect(res.body.error.code).toBe('unprocessable')
   })
 
-  it('crée un compte parent puis renvoie son profil', async () => {
+  it('crée un compte candidat puis renvoie son profil', async () => {
     const register = await request(app).post('/api/v1/auth/register').send({
       firstName: 'Fatouma',
       lastName: 'Test',
-      email: 'parent.test@example.dj',
+      email: 'candidate.test@example.dj',
       phone: '+25377123456',
       password: 'MotDePasse1',
       locale: 'fr'
@@ -61,7 +61,7 @@ maybe('API', () => {
 
     const me = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`)
     expect(me.status).toBe(200)
-    expect(me.body.data.role).toBe('parent')
+    expect(me.body.data.role).toBe('candidate')
   })
 
   it('n’expose pas les éditions en brouillon', async () => {

@@ -1,7 +1,7 @@
 {
   "registrations": {
     "pitchTitle": "S'inscrire au tournoi",
-    "pitchLead": "Le dossier se remplit en quatre étapes, par le parent ou le tuteur. Comptez dix minutes et gardez le bulletin scanné à portée de main.",
+    "pitchLead": "Le dossier se remplit en quatre étapes, par le candidat lui-même. Comptez dix minutes et gardez le bulletin scanné à portée de main.",
     "need": "Ce qu'il faut préparer",
     "needPhoto": "Une photo récente du joueur",
     "needBulletin": "Le dernier bulletin scanné, avec le cachet de l'établissement (PDF ou image, 10 Mo max)",
@@ -11,7 +11,7 @@
     "originalBulletin": "Bulletin original exigé au check-in",
     "startCta": "Commencer le dossier",
     "continueCta": "Reprendre mon dossier",
-    "loginFirst": "Créez un compte parent ou connectez-vous pour commencer.",
+    "loginFirst": "Créez votre compte ou connectez-vous pour commencer.",
     "closed": "Les inscriptions sont fermées pour le moment.",
     "steps": {
       "player": "Le joueur",

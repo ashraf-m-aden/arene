@@ -27,7 +27,7 @@ async function submit() {
     const payload: Record<string, unknown> = { ...form }
     if (!form.email) delete payload.email
     const user = await auth.register(payload)
-    await navigateTo(localePath(user.role === 'parent' ? '/compte' : '/staff'))
+    await navigateTo(localePath(user.role === 'candidate' ? '/compte' : '/staff'))
   } catch (err: any) {
     error.value = err.message
     if (Array.isArray(err.details)) {

@@ -13,14 +13,14 @@ import { Registration } from './registrations.model.js'
 const editionsService = () => import('../editions/editions.service.js')
 const schoolsService = () => import('../schools/schools.service.js')
 
-const PARENT_EDITABLE_STATUSES = ['draft', 'changes_requested']
+const CANDIDATE_EDITABLE_STATUSES = ['draft', 'changes_requested']
 
 async function assertOwnership(registration, user) {
   if (!user) throw forbidden()
   if (['staff', 'admin'].includes(user.role)) return
-  // parentId est peuplé pour les besoins des notifications : on compare l'identifiant.
-  const ownerId = String(registration.parentId?._id ?? registration.parentId)
-  if (ownerId !== String(user.id)) throw forbidden('Dossier d’un autre parent')
+  // candidateId est peuplé pour les besoins des notifications : on compare l'identifiant.
+  const ownerId = String(registration.candidateId?._id ?? registration.candidateId)
+  if (ownerId !== String(user.id)) throw forbidden('Dossier d’un autre candidat')
 }
 
 function pushHistory(registration, to, by, note) {
@@ -31,27 +31,27 @@ function pushHistory(registration, to, by, note) {
 export async function getById(id, user) {
   const registration = await Registration.findById(id)
     .populate('schoolId', 'name slug type city')
-    .populate('parentId', 'firstName lastName email phone locale')
+    .populate('candidateId', 'firstName lastName email phone locale')
   if (!registration) throw notFound('Dossier introuvable')
   if (user) await assertOwnership(registration, user)
   return registration
 }
 
-export async function createDraft({ editionId, locale }, parentId) {
+export async function createDraft({ editionId, locale }, candidateId) {
   const editions = await editionsService()
   const edition = await editions.getById(editionId)
   if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions ne sont pas ouvertes')
 
-  const existingDraft = await Registration.findOne({ editionId, parentId, status: 'draft' })
+  const existingDraft = await Registration.findOne({ editionId, candidateId, status: 'draft' })
   if (existingDraft) return existingDraft
 
-  return Registration.create({ editionId, parentId, locale, status: 'draft', step: 1 })
+  return Registration.create({ editionId, candidateId, locale, status: 'draft', step: 1 })
 }
 
 /** Mise à jour d'une étape du formulaire ; le brouillon est enregistré à chaque étape. */
 export async function patch(id, user, input) {
   const registration = await getById(id, user)
-  if (!PARENT_EDITABLE_STATUSES.includes(registration.status) && user.role === 'parent') {
+  if (!CANDIDATE_EDITABLE_STATUSES.includes(registration.status) && user.role === 'candidate') {
     throw badRequest('Ce dossier n’est plus modifiable')
   }
 
@@ -154,8 +154,8 @@ export async function submit(id, user) {
   return registration
 }
 
-export async function listMine(parentId) {
-  return Registration.find({ parentId })
+export async function listMine(candidateId) {
+  return Registration.find({ candidateId })
     .populate('schoolId', 'name slug type')
     .populate('slotId', 'label startsAt endsAt venue')
     .sort({ createdAt: -1 })
@@ -178,7 +178,7 @@ export async function list(query) {
     Registration.find(filter)
       .populate('schoolId', 'name slug type')
       .populate('slotId', 'label startsAt')
-      .populate('parentId', 'firstName lastName email phone locale')
+      .populate('candidateId', 'firstName lastName email phone locale')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit),
@@ -525,8 +525,8 @@ export async function imageRightsByIds(ids) {
   )
 }
 
-/** Suppression demandée par un parent : le dossier et ses identifications disparaissent. */
-export async function deleteByParent(id, user) {
+/** Suppression demandée par un candidat : le dossier et ses identifications disparaissent. */
+export async function deleteByCandidate(id, user) {
   const registration = await getById(id, user)
   if (['checked_in', 'qualified', 'finalist'].includes(registration.status)) {
     throw badRequest('Ce dossier a déjà concouru : contactez l’organisation pour une suppression')

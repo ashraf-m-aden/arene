@@ -18,8 +18,8 @@ async function buildContext(registrationId, extra = {}) {
   const editions = await editionsService()
   const edition = await editions.getById(registration.editionId)
 
-  const parent = registration.parentId
-  const locale = registration.locale || parent?.locale || config.defaultLocale
+  const candidate = registration.candidateId
+  const locale = registration.locale || candidate?.locale || config.defaultLocale
   const slot = registration.slotId
     ? await (await slotsService()).getById(registration.slotId)
     : null
@@ -28,8 +28,8 @@ async function buildContext(registrationId, extra = {}) {
     registration,
     edition,
     locale,
-    to: { email: parent?.email, whatsapp: parent?.phone },
-    userId: parent?._id,
+    to: { email: candidate?.email, whatsapp: candidate?.phone },
+    userId: candidate?._id,
     payload: {
       prenom: registration.player?.firstName || '',
       edition: pickLocale(edition.title, locale),

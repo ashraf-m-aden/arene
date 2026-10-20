@@ -51,7 +51,7 @@ export function useSeoPage(options: {
   return { canonical, siteUrl }
 }
 
-/** Espace parent et back-office : exclus de l'indexation. */
+/** Mon espace et back-office : exclus de l'indexation. */
 export function useNoIndex(title: string) {
   useHead({
     title,

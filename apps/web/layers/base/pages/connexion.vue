@@ -18,7 +18,7 @@ useNoIndex(t('auth.loginTitle'))
 async function afterLogin(role: string) {
   const next = typeof route.query.suivant === 'string' ? route.query.suivant : null
   if (next) return navigateTo(next)
-  return navigateTo(localePath(role === 'parent' ? '/compte' : '/staff'))
+  return navigateTo(localePath(role === 'candidate' ? '/compte' : '/staff'))
 }
 
 async function submitPassword() {

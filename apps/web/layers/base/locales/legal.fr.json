@@ -14,7 +14,7 @@
       {
         "title": "Le dossier d'inscription",
         "items": [
-          "Le dossier est rempli par le parent ou le tuteur, qui crée le compte : le candidat mineur n'a pas de compte propre.",
+          "Le dossier est rempli par le candidat lui-même, qui crée son propre compte avec son téléphone et son email.",
           "Pièces demandées : identité du joueur, établissement, rôle choisi (buteur ou défenseur), moyenne et bulletin scanné avec le cachet de l'établissement (PDF ou image, 10 Mo maximum).",
           "Trois autorisations distinctes sont recueillies : participation, droit à l'image, diffusion des vidéos monétisées, ainsi qu'une attestation sur l'honneur de l'authenticité du bulletin.",
           "Le brouillon est enregistré à chaque étape : le formulaire peut être repris plus tard, même après une coupure de connexion."
@@ -26,7 +26,7 @@
           "Le staff compare le bulletin déposé et la moyenne déclarée. Aucun refus n'est automatique : un dossier hors critères est signalé puis tranché par une personne.",
           "Trois décisions possibles : accepté, correction demandée (avec le motif) ou refusé (avec le motif).",
           "Une vérification aléatoire peut être menée par appel à l'établissement. Un bulletin falsifié entraîne la disqualification.",
-          "Chaque décision est notifiée au parent par email et par WhatsApp, dans la langue choisie à l'inscription."
+          "Chaque décision est notifiée au candidat par email et par WhatsApp, dans la langue choisie à l'inscription."
         ]
       },
       {
@@ -34,7 +34,7 @@
         "items": [
           "Le nombre de places est plafonné par rôle et par catégorie. Quand un rôle est complet, l'inscription se ferme pour ce rôle et une liste d'attente prend le relais.",
           "Un dossier accepté reçoit automatiquement un créneau d'environ 100 joueurs, avec une convocation, un badge QR et le rappel des frais.",
-          "Le parent peut demander un autre créneau tant qu'il reste de la place, jusqu'à 48 heures avant.",
+          "Le candidat peut demander un autre créneau tant qu'il reste de la place, jusqu'à 48 heures avant.",
           "Les frais d'inscription se règlent en espèces à l'accueil, le jour du créneau. Une exonération reste possible sur motif."
         ]
       },
@@ -78,15 +78,15 @@
   "faq": {
     "items": [
       {
-        "q": "Qui crée le compte, le parent ou l'enfant ?",
-        "a": "Le parent ou le tuteur. Le compte est à son nom, avec son téléphone et son email ; le candidat mineur n'a pas de compte propre."
+        "q": "Qui crée le compte ?",
+        "a": "Le candidat lui-même, en son nom propre, avec son téléphone et son email."
       },
       {
-        "q": "Mon enfant a 18 ans : lycée ou université ?",
+        "q": "J'ai 18 ans : lycée ou université ?",
         "a": "La catégorie suit le niveau d'études déclaré. Un élève de 18 ans en terminale concourt en Lycée ; un étudiant de 18 ans en première année concourt en Université."
       },
       {
-        "q": "Je n'ai pas d'adresse email, puis-je inscrire mon enfant ?",
+        "q": "Je n'ai pas d'adresse email, puis-je m'inscrire ?",
         "a": "Oui. Le compte peut fonctionner avec le seul numéro de téléphone, et la connexion se fait par un code à six chiffres envoyé sur WhatsApp."
       },
       {
@@ -106,12 +106,12 @@
         "a": "Oui, tant qu'il reste de la place dans un autre créneau de la même catégorie, jusqu'à 48 heures avant le début."
       },
       {
-        "q": "Que deviennent les documents de mon enfant ?",
-        "a": "Le bulletin et la photo sont stockés de façon privée, accessibles uniquement au parent et au staff, et supprimés à la clôture de l'édition. Vous pouvez les télécharger ou demander leur suppression depuis votre espace."
+        "q": "Que deviennent mes documents ?",
+        "a": "Le bulletin et la photo sont stockés de façon privée, accessibles uniquement au candidat et au staff, et supprimés à la clôture de l'édition. Vous pouvez les télécharger ou demander leur suppression depuis votre espace."
       },
       {
-        "q": "Mon enfant apparaîtra-t-il dans les photos et vidéos ?",
-        "a": "Uniquement si vous avez coché le consentement au droit à l'image. Sans ce consentement, il n'est jamais identifié, et vous pouvez retirer l'autorisation à tout moment."
+        "q": "Apparaîtrai-je dans les photos et vidéos ?",
+        "a": "Uniquement si vous avez coché le consentement au droit à l'image. Sans ce consentement, vous n'êtes jamais identifié, et vous pouvez retirer l'autorisation à tout moment."
       }
     ]
   },
@@ -119,24 +119,24 @@
     "paragraphs": [
       "L'Arène est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux élèves et aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
       "Le format est pensé pour être juste et lisible. Chaque joueur affronte plusieurs adversaires, les classements se calculent sur les buts marqués et les arrêts réalisés, et chaque établissement suit la progression de ses joueurs au classement des écoles.",
-      "La plateforme gère le tournoi de bout en bout : inscriptions, vérification des dossiers, convocations, accueil le jour J, résultats, classements et galeries. Les familles suivent leur dossier depuis leur espace, en français ou en arabe."
+      "La plateforme gère le tournoi de bout en bout : inscriptions, vérification des dossiers, convocations, accueil le jour J, résultats, classements et galeries. Les candidats suivent leur dossier depuis leur espace, en français ou en arabe."
     ]
   },
   "privacy": {
-    "intro": "La plateforme traite des données d'enfants : bulletins, photos et dates de naissance. Ces données ne sont jamais publiques et sont supprimées à la clôture de l'édition.",
+    "intro": "La plateforme traite des données sensibles de mineurs et de jeunes majeurs : bulletins, photos et dates de naissance. Ces données ne sont jamais publiques et sont supprimées à la clôture de l'édition.",
     "sections": [
       {
         "title": "Ce que nous collectons",
         "items": [
-          "Pour le parent : nom, prénom, téléphone, email éventuel et langue de contact.",
-          "Pour le joueur : nom, prénom, date de naissance, établissement, rôle, moyenne scolaire, bulletin scanné et photo.",
+          "Pour le compte du candidat : nom, prénom, téléphone, email éventuel et langue de contact.",
+          "Pour le dossier du joueur : nom, prénom, date de naissance, établissement, rôle, moyenne scolaire, bulletin scanné et photo.",
           "Aucune adresse postale ni numéro de pièce d'identité n'est demandé."
         ]
       },
       {
         "title": "Qui y a accès",
         "items": [
-          "Le parent, pour le dossier de son enfant.",
+          "Le candidat, pour son propre dossier.",
           "Le staff de l'organisation, pour la vérification, l'accueil et la saisie des résultats. Chaque consultation d'un bulletin est tracée.",
           "Les bulletins et photos sont stockés dans un espace privé et servis par des liens signés valables quelques minutes."
         ]
@@ -153,7 +153,7 @@
         "title": "Durée et droits",
         "items": [
           "Durée de conservation : une édition. À la clôture, bulletins, photos d'identité et coordonnées sont supprimés ; seuls les résultats et l'établissement restent, sans l'identité.",
-          "Depuis votre espace, vous pouvez télécharger les données de votre enfant ou demander leur suppression ; la suppression retire aussi l'identification dans les galeries.",
+          "Depuis votre espace, vous pouvez télécharger vos données ou demander leur suppression ; la suppression retire aussi l'identification dans les galeries.",
           "Pour toute question : contact{'@'}dj-arene.com"
         ]
       }

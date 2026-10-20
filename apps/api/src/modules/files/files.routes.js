@@ -89,7 +89,7 @@ router.get(
   asyncHandler(async (req, res) => {
     if (config.storage.driver !== 'local') throw forbidden('Lecture directe désactivée')
     const { visibility, key } = req.params
-    if (visibility === 'private' && !['staff', 'admin', 'parent'].includes(req.user?.role)) {
+    if (visibility === 'private' && !['staff', 'admin', 'candidate'].includes(req.user?.role)) {
       throw forbidden('Document privé')
     }
     const buffer = await storage.get(decodeURIComponent(key), visibility)

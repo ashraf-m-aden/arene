@@ -12,7 +12,7 @@ import { NotificationTemplate } from './modules/notifications/notifications.mode
 import { DEFAULT_TEMPLATES } from './modules/notifications/notifications.templates.js'
 
 /**
- * Jeu de démonstration : un administrateur, un staff, un parent,
+ * Jeu de démonstration : un administrateur, un staff, un candidat,
  * une édition ouverte avec ses créneaux, et un référentiel d'écoles.
  * Idempotent : relancer le script ne duplique rien.
  */
@@ -58,11 +58,11 @@ async function main() {
     lastName: 'Accueil'
   })
   await upsertUser({
-    email: 'parent@example.dj',
+    email: 'candidate@example.dj',
     phone: '+25377000003',
-    role: 'parent',
+    role: 'candidate',
     firstName: 'Fatouma',
-    lastName: 'Parent'
+    lastName: 'Candidate'
   })
 
   for (const school of SCHOOLS) {

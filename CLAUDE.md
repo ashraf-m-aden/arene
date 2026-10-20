@@ -7,9 +7,9 @@ particulier le parcours de candidature et l'écran admin de pilotage des éditio
 ## Parcours de candidature (de bout en bout)
 
 1. **Pré-inscription en ligne** (`inscription/formulaire.vue`, module `registrations`) : le
-   parent remplit le dossier en 4 étapes (joueur, notes, autorisations, récapitulatif) et
-   dépose les pièces **en photo** (bulletin scolaire, photo d'identité) — jamais de version
-   papier à ce stade. Statut `draft` puis `submitted`.
+   candidat crée son propre compte et remplit son dossier en 4 étapes (joueur, notes,
+   autorisations, récapitulatif), et dépose les pièces **en photo** (bulletin scolaire, photo
+   d'identité) — jamais de version papier à ce stade. Statut `draft` puis `submitted`.
    - **Aucune signature numérique.** Les autorisations (`consents`) sont de simples cases à
      cocher (participation, droit à l'image, vidéos monétisées, authenticité du bulletin). Il
      n'y a pas de champ « nom du signataire » : le contrat se signe plus tard, sur place, sur
@@ -19,7 +19,7 @@ particulier le parcours de candidature et l'écran admin de pilotage des éditio
    dossier hors critères (âge, moyenne, rôle complet, doublon) n'est jamais rejeté
    automatiquement : il part au staff avec ses signalements (`flags`), qui tranche.
 3. **Convocation sur place** : un dossier `approved` reçoit un créneau (`slotId`, assignation
-   automatique ou manuelle). Le parent/candidat est invité à se présenter à cette occasion.
+   automatique ou manuelle). Le candidat est invité à se présenter à cette occasion.
 4. **Signature du contrat + paiement sur place** (`staff/checkin.vue`,
    `registrations.service.checkIn`) : le jour de la convocation, le staff scanne le badge QR,
    contrôle l'identité, fait signer le **contrat papier** et encaisse les frais **en espèces**.
@@ -87,6 +87,11 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   par créneau). Séparer les deux en évènements distincts n'a pas été demandé et aurait un impact
   large sur `results` et `slots` ; à réévaluer si un besoin réel de les distinguer apparaît
   (par exemple, un rendez-vous administratif plusieurs jours avant la compétition).
+- **Inscription par le candidat lui-même** : il n'y a plus de notion de parent/tuteur qui créerait
+  un compte pour un enfant mineur. Le candidat (lycéen ou étudiant) crée son propre compte et
+  remplit lui-même son dossier. Le champ `Registration.candidateId` (ex-`parentId`) et le rôle
+  `User.role: 'candidate'` (ex-`'parent'`) en gardent la trace dans le code ; c'est pourquoi le
+  champ ne s'appelle pas `parentId`.
 
 ## Pour aller plus loin
 

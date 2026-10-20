@@ -11,7 +11,7 @@ const { ObjectId } = mongoose.Schema.Types
 const registrationSchema = new mongoose.Schema(
   {
     editionId: { type: ObjectId, ref: 'Edition', required: true, index: true },
-    parentId: { type: ObjectId, ref: 'User', required: true, index: true },
+    candidateId: { type: ObjectId, ref: 'User', required: true, index: true },
     locale: { type: String, enum: LOCALES, default: 'fr' },
 
     player: {
@@ -32,7 +32,7 @@ const registrationSchema = new mongoose.Schema(
       bulletinFileId: { type: ObjectId, ref: 'File' }
     },
 
-    /** Cases cochées par le parent en ligne : aucune signature, le contrat se signe sur place. */
+    /** Cases cochées par le candidat en ligne : aucune signature, le contrat se signe sur place. */
     consents: {
       participation: { type: Boolean, default: false },
       imageRights: { type: Boolean, default: false },

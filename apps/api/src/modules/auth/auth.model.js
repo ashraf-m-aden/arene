@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     passwordHash: { type: String, select: false },
-    role: { type: String, enum: USER_ROLES, default: 'parent', index: true },
+    role: { type: String, enum: USER_ROLES, default: 'candidate', index: true },
     locale: { type: String, enum: LOCALES, default: 'fr' },
     acceptsWhatsapp: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },

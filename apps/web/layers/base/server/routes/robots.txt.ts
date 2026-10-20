@@ -1,4 +1,4 @@
-/** L'espace parent, le back-office et l'API restent hors des moteurs. */
+/** Mon espace, le back-office et l'API restent hors des moteurs. */
 export default defineEventHandler((event) => {
   const siteUrl = String(useRuntimeConfig().public.siteUrl).replace(/\/$/, '')
 

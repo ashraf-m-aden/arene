@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-export type Role = 'parent' | 'staff' | 'admin'
+export type Role = 'candidate' | 'staff' | 'admin'
 
 export interface SessionUser {
   _id: string

@@ -35,7 +35,7 @@ export async function register(input) {
   return User.create({
     ...input,
     phone,
-    role: 'parent',
+    role: 'candidate',
     passwordHash: await hashPassword(input.password)
   })
 }
@@ -55,7 +55,7 @@ export async function login({ identifier, password }) {
   return user
 }
 
-/** Code à usage unique envoyé par WhatsApp, pour les parents sans email. */
+/** Code à usage unique envoyé par WhatsApp, pour les candidats sans email. */
 export async function requestOtp(rawPhone) {
   const phone = toE164(rawPhone)
   const user = await User.findOne({ phone })

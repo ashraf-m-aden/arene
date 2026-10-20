@@ -7,7 +7,7 @@ export const LOCALES = /** @type {const} */ (['fr', 'ar'])
 export const DEFAULT_LOCALE = 'fr'
 export const LOCALE_DIR = { fr: 'ltr', ar: 'rtl' }
 
-export const USER_ROLES = /** @type {const} */ (['admin', 'staff', 'parent'])
+export const USER_ROLES = /** @type {const} */ (['admin', 'staff', 'candidate'])
 
 export const AGE_CATEGORIES = /** @type {const} */ (['lycee', 'universite'])
 

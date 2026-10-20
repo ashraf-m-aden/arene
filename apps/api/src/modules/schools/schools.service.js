@@ -46,7 +46,7 @@ export async function create(input, { source = 'staff' } = {}) {
   return School.create({ ...input, slug, source })
 }
 
-/** Appelée quand un parent choisit « autre école » : créée non vérifiée, à valider par le staff. */
+/** Appelée quand un candidat choisit « autre école » : créée non vérifiée, à valider par le staff. */
 export async function createFromRegistration({ name, type, city }) {
   const existing = await School.findOne({
     'name.fr': new RegExp(`^${name.fr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),

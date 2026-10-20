@@ -142,7 +142,7 @@ export async function publish(id, isPublished = true) {
   return gallery
 }
 
-/** Retire un joueur de toutes les galeries (suppression de données demandée par le parent). */
+/** Retire un joueur de toutes les galeries (suppression de données demandée par le candidat). */
 export async function removeIdentification(registrationId) {
   const result = await Gallery.updateMany(
     { 'items.featuredRegIds': registrationId },

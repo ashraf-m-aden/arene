@@ -5,7 +5,7 @@ import { CheckinOperation, Slot } from './slots.model.js'
 
 const registrationsService = () => import('../registrations/registrations.service.js')
 
-/** Un parent peut demander un autre créneau tant qu'il reste 48 h avant le début. */
+/** Un candidat peut demander un autre créneau tant qu'il reste 48 h avant le début. */
 const SWITCH_DEADLINE_MS = 48 * 60 * 60 * 1000
 
 export async function countForEdition(editionId) {
@@ -84,8 +84,8 @@ export async function autoAssign(registrationId, actorId = null) {
   return null
 }
 
-/** Déplacement manuel par le staff, ou demande du parent avant la limite. */
-export async function assign(slotId, registrationId, actorId, { byParent = false } = {}) {
+/** Déplacement manuel par le staff, ou demande du candidat avant la limite. */
+export async function assign(slotId, registrationId, actorId, { byCandidate = false } = {}) {
   const slot = await getById(slotId)
   const registrations = await registrationsService()
   const registration = await registrations.getById(registrationId)
@@ -93,7 +93,7 @@ export async function assign(slotId, registrationId, actorId, { byParent = false
   if (String(registration.ageCategory) !== String(slot.ageCategory)) {
     throw badRequest('Créneau d’une autre catégorie d’âge')
   }
-  if (byParent && slot.startsAt.getTime() - Date.now() < SWITCH_DEADLINE_MS) {
+  if (byCandidate && slot.startsAt.getTime() - Date.now() < SWITCH_DEADLINE_MS) {
     throw badRequest('Changement possible jusqu’à 48 h avant le créneau')
   }
 

@@ -79,7 +79,7 @@ export const registrationQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(25)
 })
 
-export const parentContactSchema = z.object({
+export const candidateContactSchema = z.object({
   phone,
   email: z.string().email().optional()
 })

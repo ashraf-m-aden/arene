@@ -77,7 +77,7 @@ export default defineNuxtConfig({
       '/reglement': { swr: 3600 },
       '/faq': { swr: 3600 },
       '/a-propos': { swr: 3600 },
-      // Espace parent et back-office : jamais indexés, jamais mis en cache.
+      // Mon espace et back-office : jamais indexés, jamais mis en cache.
       '/compte/**': { index: false, robots: false, swr: false },
       '/staff/**': { index: false, robots: false, ssr: false },
       '/admin/**': { index: false, robots: false, ssr: false }

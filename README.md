@@ -60,7 +60,7 @@ Comptes créés par le seed (mot de passe `Merite2026!`, modifiable via `SEED_PA
 | --- | --- |
 | Administrateur | `admin@dj-arene.com` |
 | Staff | `staff@dj-arene.com` |
-| Parent | `parent@example.dj` |
+| Candidat | `candidate@example.dj` |
 
 Autres commandes : `npm test` (Vitest), `npm run lint`, `npm run lint:style`,
 `npm run dev:worker` (worker séparé), `npm run build` (build Nuxt).
@@ -115,8 +115,8 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
 Bulletins et photos d'identité vivent dans un stockage privé, servis uniquement par des liens
 signés de courte durée ; les métadonnées EXIF (dont la position GPS) sont supprimées à l'envoi.
 Les accès staff aux dossiers sont tracés (`AuditLog`). Les pages publiques n'affichent que le
-prénom, l'initiale du nom et l'école. Le parent peut télécharger ou supprimer les données de son
-enfant depuis son espace ; la suppression retire aussi l'identification dans les galeries. À la
+prénom, l'initiale du nom et l'école. Le candidat peut télécharger ou supprimer ses propres
+données depuis son espace ; la suppression retire aussi l'identification dans les galeries. À la
 clôture d'une édition, `registrations.anonymizeEdition` et `files.purgeEdition` effacent
 l'identité et les documents, en gardant les résultats.
 
