@@ -1,5 +1,9 @@
 import mongoose from 'mongoose'
-import { NOTIFICATION_CHANNELS, NOTIFICATION_STATUSES } from '@arene/shared/constants'
+import {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_STATUSES,
+  SUPPRESSION_REASONS
+} from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 const i18n = { fr: { type: String, default: '' }, ar: { type: String, default: '' } }
@@ -36,6 +40,35 @@ notificationSchema.set('toJSON', {
 
 export const Notification =
   mongoose.models.Notification || mongoose.model('Notification', notificationSchema)
+
+/**
+ * Adresses et numéros qu'on ne contacte plus : rebond définitif, plainte, ou
+ * décision de l'admin. Consultée avant chaque mise en file, elle évite d'abîmer
+ * la réputation d'envoi en insistant sur une adresse morte.
+ */
+const suppressionSchema = new mongoose.Schema(
+  {
+    channel: { type: String, enum: NOTIFICATION_CHANNELS, required: true },
+    address: { type: String, required: true, lowercase: true, trim: true },
+    reason: { type: String, enum: SUPPRESSION_REASONS, required: true },
+    detail: String,
+    notificationId: { type: ObjectId, ref: 'Notification' },
+    suppressedBy: { type: ObjectId, ref: 'User' }
+  },
+  { timestamps: true }
+)
+
+suppressionSchema.index({ channel: 1, address: 1 }, { unique: true })
+
+suppressionSchema.set('toJSON', {
+  transform(_doc, ret) {
+    delete ret.__v
+    return ret
+  }
+})
+
+export const Suppression =
+  mongoose.models.Suppression || mongoose.model('Suppression', suppressionSchema)
 
 /** Modèles de messages éditables par l'admin, en français et en arabe. */
 const templateSchema = new mongoose.Schema(

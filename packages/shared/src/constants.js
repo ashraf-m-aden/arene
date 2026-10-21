@@ -110,6 +110,12 @@ export const NOTIFICATION_STATUSES = /** @type {const} */ ([
   'failed'
 ])
 
+/**
+ * Raisons pour lesquelles une adresse ou un numéro ne doit plus être contacté.
+ * `bounce` et `complaint` viennent des évènements SES ; `manual` est posé par l'admin.
+ */
+export const SUPPRESSION_REASONS = /** @type {const} */ (['bounce', 'complaint', 'manual'])
+
 /** Modèles de messages prévus en v1 (clé → canaux par défaut). */
 export const NOTIFICATION_TEMPLATES = {
   registration_received: ['email', 'whatsapp'],

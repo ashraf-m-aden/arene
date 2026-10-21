@@ -8,7 +8,7 @@ const tabs = computed(() => [
   { to: `/editions/${props.slug}/creneaux`, label: 'editions.tabs.slots' },
   { to: `/editions/${props.slug}/classements`, label: 'editions.tabs.rankings' },
   { to: `/editions/${props.slug}/galeries`, label: 'editions.tabs.galleries' },
-  { to: '/reglement', label: 'editions.tabs.rules' }
+  { to: `/editions/${props.slug}/reglement`, label: 'editions.tabs.rules' }
 ])
 
 const isActive = (tab: { to: string; exact?: boolean }) => {

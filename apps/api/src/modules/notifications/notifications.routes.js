@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import express, { Router } from 'express'
 import { z } from 'zod'
 import {
   broadcastSchema,
@@ -14,11 +14,22 @@ import * as service from './notifications.service.js'
 
 export const router = Router()
 
-/** Webhooks fournisseurs : hors authentification, vérifiés par l'identifiant de message. */
+/**
+ * Évènements SES relayés par SNS : rebonds, plaintes, distributions.
+ * Hors authentification — c'est la signature SNS qui fait foi, vérifiée dans le
+ * service. SNS poste en `text/plain`, d'où le parseur dédié sur cette route.
+ */
 router.post(
-  '/webhooks/:provider',
-  validate({ params: z.object({ provider: z.enum(['ses', 'whatsapp']) }), body: webhookSchema }),
-  asyncHandler(async (req, res) => ok(res, await service.handleWebhook(req.params.provider, req.body)))
+  '/webhooks/ses',
+  express.json({ type: ['application/json', 'text/plain'], limit: '256kb' }),
+  asyncHandler(async (req, res) => ok(res, await service.handleSnsEvent(req.body)))
+)
+
+/** Webhook WhatsApp : identifié par l'identifiant de message du fournisseur. */
+router.post(
+  '/webhooks/whatsapp',
+  validate({ body: webhookSchema }),
+  asyncHandler(async (req, res) => ok(res, await service.handleWebhook('whatsapp', req.body)))
 )
 
 router.use(requireRole('admin'))
@@ -36,6 +47,27 @@ router.post(
   '/broadcast',
   validate({ body: broadcastSchema }),
   asyncHandler(async (req, res) => created(res, await service.broadcast(req.body, req.user.id)))
+)
+
+router.get(
+  '/suppressions',
+  validate({
+    query: z.object({
+      channel: z.enum(['email', 'whatsapp']).optional(),
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(200).default(50)
+    })
+  }),
+  asyncHandler(async (req, res) => {
+    const { items, meta } = await service.listSuppressions(req.validatedQuery)
+    ok(res, items, meta)
+  })
+)
+
+router.delete(
+  '/suppressions/:id',
+  validate({ params: common.idParam }),
+  asyncHandler(async (req, res) => ok(res, await service.unsuppress(req.params.id)))
 )
 
 router.post(

@@ -1,0 +1,199 @@
+RE: Amazon SES production access request — additional information
+Account: 905418471337
+Region requested: us-east-1
+
+Thank you for the review. Here is the complete information requested, point by point.
+
+
+1. WEBSITE OR APPLICATION URL
+-----------------------------
+https://dj-arene.com
+
+"L'Arene" is a competition management platform for secondary-school and
+university students in Djibouti. Organisers run the event in editions; each
+edition handles candidate registration, document verification, scheduling,
+on-site check-in, results and rankings. The platform is the only system that
+sends email to our participants.
+
+Sending domain: dj-arene.com
+From address: no-reply@dj-arene.com (display name "L'Arene")
+
+
+2. EMAIL TYPE
+-------------
+Transactional only. Every message is triggered by an action the recipient
+took, or by a decision on the file that recipient personally submitted.
+
+The complete list of email templates in the application:
+
+  - registration_received       confirmation that their application file
+                                was received
+  - registration_changes_requested  a correction is required on their file,
+                                with the reason
+  - registration_approved       their file was accepted
+  - registration_rejected       their file was declined, with the reason
+  - slot_assigned               their appointment: date, time, venue, fee to
+                                bring, and their QR badge
+  - registration_qualified      they qualified for the final round
+  - password reset              a one-time reset link, on their own request
+
+One additional template, "broadcast", is an operational announcement that an
+administrator can send manually to the confirmed participants of one specific
+edition - for example a change of venue or schedule. It is scoped to the
+registrants of a single edition, it is never sent to anyone who has not
+submitted an application, and it is not used for promotion.
+
+We send no marketing email: no newsletters, no promotions, no purchased or
+rented lists, no cold outreach. We have no mailing list in the marketing
+sense - we only have participants with an open application file.
+
+Emails are sent bilingually, French or Arabic according to the recipient's
+chosen language, as multipart messages with both a plain-text part and a
+simple HTML part.
+
+
+3. VOLUME
+---------
+Our capacity is bounded by the competition itself, so the ceiling is known
+rather than estimated.
+
+  - Seats per edition:           700 (400 secondary school, 300 university)
+  - Transactional emails per
+    participant, whole funnel:   3 to 5
+  - Total per edition:           approximately 3,000
+  - Registration window:         4 to 6 weeks per edition
+
+Expected sending:
+
+  - Peak day (during a registration window):   under 300 emails
+  - Typical month during a window:             under 3,000 emails
+  - Typical month outside a window:            under 500 emails
+  - First 12 months, all editions combined:    under 10,000 emails
+
+We are preparing our first edition, so initial volume will be at the lower
+end of these figures.
+
+
+4. RECIPIENT SOURCE
+-------------------
+Recipients create their own account on https://dj-arene.com and enter their
+own email address themselves. There is no third-party list, no import, and no
+address obtained from anyone other than the person who owns it.
+
+Concretely, the sequence is:
+
+  a. the student creates an account on our site with their email address
+  b. they complete an application file in four steps and upload their own
+     supporting documents (school report, identity photo)
+  c. they explicitly accept the participation terms with separate checkboxes
+     before the file can be submitted
+  d. only from that point does the platform email them, and only about the
+     progress of that application
+
+Every email we send therefore corresponds to a file that the recipient
+personally created and submitted. Students who never submit a file never
+receive anything. Accounts remain valid between editions, and a returning
+participant only updates their school results - no email is sent unless they
+apply again.
+
+
+5. BOUNCE AND COMPLAINT HANDLING
+--------------------------------
+Bounces and complaints are handled automatically, end to end, with no manual
+step required to stop sending to a bad address.
+
+How an event reaches us:
+
+  - An SES configuration set is attached to our sending, with an event
+    destination publishing Bounce, Complaint and Delivery events to an SNS
+    topic.
+  - That topic posts to our endpoint, POST /api/v1/notifications/webhooks/ses.
+  - Every incoming payload is authenticated before it is acted on: we verify
+    the SNS cryptographic signature against the AWS signing certificate
+    (RSA-SHA1 or RSA-SHA256 depending on SignatureVersion), we refuse any
+    SigningCertURL outside the sns.<region>.amazonaws.com domain, and we
+    reject any message whose TopicArn is not our configured topic. An
+    unauthenticated caller cannot suppress an address.
+
+What we do with each event:
+
+  - Delivery  -> the message record is marked delivered, with a timestamp.
+  - Bounce, type Permanent -> the message is marked failed and the recipient
+    address is added to our suppression list immediately.
+  - Bounce, type Transient (for example a full mailbox) -> the message is
+    marked failed with the reason recorded, but the address is NOT suppressed,
+    since it is likely to become valid again.
+  - Complaint -> the message is marked failed and the recipient address is
+    added to the suppression list immediately, whatever the feedback type.
+  - Reject -> the message is marked failed with the reason recorded.
+
+What the suppression list does:
+
+  - It is consulted before every single send. A suppressed address is never
+    queued again, for any message type, including operational announcements
+    from an administrator.
+  - Each blocked attempt still leaves a visible record with the reason, so
+    organisers can see that a participant was not reachable by email and can
+    contact them another way.
+  - Entries are unique per address and per channel, so replaying the same
+    event cannot corrupt the list.
+  - Removing an address from the list is a deliberate administrative action,
+    available only to an administrator, and is logged.
+
+Monitoring:
+
+  - Every outbound message is persisted with its own status lifecycle
+    (queued, sending, sent, delivered, read, failed), its attempt count and
+    its failure reason.
+  - Administrators have a screen listing all messages with status and reason,
+    and a separate view of the suppression list, so any rise in bounces or
+    complaints is visible immediately rather than discovered later.
+  - Retries are capped at 5 attempts per message, after which the message is
+    marked failed and abandoned rather than retried indefinitely.
+  - Account-level suppression is enabled on our SES account as a second line
+    of defence behind our own list.
+
+6. SAMPLE EMAIL
+---------------
+Below is a real template from the application, filled in with example values.
+Messages are short, factual and specific to one application file.
+
+--- Sample 1: application accepted ---
+
+From:    L'Arene <no-reply@dj-arene.com>
+To:      the student's own address
+Subject: Dossier accepte - L'Arene 2026
+
+Bonne nouvelle : le dossier de Idriss est accepte. Votre convocation arrive
+avec le creneau et le badge.
+https://dj-arene.com/compte
+
+L'Arene - Tournoi de duels 1v1 - Djibouti
+
+--- Sample 2: appointment details ---
+
+From:    L'Arene <no-reply@dj-arene.com>
+To:      the student's own address
+Subject: Convocation - L'Arene 2026
+
+Convocation de Idriss : creneau du matin, le 14 mars 2026 au Stade du
+Ville Djibouti. Frais a regler en especes a l'accueil : 1000 DJF. Badge et
+documents : https://dj-arene.com/compte
+
+L'Arene - Tournoi de duels 1v1 - Djibouti
+
+The HTML part carries the same text inside a plain single-column layout with
+our name in the header and a one-line footer. Arabic recipients receive the
+same content, right-to-left, from the same address.
+
+
+7. VERIFIED IDENTITY
+--------------------
+The domain dj-arene.com is verified in us-east-1, the region of this request.
+Our sending identity is no-reply@dj-arene.com on that verified domain.
+
+Please let us know if anything above needs to be more specific.
+
+Thank you,
+Ashraf
+L'Arene - dj-arene.com

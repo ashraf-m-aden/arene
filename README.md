@@ -1,9 +1,22 @@
 # L'Arène
 
-Plateforme du tournoi de duels de football 1v1 réservé aux élèves et étudiants de Djibouti qui
-tiennent leurs résultats scolaires. Elle gère le tournoi de bout en bout : inscriptions,
-vérification des dossiers, créneaux et convocations, check-in le jour J (y compris hors ligne),
-résultats, classements des joueurs et des écoles, galeries, et notifications email + WhatsApp.
+Plateforme d'organisation de compétitions pour les jeunes de Djibouti qui tiennent leurs
+résultats scolaires. Tout se joue par **éditions** : selon l'édition, la compétition est
+**sportive ou intellectuelle**. La plateforme pilote chaque édition de bout en bout —
+inscriptions, vérification des dossiers, créneaux et convocations, check-in le jour J (y compris
+hors ligne), résultats, classements des participants et des écoles, galeries, notifications
+email + WhatsApp.
+
+Le candidat s'inscrit lui-même et **garde son compte d'une édition à l'autre** : d'une édition à
+la suivante, il ne remet à jour que ses résultats scolaires. Le parcours complet
+(pré-inscription, pièces en photo, confirmation à distance puis confirmation en présentiel) est
+documenté dans `CLAUDE.md`.
+
+**La première édition est le tournoi de duels de football 1v1**, et c'est elle qui est
+implémentée aujourd'hui : la mécanique de compétition — rôles buteur/défenseur, cinq tentatives,
+barème des écoles — est encore écrite en dur pour ce format, et le front public assume ce parti
+pris football. Rendre la discipline configurable par édition est le prochain chantier
+structurant ; il est décrit dans `CLAUDE.md`, section « Écarts à combler ».
 
 Implémentation de la *Documentation technique – Plateforme Tournoi de Duels 1v1* (v1).
 
@@ -45,10 +58,10 @@ Les règles entre modules sont respectées : un module ne touche jamais le modè
 ## Démarrage en local
 
 Prérequis : Node 22, MongoDB joignable (local ou Atlas). Redis est facultatif : sans
-`REDIS_URL`, l'API traite elle-même la file en mémoire.
+`REDIS_URL`, l'API traite elle-même la file en mémoire. Créez un `.env` à la racine avec au
+minimum `MONGO_URI`, `JWT_SECRET` et `JWT_REFRESH_SECRET` (liste complète plus bas).
 
 ```bash
-cp .env.example .env            # puis ajustez MONGO_URI et les secrets JWT
 npm install --legacy-peer-deps  # npm bute sinon sur la résolution des peers de Nuxt
 npm run seed                    # jeu de démonstration (édition ouverte, créneaux, écoles)
 npm run dev                     # API sur :4000, front sur :3000
@@ -75,7 +88,7 @@ images, déploie la préproduction à chaque fusion sur `main` et la production 
 
 Variables principales : `MONGO_URI`, `REDIS_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`,
 `S3_BUCKET_PUBLIC`, `S3_BUCKET_PRIVATE`, `SES_REGION`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`,
-`PUBLIC_SITE_URL`, `DEFAULT_LOCALE`. Voir `.env.example`.
+`PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
 
 ## API
 
@@ -94,21 +107,38 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
 
 ## Règles métier implémentées
 
+### Communes à toutes les éditions
+
+- **Compte permanent** : le candidat s'inscrit lui-même ; son `User` survit aux éditions, une
+  `Registration` est créée par édition (`editionId` + `candidateId`).
 - **Catégories** : Lycée (15–18 ans) et Université (18–23 ans). La catégorie suit le niveau
   d'études déclaré, l'âge sert de contrôle — ce qui tranche le cas des 18 ans.
 - **Seuil scolaire** : moyenne d'au moins 12/20 (`rules.gradeThreshold`, par édition).
+- **Pièces en photo ou en scan** : bulletin et photo d'identité sont déposés en ligne, jamais
+  attendus en version papier au dépôt du dossier.
 - **Aucun refus automatique** : un dossier hors critères part au staff avec ses signalements
   (âge, moyenne, rôle complet, doublon).
-- **Plafond de places** par rôle et par catégorie, avec fermeture automatique du rôle complet.
+- **Double confirmation** : une première vérification des pièces à distance, puis une
+  confirmation en présentiel qui atteste que le candidat existe réellement — contrôle
+  d'identité, contrat papier signé, frais encaissés, dossard remis.
+- **Plafond de places** par catégorie, avec fermeture automatique quand le quota est atteint.
 - **Créneau automatique** à l'acceptation du dossier, convocation + rappel la veille.
 - **Check-in hors ligne** : la liste du créneau est chargée en IndexedDB, les opérations portent
   une clé d'idempotence et sont rejouées au retour du réseau sans double encaissement.
+- **Droit à l'image** : un participant n'est identifiable dans une galerie que si son dossier
+  porte le consentement ; le service refuse l'identification sinon.
+
+### Propres à la première édition (duels 1v1)
+
+Ces règles sont aujourd'hui écrites en dur dans `packages/shared/src/constants.js` et
+`results.service`, pas rattachées à une discipline d'édition.
+
+- **Rôles** : buteur et défenseur (`PLAYER_ROLES`), le plafond de places se décline par rôle en
+  plus de la catégorie.
 - **Rencontres** : 5 tentatives, 3 adversaires par buteur en qualification, 2 finalistes par rôle
   et par catégorie, finale croisée (4 rencontres par catégorie).
 - **Classement des écoles** : présence 1, victoire 2, finaliste 5, podium 15/10/6, champion +25 ;
   deux vues, points totaux et points par joueur inscrit.
-- **Droit à l'image** : un joueur n'est identifiable dans une galerie que si son dossier porte le
-  consentement ; le service refuse l'identification sinon.
 
 ## Sécurité et données des mineurs
 
@@ -144,3 +174,7 @@ publiques mises en cache (`routeRules` en `swr`), images en WebP/AVIF avec dimen
 - L'export des inscriptions est produit en CSV (séparateur `;`, BOM pour Excel), pas en `.xlsx`.
 - Le scan du QR utilise l'API `BarcodeDetector` du navigateur quand elle est disponible, avec
   recherche par nom ou dossard en secours.
+
+Les écarts qui portent sur le **produit** plutôt que sur la technique — discipline configurable
+par édition, numéro de téléphone du parent dans le formulaire, réinscription allégée d'un
+candidat déjà vérifié — sont listés dans `CLAUDE.md`, section « Écarts à combler ».

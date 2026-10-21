@@ -8,8 +8,7 @@ const links = computed(() => [
   { to: '/editions', label: 'nav.editions' },
   { to: '/inscription', label: 'nav.register' },
   { to: '/ecoles', label: 'nav.schools' },
-  { to: '/galeries', label: 'nav.galleries' },
-  { to: '/reglement', label: 'nav.rules' }
+  { to: '/galeries', label: 'nav.galleries' }
 ])
 
 watch(() => route.fullPath, () => { open.value = false })

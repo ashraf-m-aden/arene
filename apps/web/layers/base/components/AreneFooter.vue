@@ -22,7 +22,6 @@ const year = new Date().getFullYear()
 
       <nav class="footer__group" :aria-label="$t('footer.infos')">
         <h2>{{ $t('footer.infos') }}</h2>
-        <NuxtLink :to="localePath('/reglement')">{{ $t('nav.rules') }}</NuxtLink>
         <NuxtLink :to="localePath('/faq')">{{ $t('nav.faq') }}</NuxtLink>
         <NuxtLink :to="localePath('/a-propos')">{{ $t('nav.about') }}</NuxtLink>
         <NuxtLink :to="localePath('/confidentialite')">{{ $t('nav.privacy') }}</NuxtLink>

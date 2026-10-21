@@ -116,7 +116,7 @@ useSeoPage({
               <span>{{ $t('registrations.originalBulletin') }}</span>
             </li>
           </ul>
-          <NuxtLink :to="localePath('/reglement')" class="btn btn--ghost btn--sm">
+          <NuxtLink :to="localePath(`/editions/${edition.slug}/reglement`)" class="btn btn--ghost btn--sm">
             {{ $t('home.ctaRules') }}
           </NuxtLink>
         </div>

@@ -1,46 +1,92 @@
 # CLAUDE.md — L'Arène
 
 Contexte projet pour Claude Code. Complète le `README.md` (pile technique, démarrage, routes) :
-ce fichier documente les règles métier qui ne se lisent pas facilement dans le code, en
-particulier le parcours de candidature et l'écran admin de pilotage des éditions.
+ce fichier documente les règles métier qui ne se lisent pas facilement dans le code — ce qu'est
+le produit, le parcours de candidature, l'écran admin de pilotage des éditions — et surtout
+l'écart entre la cible produit et ce qui est réellement implémenté aujourd'hui.
+
+## Ce qu'est L'Arène
+
+Une plateforme d'**organisation de compétitions pour les jeunes**, organisée par **éditions**.
+Selon l'édition, la compétition peut être **sportive** ou **intellectuelle** : la plateforme
+(inscriptions, vérification des dossiers, créneaux, convocations, check-in, résultats,
+classements, galeries, notifications) est la même, seule la discipline change.
+
+La **première édition est le tournoi de duels de football 1v1** — c'est elle qui est
+implémentée aujourd'hui, et c'est pourquoi une bonne partie du code est encore écrite en dur
+pour ce format (voir « Écarts à combler »).
+
+## Le compte candidat est permanent
+
+Le candidat **s'inscrit lui-même** : il n'y a pas de parent ou de tuteur qui crée un compte à sa
+place. Son compte (`User`, rôle `candidate`) est **conservé d'une édition à l'autre**.
+
+- Un **nouveau candidat** fait le parcours complet : dossier, pièces, confirmation à distance,
+  puis confirmation en présentiel qui atteste que la personne existe réellement.
+- Un **candidat qui revient** pour une édition suivante ne refait pas cette vérification
+  d'identité : son existence est déjà établie. **On ne reconfirme que ses résultats scolaires**
+  (bulletin de l'année en cours, nouvelle moyenne).
+
+Le **numéro de téléphone d'un parent** est demandé dans le formulaire. Ce n'est pas un compte ni
+une autorisation parentale : c'est un **contact de secours** pour que l'organisation puisse
+joindre la famille. Le candidat reste l'interlocuteur et le titulaire du dossier.
+
+Modélisation : le `User` porte le compte permanent, la `Registration` porte la candidature **à
+une édition donnée** (`editionId` + `candidateId`). Le champ s'appelle `candidateId` et non
+`parentId` pour cette raison.
 
 ## Parcours de candidature (de bout en bout)
 
 1. **Pré-inscription en ligne** (`inscription/formulaire.vue`, module `registrations`) : le
-   candidat crée son propre compte et remplit son dossier en 4 étapes (joueur, notes,
-   autorisations, récapitulatif), et dépose les pièces **en photo** (bulletin scolaire, photo
-   d'identité) — jamais de version papier à ce stade. Statut `draft` puis `submitted`.
+   candidat crée son compte et remplit son dossier en 4 étapes (joueur, notes, autorisations,
+   récapitulatif). Tant qu'il n'a pas envoyé, le dossier est un brouillon (`draft`), sauvegardé
+   à chaque étape. À l'envoi il passe `submitted` : c'est l'état **« préinscrit, non
+   confirmé »**.
+   - **Pièces en photo ou en scan uniquement** (bulletin scolaire, photo d'identité). Aucune
+     pièce papier n'est attendue à ce stade.
    - **Aucune signature numérique.** Les autorisations (`consents`) sont de simples cases à
      cocher (participation, droit à l'image, vidéos monétisées, authenticité du bulletin). Il
      n'y a pas de champ « nom du signataire » : le contrat se signe plus tard, sur place, sur
-     papier. C'est un choix produit délibéré — voir « Écarts assumés » plus bas.
-2. **Vérification staff** (`staff/dossiers.vue`, `registrations.service.review`) : le staff
-   passe le dossier à `under_review`, puis `approved`, `rejected` ou `changes_requested`. Un
-   dossier hors critères (âge, moyenne, rôle complet, doublon) n'est jamais rejeté
-   automatiquement : il part au staff avec ses signalements (`flags`), qui tranche.
-3. **Convocation sur place** : un dossier `approved` reçoit un créneau (`slotId`, assignation
-   automatique ou manuelle). Le candidat est invité à se présenter à cette occasion.
-4. **Signature du contrat + paiement sur place** (`staff/checkin.vue`,
-   `registrations.service.checkIn`) : le jour de la convocation, le staff scanne le badge QR,
-   contrôle l'identité, fait signer le **contrat papier** et encaisse les frais **en espèces**.
-   Le contrat signé est une condition bloquante (`contractSigned`, au même titre que
-   `identityChecked`) : sans elle, l'inscription ne peut pas être validée.
-5. **Validation → statut inscrit** : une fois le contrat signé et les frais encaissés, le staff
-   valide l'inscription. Le dossier reçoit un numéro de dossard (`bibNumber`) et passe au
-   statut affiché **« Inscrit »**. Note d'implémentation : ce libellé correspond en base au
-   statut `checked_in` (voir « Écarts assumés »).
+     papier. Choix produit délibéré — voir « Écarts assumés ».
+2. **Première confirmation, à distance** (`staff/dossiers.vue`,
+   `registrations.service.review`) : l'organisation examine les pièces. Le dossier passe
+   `under_review`, puis `approved`, `rejected` ou `changes_requested`. Un dossier hors critères
+   (âge, moyenne, rôle complet, doublon) n'est **jamais rejeté automatiquement** : il part au
+   staff avec ses signalements (`flags`), qui tranche.
+3. **Convocation** : un dossier `approved` reçoit un créneau (`slotId`, assignation automatique
+   ou manuelle) et passe `scheduled`. Le candidat est invité à se présenter.
+4. **Deuxième confirmation, en présentiel** (`staff/checkin.vue`,
+   `registrations.service.checkIn`) : c'est l'étape qui **scelle la candidature** et qui atteste
+   que **la personne existe vraiment**. Le staff scanne le badge QR, contrôle l'identité
+   (`identityChecked`), fait signer le **contrat papier** (`contractSigned`, condition
+   bloquante) et encaisse les frais **en espèces**.
+5. **Validation → statut « Inscrit »** : contrat signé et frais encaissés, le staff valide. Le
+   dossier reçoit un numéro de dossard (`bibNumber`) et affiche **« Inscrit »**. Note
+   d'implémentation : ce libellé correspond en base au statut `checked_in` (voir « Écarts
+   assumés »).
 6. **Compétition** : `checked_in` → `qualified`/`eliminated` → éventuellement `finalist`, ou
    `disqualified`/`no_show` selon le déroulé.
+
+### Correspondance vocabulaire métier ↔ statuts en base
+
+| Ce qu'on dit | `Registration.status` |
+| --- | --- |
+| Brouillon | `draft` |
+| Préinscrit, non confirmé | `submitted`, puis `under_review` |
+| Dossier confirmé à distance | `approved` |
+| Convoqué | `scheduled` |
+| Inscrit (confirmé en présentiel) | `checked_in` |
 
 ### Champs clés du modèle `Registration`
 
 - `consents` : cases cochées en ligne, horodatées (`submittedAt`), sans identité de signataire.
-- `contract.signed` / `contract.signedAt` / `contract.signedBy` : preuve de la signature papier
-  sur place, posée par `registrations.service.checkIn`.
+- `contract.signed` / `signedAt` / `signedBy` : preuve de la signature papier sur place, posée
+  par `registrations.service.checkIn`.
 - `payment.status/amount/receivedBy/receivedAt` : encaissement sur place, au même moment que la
   signature du contrat.
 - `flags` : signalements des contrôles automatiques (âge, moyenne, rôle complet, doublon) —
   jamais un refus automatique, toujours une alerte pour le staff.
+- `dedupeKey` : même nom + même date de naissance + même école **dans une édition** = doublon.
 
 ## Écran admin — Éditions, quotas, candidatures
 
@@ -58,48 +104,77 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   - Quotas : capacité par catégorie (lycée/université) et par rôle (buteur/défenseur), avec
     une jauge (`AreneMeter`) comparant places utilisées / places ouvertes
     (`GET /editions/:id/stats` → `seats`), et un formulaire pour ajuster les quotas.
-  - Candidatures : tunnel de statuts (`AreneBarChart`, voir plus bas) du dépôt au podium, total de
-    dossiers, lien direct vers `/staff/dossiers?editionId=<id>` pour la liste détaillée des
-    dossiers de **cette** édition précisément (le filtre `editionId` de query string prime sur
-    l'édition courante).
+  - Candidatures : tunnel de statuts (`AreneBarChart`) du dépôt au podium, total de dossiers,
+    lien direct vers `/staff/dossiers?editionId=<id>` pour la liste détaillée des dossiers de
+    **cette** édition précisément (le filtre `editionId` de query string prime sur l'édition
+    courante).
   - Paiements : répartition payé/exonéré/dû, montants.
   - Écoles les plus représentées, créneaux de l'édition (table + création).
   - Transition de statut d'édition (mêmes règles que `EDITION_TRANSITIONS`).
-- **Configuration** (`admin/pages/admin/index.vue`) : ne gère plus que ce qui est transverse
-  aux éditions — comptes de l'organisation (staff/admin) et import du référentiel des écoles.
-  La gestion par édition (statut, créneaux, quotas, candidatures) vit désormais dans
-  `/admin/editions/*`.
+- **Configuration** (`admin/pages/admin/index.vue`) : ne gère plus que ce qui est transverse aux
+  éditions — comptes de l'organisation (staff/admin) et import du référentiel des écoles. La
+  gestion par édition (statut, créneaux, quotas, candidatures) vit dans `/admin/editions/*`.
 - **`AreneBarChart`** (`base/components/AreneBarChart.vue`) : diagramme en barres horizontales
   générique (label, valeur, teinte), utilisé pour le tunnel de candidatures et la répartition
   des paiements. Pas de dépendance externe — SVG/CSS maison, cohérent avec `AreneMeter`.
 
-## Écarts assumés par rapport à la description initiale
+## Écarts assumés (décisions d'implémentation)
 
-- **« Statut inscrit »** : la description métier demande un statut affiché « inscrit » après
-  signature du contrat et paiement sur place. Plutôt que d'ajouter une valeur d'énumération
-  (`checked_in` est profondément câblé dans `results.service`, `slots.service`,
-  `SEAT_HOLDING_STATUSES`, les classements et les notifications), le libellé affiché a été
-  renommé « Inscrit » (`status.checked_in` dans les locales) ; la valeur interne reste
-  `checked_in`. Fonctionnellement, c'est le même évènement : présentation sur place, contrôle
-  d'identité, signature du contrat, encaissement, numéro de dossard.
-- **Contrat vs créneau** : le créneau (`Slot`) reste à la fois le rendez-vous administratif
-  (signature, paiement) et le moment de la compétition elle-même (les rencontres sont générées
-  par créneau). Séparer les deux en évènements distincts n'a pas été demandé et aurait un impact
-  large sur `results` et `slots` ; à réévaluer si un besoin réel de les distinguer apparaît
-  (par exemple, un rendez-vous administratif plusieurs jours avant la compétition).
-- **Inscription par le candidat lui-même** : il n'y a plus de notion de parent/tuteur qui créerait
-  un compte pour un enfant mineur. Le candidat (lycéen ou étudiant) crée son propre compte et
-  remplit lui-même son dossier. Le champ `Registration.candidateId` (ex-`parentId`) et le rôle
-  `User.role: 'candidate'` (ex-`'parent'`) en gardent la trace dans le code ; c'est pourquoi le
-  champ ne s'appelle pas `parentId`.
+- **« Statut inscrit »** : plutôt que d'ajouter une valeur d'énumération (`checked_in` est
+  profondément câblé dans `results.service`, `slots.service`, `SEAT_HOLDING_STATUSES`, les
+  classements et les notifications), le libellé affiché a été renommé « Inscrit »
+  (`status.checked_in` dans les locales) ; la valeur interne reste `checked_in`.
+  Fonctionnellement c'est le même évènement : présentation sur place, contrôle d'identité,
+  signature du contrat, encaissement, dossard.
+- **Contrat vs créneau** : le créneau (`Slot`) est à la fois le rendez-vous administratif
+  (identité, signature, paiement) et le moment de la compétition (les rencontres sont générées
+  par créneau). Les séparer aurait un impact large sur `results` et `slots` ; à réévaluer si un
+  rendez-vous administratif plusieurs jours avant la compétition devient nécessaire.
+- **Pas de rôle parent** : le candidat est titulaire de son dossier. Le parent n'existe que
+  comme numéro de contact.
+
+## Écarts à combler (cible produit non encore implémentée)
+
+Ces points font partie de la définition du produit ci-dessus mais **n'existent pas encore dans
+le code**. Ne pas les décrire comme faits.
+
+1. **Numéro de téléphone du parent** — aucun champ nulle part : ni dans `Registration` (le
+   modèle n'a pas de bloc contact), ni dans `playerStepSchema`
+   (`packages/shared/src/schemas/registration.js`), ni dans le formulaire. À noter :
+   `candidateContactSchema` existe dans ce même fichier mais **n'est utilisé par aucune route**.
+   Un ajout propre touche : le schéma Zod partagé, `registrations.model.js`, l'étape 1 de
+   `inscription/formulaire.vue`, les locales fr/ar, et `exportRows` (colonne CSV).
+2. **Discipline de l'édition (sportive / intellectuelle)** — `Edition` n'a ni `type` ni
+   `discipline`. Toute la mécanique de compétition est écrite pour le 1v1 football :
+   `PLAYER_ROLES = ['striker','defender']`, `capacity.{lycee,universite}.{striker,defender}`,
+   `ATTEMPTS_PER_MATCH`, `OPPONENTS_PER_STRIKER`, `MATCH_PHASES`, `ATTEMPT_OUTCOMES`,
+   `SCHOOL_POINTS` (tous dans `packages/shared/src/constants.js`), plus `results.service`. Une
+   édition intellectuelle demandera au minimum un `Edition.discipline` et de rendre les rôles,
+   le barème et le format de rencontre dépendants de l'édition plutôt que globaux.
+3. **Réinscription allégée d'un candidat connu** — un candidat qui revient refait aujourd'hui
+   les 4 étapes complètes : `registrations.service.createDraft` crée un dossier vide, sans
+   reprendre les données de ses dossiers passés. La cible est de **pré-remplir l'identité,
+   l'école et la photo depuis la dernière candidature** et de ne demander que les notes et le
+   nouveau bulletin, en sautant la revérification d'identité en présentiel.
+4. **`anonymizeEdition` travaille contre la réutilisation** — à la clôture d'une édition,
+   `registrations.service.anonymizeEdition` efface `player.lastName`, `player.birthDate`,
+   `player.photoFileId` et `grades.bulletinFileId` sur les dossiers de l'édition. Le compte
+   `User` survit, mais plus aucune donnée de dossier n'est récupérable pour pré-remplir une
+   candidature suivante. Si le point 3 est implémenté, il faudra décider où vit le profil
+   durable du candidat (probablement sur le `User`, qui n'est pas anonymisé) plutôt que de
+   dépendre d'une `Registration` archivée.
+5. **Distinguer « jamais vérifié en présentiel » de « déjà vérifié »** — rien ne marque
+   aujourd'hui qu'un candidat a été authentifié physiquement lors d'une édition passée. Cette
+   information conditionne tout le point 3 ; sa place naturelle est le `User` (par exemple un
+   `identityVerifiedAt` / `identityVerifiedBy`), pas la `Registration`.
 
 ## Pour aller plus loin
 
-- `registrations.service.checkIn` est le point d'entrée unique de la validation sur place
-  (contrat + paiement + dossard) : toute évolution du parcours passe par là, pas par une
-  nouvelle route.
+- `registrations.service.checkIn` est le point d'entrée unique de la confirmation en présentiel
+  (identité + contrat + paiement + dossard) : toute évolution du parcours passe par là, pas par
+  une nouvelle route.
 - Les quotas affichés dans `/admin/editions/[slug]` viennent de `editions.service.seatsLeft`,
   qui compte les dossiers aux statuts de `SEAT_HOLDING_STATUSES` — un dossier `rejected` ou
   `draft` ne consomme jamais de place.
-- Le CSV d'export (`registrations.service.exportRows`) inclut désormais une colonne
-  « Contrat signé » (oui/non).
+- Le CSV d'export (`registrations.service.exportRows`) inclut une colonne « Contrat signé »
+  (oui/non).

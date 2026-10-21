@@ -1,11 +1,12 @@
 import config from '../../core/config.js'
 import logger from '../../core/logger.js'
 import { enqueue, QUEUES } from '../../core/queue.js'
-import { notFound } from '../../core/errors.js'
+import { badRequest, notFound } from '../../core/errors.js'
 import { toE164 } from '../../core/utils/text.js'
-import { Notification, NotificationTemplate } from './notifications.model.js'
+import { Notification, NotificationTemplate, Suppression } from './notifications.model.js'
 import { DEFAULT_TEMPLATES, renderTemplate } from './notifications.templates.js'
 import { providers } from './notifications.providers.js'
+import { confirmSubscription, readSesEvent, verifyEnvelope } from './notifications.sns.js'
 
 const registrationsService = () => import('../registrations/registrations.service.js')
 
@@ -57,6 +58,30 @@ export async function queueMessage({
   for (const target of targets) {
     const recipient = target === 'whatsapp' ? toE164(to?.whatsapp ?? to) : to?.email ?? to
     if (!recipient) continue
+
+    // Adresse supprimée : on garde une trace visible pour l'organisation, mais
+    // on n'envoie rien. Insister sur un rebond définitif abîme la réputation.
+    const blocked = await isSuppressed(target, recipient)
+    if (blocked) {
+      const skipped = await Notification.create({
+        editionId,
+        registrationId,
+        userId,
+        channel: target,
+        template,
+        locale,
+        to: recipient,
+        payload,
+        status: 'failed',
+        error: `adresse supprimée (${blocked.reason}) : aucun envoi`
+      })
+      logger.warn(
+        { channel: target, template, reason: blocked.reason },
+        'envoi annulé : destinataire supprimé'
+      )
+      queued.push(skipped)
+      continue
+    }
 
     const notification = await Notification.create({
       editionId,
@@ -163,6 +188,100 @@ export async function retry(id) {
   await notification.save()
   await enqueue(QUEUES.notifications, { notificationId: String(notification._id) })
   return notification
+}
+
+/* ─── Liste de suppression ─── */
+
+/** Le destinataire est-il sur la liste ? Renvoie l'entrée, ou null. */
+export async function isSuppressed(channel, address) {
+  if (!address) return null
+  return Suppression.findOne({ channel, address: String(address).toLowerCase().trim() }).lean()
+}
+
+/** Ajoute (ou met à jour) une entrée. Idempotent : rejouer un évènement ne casse rien. */
+export async function suppress({ channel, address, reason, detail, notificationId, suppressedBy }) {
+  if (!address) return null
+  const entry = await Suppression.findOneAndUpdate(
+    { channel, address: String(address).toLowerCase().trim() },
+    { channel, address: String(address).toLowerCase().trim(), reason, detail, notificationId, suppressedBy },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  )
+  logger.warn({ channel, reason, detail }, 'destinataire ajouté à la liste de suppression')
+  return entry
+}
+
+export async function listSuppressions({ channel, page = 1, limit = 50 } = {}) {
+  const filter = channel ? { channel } : {}
+  const [items, total] = await Promise.all([
+    Suppression.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    Suppression.countDocuments(filter)
+  ])
+  return { items, meta: { page, limit, total } }
+}
+
+/** Réhabilite un destinataire : à n'utiliser qu'après vérification humaine. */
+export async function unsuppress(id) {
+  const removed = await Suppression.findByIdAndDelete(id)
+  if (!removed) throw notFound('Entrée de suppression introuvable')
+  logger.info({ channel: removed.channel, reason: removed.reason }, 'destinataire réhabilité')
+  return removed
+}
+
+/* ─── Évènements SES relayés par SNS ─── */
+
+/**
+ * Point d'entrée du webhook SES. Vérifie la signature SNS, confirme l'abonnement
+ * si c'est ce qui est demandé, puis applique l'évènement : statut du message et,
+ * pour un rebond définitif ou une plainte, suppression du destinataire.
+ */
+export async function handleSnsEvent(envelope) {
+  await verifyEnvelope(envelope)
+
+  if (envelope.Type === 'SubscriptionConfirmation') return confirmSubscription(envelope)
+  if (envelope.Type !== 'Notification') return { ignored: envelope.Type }
+
+  let message
+  try {
+    message = JSON.parse(envelope.Message)
+  } catch {
+    throw badRequest('Message SNS illisible')
+  }
+
+  const event = readSesEvent(message)
+  if (!event) return { ignored: 'évènement non reconnu' }
+
+  const notification = event.providerMessageId
+    ? await Notification.findOne({ providerMessageId: event.providerMessageId })
+    : null
+
+  if (notification && event.status) {
+    notification.status = event.status
+    if (event.status === 'delivered') notification.deliveredAt = new Date()
+    if (event.error) notification.error = event.error
+    await notification.save()
+  }
+
+  const suppressed = []
+  for (const target of event.suppress) {
+    await suppress({
+      channel: 'email',
+      address: target.address,
+      reason: target.reason,
+      detail: target.detail,
+      notificationId: notification?._id
+    })
+    suppressed.push(target.address)
+  }
+
+  logger.info(
+    { type: event.type, matched: Boolean(notification), suppressed: suppressed.length },
+    'évènement SES traité'
+  )
+  return { type: event.type, matched: Boolean(notification), suppressed: suppressed.length }
 }
 
 /** Mise à jour depuis les webhooks fournisseurs : distribué, lu, échoué. */

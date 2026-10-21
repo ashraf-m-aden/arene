@@ -15,7 +15,6 @@ const STATIC_PAGES: Entry[] = [
   { path: '/inscription', changefreq: 'weekly', priority: 0.9 },
   { path: '/ecoles', changefreq: 'weekly', priority: 0.7 },
   { path: '/galeries', changefreq: 'weekly', priority: 0.6 },
-  { path: '/reglement', changefreq: 'monthly', priority: 0.6 },
   { path: '/faq', changefreq: 'monthly', priority: 0.5 },
   { path: '/a-propos', changefreq: 'yearly', priority: 0.4 },
   { path: '/confidentialite', changefreq: 'yearly', priority: 0.3 }
@@ -57,6 +56,12 @@ export default defineEventHandler(async (event) => {
         path: `/editions/${edition.slug}/classements`,
         changefreq: 'hourly',
         priority: 0.7,
+        lastmod: edition.updatedAt
+      },
+      {
+        path: `/editions/${edition.slug}/reglement`,
+        changefreq: 'monthly',
+        priority: 0.6,
         lastmod: edition.updatedAt
       }
     ]),

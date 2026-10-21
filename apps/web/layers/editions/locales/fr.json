@@ -15,6 +15,11 @@
     "threshold": "Moyenne minimale",
     "venue": "Lieu",
     "capacity": "Places",
+    "rulesTitle": "Règlement de l'édition",
+    "rulesLead": "Ce règlement est celui de cette édition. Ses conditions chiffrées lui sont propres ; les règles générales du tournoi suivent.",
+    "rulesConditions": "Les conditions de cette édition",
+    "rulesGeneral": "Les règles générales",
+    "categories": "Catégories admises",
     "empty": "Aucune édition publiée pour l'instant.",
     "tabs": {
       "overview": "Présentation",
@@ -32,7 +37,7 @@
       "cancelled": "Annulé"
     },
     "seatsByRole": "Places par rôle",
-    "registerCta": "Inscrire mon enfant",
+    "registerCta": "Je m'inscris !",
     "closedNotice": "Les inscriptions de cette édition sont fermées.",
     "soonNotice": "Les inscriptions ouvriront bientôt."
   }

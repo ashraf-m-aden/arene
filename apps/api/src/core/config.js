@@ -45,7 +45,10 @@ export const config = {
     sesFrom: process.env.SES_FROM || "L'Arène <no-reply@dj-arene.com>",
     whatsappToken: process.env.WHATSAPP_TOKEN || '',
     whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || '',
-    maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5)
+    maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5),
+    // Topic SNS qui relaie les rebonds et plaintes SES. Sans lui, le webhook
+    // accepte toute signature AWS valide : à renseigner en production.
+    snsTopicArn: process.env.SNS_TOPIC_ARN || ''
   },
 
   publicSiteUrl: process.env.PUBLIC_SITE_URL || 'http://localhost:3000',

@@ -201,7 +201,7 @@ useSeoPage({
         </svg>
       </div>
 
-      <div class="container arena__inner">
+      <div class="container arena__inner" :class="{ 'arena__inner--solo': !edition }">
         <div class="arena__text">
           <p class="arena__kicker">
             <span class="arena__pulse" aria-hidden="true" />
@@ -217,15 +217,30 @@ useSeoPage({
 
           <div class="arena__cta">
             <NuxtLink
-              v-if="isOpen"
               :to="localePath('/inscription')"
-              class="btn btn--primary btn--lg"
+              class="btn btn--kickoff btn--lg"
             >
-              {{ $t('home.ctaRegister') }}
-              <span class="icon-directional" aria-hidden="true">→</span>
+              <svg class="btn__ball" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9.3" stroke="currentColor" stroke-width="1.7" />
+                <path d="M12 6.6l3.45 2.5-1.32 4.05h-4.26L8.55 9.1 12 6.6z" fill="currentColor" />
+                <path
+                  d="M12 2.7v3.9M15.45 9.1l3.7-1.2M14.13 13.15l2.3 3.14M9.87 13.15l-2.3 3.14M8.55 9.1l-3.7-1.2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              {{ $t('home.ctaJoin') }}
             </NuxtLink>
-            <NuxtLink :to="localePath('/reglement')" class="btn btn--ghost btn--lg">
+            <NuxtLink
+              v-if="edition"
+              :to="localePath(`/editions/${edition.slug}/reglement`)"
+              class="btn btn--ghost btn--lg"
+            >
               {{ $t('home.ctaRules') }}
+            </NuxtLink>
+            <NuxtLink v-else :to="localePath('/editions')" class="btn btn--ghost btn--lg">
+              {{ $t('editions.title') }}
             </NuxtLink>
           </div>
 
@@ -338,7 +353,6 @@ useSeoPage({
           </NuxtLink>
         </aside>
 
-        <AreneEmpty v-else :title="$t('home.noEdition')" :hint="$t('home.noEditionHint')" />
       </div>
     </section>
 
@@ -601,7 +615,8 @@ useSeoPage({
   background: var(--color-ink-deep);
   color: var(--color-on-ink);
 
-  a {
+  // Les liens de texte passent en or ; les boutons gardent leurs propres couleurs.
+  a:not(.btn) {
     color: var(--color-gold-bright);
   }
 }
@@ -662,6 +677,13 @@ useSeoPage({
   @include from(md) {
     grid-template-columns: minmax(0, 1.3fr) minmax(21rem, 0.9fr);
     gap: var(--space-8);
+  }
+}
+
+/** Sans édition ouverte, le tableau d'affichage n'existe pas : le texte prend toute la largeur. */
+.arena__inner--solo {
+  @include from(md) {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -757,16 +779,6 @@ useSeoPage({
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-/** Pas d'édition ouverte : le bloc vide doit rester lisible sur fond sombre. */
-.arena :deep(.empty) {
-  border-color: rgb(255 255 255 / 20%);
-  color: rgb(243 239 230 / 80%);
-
-  .muted {
-    color: rgb(243 239 230 / 62%);
-  }
 }
 
 /* ─── Le tableau d'affichage ─── */

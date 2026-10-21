@@ -61,6 +61,67 @@
   }
 }
 
+/**
+ * Le bouton d'engagement : le ballon donne le coup d'envoi au survol.
+ * Réservé à l'appel principal (hero), pour qu'il garde sa force.
+ */
+.btn--kickoff {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-gold-bright), var(--color-gold));
+  color: var(--color-ink);
+  font-weight: 700;
+  box-shadow: 0 10px 24px -12px rgb(201 153 42 / 85%), var(--shadow-sm);
+  overflow: hidden;
+
+  // Le reflet qui balaie le bouton, comme un projecteur sur la pelouse.
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: -60%;
+    inline-size: 40%;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 45%), transparent);
+    transform: skewX(-18deg);
+    transition: inset-inline-start var(--transition);
+  }
+
+  &:hover {
+    box-shadow: 0 14px 30px -12px rgb(201 153 42 / 95%), var(--shadow-md);
+
+    &::after {
+      inset-inline-start: 120%;
+    }
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+.btn__ball {
+  inline-size: 1.35em;
+  block-size: 1.35em;
+  flex: none;
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.btn--kickoff:hover .btn__ball {
+  transform: rotate(360deg);
+}
+
+// Le ballon ne tourne pas pour qui demande moins d'animation.
+@media (prefers-reduced-motion: reduce) {
+  .btn__ball,
+  .btn--kickoff::after {
+    transition: none;
+  }
+
+  .btn--kickoff:hover .btn__ball {
+    transform: none;
+  }
+}
+
 .btn--ink {
   background: var(--color-ink);
   color: var(--color-on-ink);

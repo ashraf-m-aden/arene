@@ -1,0 +1,47 @@
+// A INSERER dans le tableau "Statement" de la policy existante de l'utilisateur
+// IAM arene-s3. Ne remplace rien : les blocs S3 actuels restent tels quels.
+//
+// Si l'identite verifiee est une adresse et non le domaine, remplacer
+//   identity/dj-arene.com   par   identity/no-reply@dj-arene.com
+//
+// (Retirer ces commentaires avant de coller : la console IAM attend du JSON strict.)
+[
+  {
+    "Sid": "AreneSesEnvoiTransactionnel",
+    "Effect": "Allow",
+    "Action": [
+      "ses:SendEmail",
+      "ses:SendRawEmail"
+    ],
+    "Resource": "arn:aws:ses:us-east-1:905418471337:identity/dj-arene.com",
+    "Condition": {
+      "StringEquals": {
+        "ses:FromAddress": "no-reply@dj-arene.com"
+      }
+    }
+  },
+  {
+    "Sid": "AreneSesSupervision",
+    "Effect": "Allow",
+    "Action": [
+      "ses:GetSendQuota",
+      "ses:GetSendStatistics",
+      "ses:GetAccountSendingEnabled",
+      "ses:ListIdentities",
+      "ses:GetIdentityVerificationAttributes"
+    ],
+    "Resource": "*"
+  },
+  {
+    "Sid": "AreneBucketsDiagnostic",
+    "Effect": "Allow",
+    "Action": [
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ],
+    "Resource": [
+      "arn:aws:s3:::arene-private",
+      "arn:aws:s3:::arene-public"
+    ]
+  }
+]

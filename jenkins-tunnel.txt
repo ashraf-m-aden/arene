@@ -1,0 +1,69 @@
+OUVRIR L'INTERFACE JENKINS (arene-pipeline) DEPUIS CE POSTE
+===========================================================
+Serveur  : ubuntu@50.19.46.247 (EC2, heberge aussi Totalis)
+Cle      : C:\Users\Ashraf\Downloads\das2026.pem
+Jenkins  : ecoute sur le port 8080 de l'EC2, ferme a l'exterieur.
+           On y accede par un tunnel SSH, pas par l'IP publique.
+
+
+1. UNE SEULE FOIS : PROTEGER LA CLE
+-----------------------------------
+Windows refuse une cle .pem lisible par tout le monde
+(erreur "UNPROTECTED PRIVATE KEY FILE"). Dans PowerShell :
+
+icacls "C:\Users\Ashraf\Downloads\das2026.pem" /inheritance:r /grant:r "$env:USERNAME:(R)"
+
+
+2. OUVRIR LE TUNNEL
+-------------------
+Dans PowerShell. La fenetre reste ouverte tant que le tunnel sert :
+ne la fermez pas, et n'attendez pas de message, -N ne renvoie rien.
+
+ssh -i "C:\Users\Ashraf\Downloads\das2026.pem" -N -o ServerAliveInterval=60 -L 8080:localhost:8080 ubuntu@50.19.46.247
+
+Puis, dans le navigateur :  http://localhost:8080
+
+Fermer le tunnel : Ctrl+C dans cette fenetre PowerShell.
+
+
+3. SI LE PORT 8080 EST DEJA PRIS SUR LE POSTE
+---------------------------------------------
+Message "bind: Address already in use". Utilisez un autre port local :
+
+ssh -i "C:\Users\Ashraf\Downloads\das2026.pem" -N -o ServerAliveInterval=60 -L 8081:localhost:8080 ubuntu@50.19.46.247
+
+Puis :  http://localhost:8081
+
+Verifier ce qui occupe le port 8080 :
+netstat -ano | findstr ":8080"
+
+
+4. SI VOUS PASSEZ PAR EC2 INSTANCE CONNECT
+------------------------------------------
+Gardez la meme option -L 8080:localhost:8080 dans la commande proposee
+par la console AWS : c'est elle qui ramene Jenkins sur votre poste.
+
+
+5. A REGARDER DANS LE BUILD DU COMMIT 70622c6
+---------------------------------------------
+Etape "Attente des images" :
+  - 1re ligne attendue : "Depot suivi : ashraf-m-aden/arene"
+    Si elle affiche "generationmerite", le job Jenkins est configure avec
+    l'ancienne URL du depot : ca fonctionne quand meme (redirection suivie
+    grace a -L), mais autant corriger l'URL dans la config du job.
+  - puis "CI de 70622c6 vert"
+  - puis "Images 70622c6 publiees"
+
+Etape "Deploiement" :
+  - "Actuel : <ancien tag>, cible : 70622c6"
+  - puis "Deploye : 70622c6"
+
+Deja verifie depuis l'exterieur le 20/10/2026 :
+  - nejishow/arene-api:70622c6 et nejishow/arene-web:70622c6 sont sur Docker Hub
+  - https://dj-arene.com/ et /api/v1/editions/current repondent 200
+
+
+NOTE
+----
+Ce fichier n'est pas ignore par git : ne le commitez pas (il donne l'IP du
+serveur et le chemin de la cle). Il ne contient aucun secret en lui-meme.
