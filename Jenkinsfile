@@ -1,4 +1,4 @@
-// Déploiement continu d'Arène sur l'EC2 (job Jenkins « arene-pipeline »).
+// Déploiement continu d'Arène sur l'EC2 (job Jenkins « areneCI »).
 //
 // Un push sur main déclenche ce job par le webhook GitHub. Les images sont
 // construites par GitHub Actions (build-and-push.yml) : ce job attend que le

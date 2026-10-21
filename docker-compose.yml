@@ -1,8 +1,13 @@
 name: arene
 
-# Les trois environnements (local, préproduction, production) partagent cette
-# composition ; seules les variables changent. Le proxy Caddy termine le HTTPS
-# et route /api vers l'API, le reste vers Nuxt.
+# Pile autonome pour le développement et les essais : images construites sur
+# place, MongoDB sans authentification, Caddy en façade (HTTPS, /api vers l'API,
+# le reste vers Nuxt).
+#
+# Ce n'est PAS la composition de production. dj-arene.com tourne avec
+# docker/docker-compose.ec2.yml (conteneurs arene-*, Mongo authentifié publié sur
+# 127.0.0.1:27018, réseau arene-network, images Docker Hub), déployé par Jenkins
+# avec ~/arene/.env.ec2. Voir docker/DEPLOY.md.
 services:
   web:
     build:
@@ -36,6 +41,7 @@ services:
       CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
+      SNS_TOPIC_ARN: ${SNS_TOPIC_ARN:-}
       WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
       WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}

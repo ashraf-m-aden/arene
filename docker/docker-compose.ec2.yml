@@ -47,6 +47,9 @@ services:
       CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
+      # Topic SNS des rebonds/plaintes SES. Vide, le webhook accepte n'importe quel
+      # topic AWS correctement signé : à renseigner (voir docker/DEPLOY.md, § 7).
+      SNS_TOPIC_ARN: ${SNS_TOPIC_ARN:-}
       WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
       WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}

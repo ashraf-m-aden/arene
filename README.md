@@ -80,15 +80,25 @@ Autres commandes : `npm test` (Vitest), `npm run lint`, `npm run lint:style`,
 
 ## Déploiement
 
-`docker compose up -d --build` monte six services : `web` (Nuxt), `api`, `worker` (même image
-que l'API), `mongo`, `redis` et `proxy` (Caddy, HTTPS automatique, `/api` vers l'API). Les trois
-environnements — local, préproduction, production — partagent cette composition ; seules les
-variables changent. L'intégration continue (GitHub Actions) enchaîne lint → tests → build des
-images, déploie la préproduction à chaque fusion sur `main` et la production sur un tag `v*`.
+Le dépôt contient **deux compositions Docker**, à ne pas confondre :
+
+| Fichier | Usage | Particularités |
+| --- | --- | --- |
+| `docker-compose.yml` (racine) | développement, essais d'une pile complète | images construites sur place (`--build`), `mongo` sans authentification, `proxy` Caddy |
+| `docker/docker-compose.ec2.yml` | **production** (dj-arene.com, EC2 partagé avec Totalis) | images Docker Hub `nejishow/arene-*:<sha>`, conteneurs `arene-*`, Mongo `--auth` publié sur `127.0.0.1:27018`, réseau externe `arene-network`, entrée par `hms-nginx` |
+
+La production lit ses variables dans `~/arene/.env.ec2` sur le serveur (jamais commité ; modèle :
+`docker/.env.ec2.example`). La procédure complète est dans `docker/DEPLOY.md`.
+
+Chaîne de livraison : un push sur `main` lance `ci.yml` (lint → tests → build), puis, si le CI
+est vert, `build-and-push.yml` publie `nejishow/arene-api` et `nejishow/arene-web` taguées au
+SHA court. Le job Jenkins **`areneCI`** (déclenché par webhook GitHub, `Jenkinsfile`) attend ces
+images, synchronise `~/arene/repo` sur le commit et lance `docker/scripts/deploy.sh`, qui revient
+au tag précédent en cas d'échec. Il n'y a pas de préproduction.
 
 Variables principales : `MONGO_URI`, `REDIS_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`,
-`S3_BUCKET_PUBLIC`, `S3_BUCKET_PRIVATE`, `SES_REGION`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`,
-`PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
+`S3_BUCKET_PUBLIC`, `S3_BUCKET_PRIVATE`, `SES_REGION`, `SES_FROM`, `SNS_TOPIC_ARN`,
+`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
 
 ## API
 

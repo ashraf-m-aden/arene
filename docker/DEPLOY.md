@@ -12,6 +12,10 @@ L'EC2 (t3.large, 50.19.46.247) héberge aussi Totalis. L'Arène en est **isolée
 | Sauvegardes   | `docker/scripts/backup-mongo.sh` → `s3://dj-arene-backups` | Non              |
 | Entrée 80/443 | `hms-nginx`, fichier `conf.d/arene.conf`             | **Oui (une seule IP)** |
 
+Ce document porte sur `docker/docker-compose.ec2.yml`, la seule composition de
+production. Le `docker-compose.yml` de la racine est une pile de développement
+(Mongo sans authentification, Caddy, build local) : il ne décrit pas le serveur.
+
 Les images sont publiées par `.github/workflows/build-and-push.yml`
 (`nejishow/arene-api`, `nejishow/arene-web`) ; rien n'est construit sur le serveur.
 Ports internes : API 4000, web 3000. Aucun port publié sur l'hôte.
@@ -91,10 +95,32 @@ docker exec arene-api getent hosts hms-mongodb         # ne doit rien renvoyer
 curl -I https://totalis.clinic                         # inchangé
 ```
 
-## Mises à jour et rollback
+## 7. Rebonds et plaintes SES (SNS)
+
+L'API reçoit les évènements SES sur `POST /api/v1/notifications/webhooks/ses` et
+cesse d'écrire aux adresses en rebond permanent ou en plainte. La signature SNS est
+toujours vérifiée ; `SNS_TOPIC_ARN` restreint en plus le webhook à **notre** topic.
+Sans lui, n'importe quel topic SNS signé par AWS serait accepté (l'API logue alors
+`SNS_TOPIC_ARN absent`).
 
 ```bash
-# mise à jour : IMAGE_TAG=<sha court> dans ~/arene/.env.ec2, puis pull + up -d
+# Dans la région SES (us-east-1) : topic arene-ses-events, abonnement HTTPS
+#   https://dj-arene.com/api/v1/notifications/webhooks/ses
+# (l'API confirme l'abonnement d'elle-même), puis sur l'identité SES dj-arene.com :
+# notifications Bounce + Complaint → ce topic.
+echo 'SNS_TOPIC_ARN=arn:aws:sns:us-east-1:<compte>:arene-ses-events' >> ~/arene/.env.ec2
+docker compose -f docker/docker-compose.ec2.yml --env-file ~/arene/.env.ec2 up -d api
+```
+
+## Mises à jour et rollback
+
+Les mises à jour sont automatiques : un push sur `main` déclenche le job Jenkins
+`areneCI`, qui déploie `nejishow/arene-*:<sha court>` via `docker/scripts/deploy.sh`.
+Une nouvelle variable d'environnement s'ajoute **à la main** dans `~/arene/.env.ec2`
+(et dans `docker/.env.ec2.example`) avant le push qui l'utilise.
+
+```bash
+# mise à jour manuelle : IMAGE_TAG=<sha court> dans ~/arene/.env.ec2, puis pull + up -d
 # rollback complet, sans effet sur Totalis :
 rm ~/hms-monorepo/deployments/nginx/conf.d/arene.conf
 docker exec hms-nginx nginx -t && docker kill --signal=HUP hms-nginx
