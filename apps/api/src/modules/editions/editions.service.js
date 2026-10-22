@@ -1,4 +1,4 @@
-import { canTransitionEdition, EDITION_TRANSITIONS } from '@arene/shared'
+import { canTransitionEdition, EDITION_TRANSITIONS, SEATS_REVEAL_RATIO } from '@arene/shared'
 import { badRequest, conflict, notFound } from '../../core/errors.js'
 import { slugify } from '../../core/utils/text.js'
 import bus from '../../core/events.js'
@@ -62,6 +62,30 @@ export async function seatsLeft(editionId) {
       const used = taken?.[category]?.[role] ?? 0
       result[category][role] = { capacity, used, left: Math.max(0, capacity - used) }
     }
+  }
+  return result
+}
+
+/**
+ * Vue publique des places : les chiffres d'une categorie ne sortent que lorsqu'elle
+ * atteint SEATS_REVEAL_RATIO de remplissage.
+ *
+ * Le filtrage se fait ici, pas dans l'ecran : masquer cote front laisserait les
+ * compteurs dans la reponse de l'API, lisibles par quiconque ouvre les outils de
+ * developpement. Une categorie sous le seuil ne renvoie aucun nombre du tout.
+ */
+export function publicSeats(seats) {
+  const result = {}
+  for (const [category, byRole] of Object.entries(seats || {})) {
+    let capacity = 0
+    let used = 0
+    for (const seat of Object.values(byRole || {})) {
+      capacity += seat?.capacity ?? 0
+      used += seat?.used ?? 0
+    }
+    // Une categorie sans plafond defini n'est jamais « tendue ».
+    const tight = capacity > 0 && used / capacity >= SEATS_REVEAL_RATIO
+    result[category] = tight ? { tight: true, ...byRole } : { tight: false }
   }
   return result
 }

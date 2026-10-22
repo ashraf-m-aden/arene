@@ -4,8 +4,7 @@ export type Role = 'candidate' | 'staff' | 'admin'
 
 export interface SessionUser {
   _id: string
-  firstName: string
-  lastName: string
+  name: string
   fullName?: string
   email?: string
   phone?: string
@@ -30,7 +29,14 @@ export const useAuthStore = defineStore('auth', {
     isStaff: (state) => state.user?.role === 'staff' || state.user?.role === 'admin',
     isAdmin: (state) => state.user?.role === 'admin',
     initials: (state) =>
-      state.user ? `${state.user.firstName?.[0] ?? ''}${state.user.lastName?.[0] ?? ''}` : ''
+      state.user
+        ? String(state.user.name || '')
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() ?? '')
+            .join('')
+        : ''
   },
 
   actions: {

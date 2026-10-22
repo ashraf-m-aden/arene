@@ -76,6 +76,16 @@ export const REGISTRATION_TRANSITIONS = {
   disqualified: []
 }
 
+/**
+ * Seuil de remplissage a partir duquel les places restantes deviennent publiques.
+ *
+ * En dessous, les candidats et les visiteurs ne voient aucun chiffre : afficher
+ * « 180 places libres » au lancement ne dit rien a personne et laisse croire que
+ * l'inscription peut attendre. Le compte a rebours n'apparait qu'au moment ou la
+ * rarete est reelle, categorie par categorie.
+ */
+export const SEATS_REVEAL_RATIO = 0.9
+
 /** Statuts qui occupent une place dans le plafond d'une édition. */
 export const SEAT_HOLDING_STATUSES = [
   'approved',

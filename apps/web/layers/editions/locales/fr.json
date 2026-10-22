@@ -42,6 +42,7 @@
     "soonNotice": "Les inscriptions ouvriront bientôt.",
     "rulesEmpty": "Le règlement de cette édition n’est pas encore publié.",
     "rulesEmptyHint": "L’organisation le met en ligne avant l’ouverture des inscriptions.",
-    "tournamentDates": "Dates du tournoi"
+    "tournamentDates": "Dates du tournoi",
+    "seatsTight": "Cette édition approche de son plafond : voici ce qu’il reste."
   }
 }

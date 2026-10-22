@@ -31,7 +31,7 @@ function pushHistory(registration, to, by, note) {
 export async function getById(id, user) {
   const registration = await Registration.findById(id)
     .populate('schoolId', 'name slug type city')
-    .populate('candidateId', 'firstName lastName email phone locale')
+    .populate('candidateId', 'name email phone locale')
   if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
   if (user) await assertOwnership(registration, user)
   return registration
@@ -42,10 +42,27 @@ export async function createDraft({ editionId, locale }, candidateId) {
   const edition = await editions.getById(editionId)
   if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions ne sont pas ouvertes').withKey('registrationsNotOpen')
 
-  const existingDraft = await Registration.findOne({ editionId, candidateId, status: 'draft' })
-  if (existingDraft) return existingDraft
+  /*
+   * Un seul dossier par candidat et par edition, quel que soit son statut. On
+   * rend l'existant plutot que d'en ouvrir un second : sans ce controle, un
+   * candidat dont le dossier etait deja envoye repartait sur un dossier vierge
+   * et se retrouvait avec deux candidatures concurrentes dans la meme edition.
+   */
+  const existing = await Registration.findOne({ editionId, candidateId })
+  if (existing) return existing
 
-  return Registration.create({ editionId, candidateId, locale, status: 'draft', step: 1 })
+  // Le nom vient du compte : saisi une fois a l'inscription, jamais redemande.
+  const { User } = await import('../auth/auth.model.js')
+  const account = await User.findById(candidateId).select('name')
+
+  return Registration.create({
+    editionId,
+    candidateId,
+    locale,
+    status: 'draft',
+    step: 1,
+    player: { name: account?.name || '' }
+  })
 }
 
 /** Mise à jour d'une étape du formulaire ; le brouillon est enregistré à chaque étape. */
@@ -83,10 +100,9 @@ export async function patch(id, user, input) {
     input.consents ? 4 : input.grades ? 3 : input.player || input.role ? 2 : 1
   )
 
-  if (registration.player?.firstName && registration.player?.birthDate) {
+  if (registration.player?.name && registration.player?.birthDate) {
     registration.dedupeKey = buildDedupeKey({
-      firstName: registration.player.firstName,
-      lastName: registration.player.lastName,
+      name: registration.player.name,
       birthDate: registration.player.birthDate,
       schoolId: registration.schoolId
     })
@@ -107,7 +123,7 @@ export async function submit(id, user) {
   }
 
   const missing = []
-  if (!registration.player?.firstName || !registration.player?.lastName) missing.push('player.name')
+  if (!registration.player?.name) missing.push('player.name')
   if (!registration.player?.birthDate) missing.push('player.birthDate')
   if (!registration.schoolId) missing.push('schoolId')
   if (!registration.role) missing.push('role')
@@ -168,8 +184,7 @@ export async function list(query) {
   if (q) {
     const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     filter.$or = [
-      { 'player.firstName': new RegExp(safe, 'i') },
-      { 'player.lastName': new RegExp(safe, 'i') },
+      { 'player.name': new RegExp(safe, 'i') },
       { bibNumber: Number.isNaN(Number(q)) ? -1 : Number(q) }
     ]
   }
@@ -178,7 +193,7 @@ export async function list(query) {
     Registration.find(filter)
       .populate('schoolId', 'name slug type')
       .populate('slotId', 'label startsAt')
-      .populate('candidateId', 'firstName lastName email phone locale')
+      .populate('candidateId', 'name email phone locale')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit),
@@ -232,7 +247,7 @@ export async function review(id, staffId, { decision, reason, randomCheck = fals
  */
 export async function listByIds(editionId, ids) {
   return Registration.find({ editionId, _id: { $in: ids } })
-    .populate('candidateId', 'email phone locale firstName')
+    .populate('candidateId', 'email phone locale name')
     .sort({ createdAt: 1 })
 }
 
@@ -422,7 +437,7 @@ export async function publicPlayersForSchool(editionId, schoolId) {
     editionId,
     schoolId,
     status: { $in: ['checked_in', 'eliminated', 'qualified', 'finalist'] }
-  }).select('player.firstName player.lastName role ageCategory status')
+  }).select('player.name role ageCategory status')
 
   return rows.map((r) => ({
     id: r._id,
@@ -444,9 +459,9 @@ export async function rosterForSlot(slotId) {
   return Registration.find({ slotId, status: { $in: ['scheduled', 'checked_in', 'no_show'] } })
     .populate('schoolId', 'name slug')
     .select(
-      'player.firstName player.lastName player.photoFileId role ageCategory status bibNumber payment randomCheck qrToken checkedInAt schoolId'
+      'player.name player.photoFileId role ageCategory status bibNumber payment randomCheck qrToken checkedInAt schoolId'
     )
-    .sort({ 'player.lastName': 1 })
+    .sort({ 'player.name': 1 })
     .lean()
 }
 
@@ -462,8 +477,7 @@ export async function exportRows(editionId) {
 
   return toCsv(rows, [
     { key: 'bibNumber', label: 'Dossard' },
-    { label: 'Prénom', get: (r) => r.player?.firstName },
-    { label: 'Nom', get: (r) => r.player?.lastName },
+    { label: 'Nom', get: (r) => r.player?.name },
     { label: 'Naissance', get: (r) => r.player?.birthDate?.toISOString?.().slice(0, 10) },
     { label: 'Genre', get: (r) => r.player?.gender },
     { label: 'École', get: (r) => r.schoolId?.name?.fr },
@@ -493,7 +507,7 @@ export async function anonymizeEdition(editionId) {
         qrToken: '',
         dedupeKey: ''
       },
-      $set: { 'player.lastName': '' }
+      $set: { 'player.name': '' }
     }
   )
   return result.modifiedCount ?? 0
@@ -507,7 +521,7 @@ function toObjectId(value) {
 export async function publicProfilesByIds(ids) {
   const rows = await Registration.find({ _id: { $in: ids } })
     .populate('schoolId', 'name slug type')
-    .select('player.firstName player.lastName role ageCategory schoolId status bibNumber')
+    .select('player.name role ageCategory schoolId status bibNumber')
 
   return new Map(
     rows.map((row) => [
@@ -537,7 +551,7 @@ export async function listForRanking(editionId) {
 /** Consentement au droit à l'image, par identifiant de dossier. */
 export async function imageRightsByIds(ids) {
   const rows = await Registration.find({ _id: { $in: ids } }).select(
-    'consents.imageRights consents.monetizedVideos player.firstName player.lastName'
+    'consents.imageRights consents.monetizedVideos player.name'
   )
   return new Map(
     rows.map((row) => [
@@ -551,16 +565,8 @@ export async function imageRightsByIds(ids) {
   )
 }
 
-/** Suppression demandée par un candidat : le dossier et ses identifications disparaissent. */
-export async function deleteByCandidate(id, user) {
-  const registration = await getById(id, user)
-  if (['checked_in', 'qualified', 'finalist'].includes(registration.status)) {
-    throw badRequest('Ce dossier a déjà concouru : contactez l’organisation pour une suppression').withKey('fileAlreadyCompeted')
-  }
-  bus.emitEvent('registration.deleted', {
-    registrationId: String(registration._id),
-    editionId: String(registration.editionId)
-  })
-  await registration.deleteOne()
-  return { deleted: true }
-}
+/*
+ * Il n'existe volontairement pas de suppression de dossier par le candidat.
+ * Un dossier engage l'organisation (place reservee, creneau, verification deja
+ * faite) : son retrait passe par le staff, qui garde la trace de la decision.
+ */

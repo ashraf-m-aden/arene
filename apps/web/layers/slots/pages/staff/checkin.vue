@@ -33,7 +33,7 @@ const filtered = computed(() => {
   const needle = search.value.trim().toLowerCase()
   if (!needle) return store.roster
   return store.roster.filter((player) => {
-    const name = `${player.player?.firstName ?? ''} ${player.player?.lastName ?? ''}`.toLowerCase()
+    const name = String(player.player?.name ?? '').toLowerCase()
     return name.includes(needle) || String(player.bibNumber ?? '').includes(needle)
   })
 })
@@ -220,7 +220,7 @@ async function closeSlot() {
         @click="select(player)"
       >
         <span class="roster__name">
-          <strong>{{ player.player?.firstName }} {{ player.player?.lastName }}</strong>
+          <strong>{{ player.player?.name }}</strong>
           <span class="muted">
             {{ $t(`role.${player.role}`) }}
             <template v-if="player.schoolId"> · {{ text(player.schoolId.name) }}</template>
@@ -244,7 +244,7 @@ async function closeSlot() {
     <aside v-if="selected" class="sheet card">
       <div class="spread">
         <h2 class="card__title">
-          {{ selected.player?.firstName }} {{ selected.player?.lastName }}
+          {{ selected.player?.name }}
         </h2>
         <button class="btn btn--quiet btn--sm" @click="selected = null">{{ $t('common.close') }}</button>
       </div>

@@ -2,11 +2,15 @@ import { z } from 'zod'
 import { AGE_CATEGORIES, PLAYER_ROLES, REGISTRATION_STATUSES } from '../constants.js'
 import { i18nText, isoDate, objectId, phone } from './common.js'
 
-/** Étape 1 — le joueur. */
+/**
+ * Etape 1 — le joueur.
+ *
+ * Le nom n'y figure pas : il appartient au compte, a ete saisi a l'inscription et
+ * n'est plus jamais modifie. Le dossier en garde une copie, posee par l'API a la
+ * creation du brouillon, que le candidat ne peut pas changer.
+ */
 export const playerStepSchema = z.object({
   player: z.object({
-    firstName: z.string().trim().min(2).max(60),
-    lastName: z.string().trim().min(2).max(60),
     birthDate: isoDate,
     gender: z.enum(['m', 'f']),
     photoFileId: objectId.optional()

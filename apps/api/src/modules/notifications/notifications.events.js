@@ -31,7 +31,7 @@ async function buildContext(registrationId, extra = {}) {
     to: { email: candidate?.email, whatsapp: candidate?.phone },
     userId: candidate?._id,
     payload: {
-      prenom: registration.player?.firstName || '',
+      prenom: registration.player?.name || '',
       edition: pickLocale(edition.title, locale),
       creneau: slot?.label || '',
       date: slot?.startsAt

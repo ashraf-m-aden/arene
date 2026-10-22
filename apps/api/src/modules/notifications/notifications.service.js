@@ -326,7 +326,7 @@ export async function broadcast(
         registrationId: registration._id,
         userId: candidate?._id,
         payload: {
-          prenom: registration.player?.firstName,
+          prenom: registration.player?.name,
           sujet: payload.subject?.[registration.locale || 'fr'] || payload.subject?.fr,
           message: payload.body?.[registration.locale || 'fr'] || payload.body?.fr
         }

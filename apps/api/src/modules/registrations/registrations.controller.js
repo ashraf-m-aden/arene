@@ -74,7 +74,4 @@ export const myData = asyncHandler(async (req, res) => {
   res.send(JSON.stringify(registration.toJSON(), null, 2))
 })
 
-/** Mon espace : suppression du dossier et des identifications associées. */
-export const remove = asyncHandler(async (req, res) => {
-  ok(res, await service.deleteByCandidate(req.params.id, req.user))
-})
+

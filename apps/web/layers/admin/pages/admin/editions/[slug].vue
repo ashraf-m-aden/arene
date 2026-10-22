@@ -939,12 +939,12 @@ async function createSlot() {
                   <input
                     type="checkbox"
                     :checked="selection.has(String(row._id))"
-                    :aria-label="row.player?.firstName"
+                    :aria-label="row.player?.name"
                     @change="toggleCandidate(String(row._id))"
                   >
                 </td>
                 <td>
-                  <strong>{{ row.player?.firstName }} {{ row.player?.lastName }}</strong>
+                  <strong>{{ row.player?.name }}</strong>
                 </td>
                 <td>{{ $t(`status.${row.status}`) }}</td>
                 <td>{{ row.ageCategory ? $t(`category.${row.ageCategory}`) : '—' }}</td>

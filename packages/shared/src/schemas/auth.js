@@ -2,10 +2,17 @@ import { z } from 'zod'
 import { USER_ROLES } from '../constants.js'
 import { email, locale, password, phone } from './common.js'
 
+/**
+ * Le nom est saisi UNE SEULE FOIS, ici, a la creation du compte : un seul champ,
+ * pas de prenom/nom separes. Les noms djiboutiens s'ecrivent en chaine (nom propre,
+ * nom du pere, nom du grand-pere) et ne se decoupent pas en deux cases.
+ *
+ * Il porte le compte permanent : il n'est plus jamais modifie, et il est repris tel
+ * quel d'une edition a l'autre.
+ */
 export const registerSchema = z
   .object({
-    firstName: z.string().trim().min(2).max(60),
-    lastName: z.string().trim().min(2).max(60),
+    name: z.string().trim().min(3).max(120),
     email: email.optional(),
     phone,
     password,
@@ -30,8 +37,7 @@ export const resetPasswordSchema = z.object({
 })
 
 export const createStaffSchema = z.object({
-  firstName: z.string().trim().min(2).max(60),
-  lastName: z.string().trim().min(2).max(60),
+  name: z.string().trim().min(3).max(120),
   email,
   phone: phone.optional(),
   password,

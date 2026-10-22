@@ -73,14 +73,26 @@ const hasLive = computed(() =>
   Boolean(topStriker.value || topDefender.value || podium.value.length)
 )
 
-/** Places restantes par rôle, toutes catégories confondues : c'est l'enjeu du héros. */
+/**
+ * Places restantes par rôle, sur les seules catégories que l'API a dévoilées.
+ *
+ * Tant qu'une catégorie n'approche pas de son plafond, l'API ne renvoie aucun
+ * chiffre pour elle (`tight: false`) : on ne compte donc que celles qui en
+ * portent. Le compteur n'apparaît qu'au moment où la rareté est réelle.
+ */
+const seatsRevealed = computed(() =>
+  Object.values(edition.value?.seats || {}).some((byRole: any) => byRole?.tight)
+)
+
 const seatsByRole = computed(() => {
   const roles: Record<string, { capacity: number; used: number; left: number }> = {
     striker: { capacity: 0, used: 0, left: 0 },
     defender: { capacity: 0, used: 0, left: 0 }
   }
   for (const byRole of Object.values(edition.value?.seats || {}) as any[]) {
-    for (const [role, seat] of Object.entries(byRole || {}) as any[]) {
+    if (!byRole?.tight) continue
+    for (const [role, seat] of Object.entries(byRole) as any[]) {
+      if (role === 'tight') continue
       if (!roles[role]) roles[role] = { capacity: 0, used: 0, left: 0 }
       roles[role].capacity += seat?.capacity ?? 0
       roles[role].used += seat?.used ?? 0
@@ -254,9 +266,11 @@ useSeoPage({
         </div>
 
         <aside v-if="edition" class="scoreboard">
-          <p class="scoreboard__title">{{ $t('home.faceoffTitle') }}</p>
+          <p v-if="seatsRevealed" class="scoreboard__title">{{ $t('home.faceoffTitle') }}</p>
 
-          <div class="faceoff">
+          <!-- Compteurs masques tant que l'edition n'approche pas de son plafond :
+               l'API ne renvoie meme pas les chiffres dans ce cas. -->
+          <div v-if="seatsRevealed" class="faceoff">
             <article
               v-for="side in sides"
               :key="side.role"

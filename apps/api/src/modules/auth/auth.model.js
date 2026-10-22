@@ -3,8 +3,12 @@ import { LOCALES, USER_ROLES } from '@arene/shared/constants'
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
+    /**
+     * Nom complet, en un seul champ. Saisi a la creation du compte et jamais
+     * modifie ensuite : c'est l'identite du compte permanent, reprise telle quelle
+     * d'une edition a l'autre.
+     */
+    name: { type: String, required: true, trim: true },
     email: { type: String, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     passwordHash: { type: String, select: false },
@@ -37,7 +41,7 @@ userSchema.index(
 )
 
 userSchema.virtual('fullName').get(function fullName() {
-  return `${this.firstName} ${this.lastName}`.trim()
+  return String(this.name || '').trim()
 })
 
 userSchema.set('toJSON', {

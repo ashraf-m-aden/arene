@@ -4,6 +4,7 @@ definePageMeta({ middleware: 'auth' })
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const store = useRegistrationStore()
+const auth = useAuthStore()
 const { text, money } = useFormat()
 
 useNoIndex(t('registrations.pitchTitle'))
@@ -126,9 +127,7 @@ const stepKeys = ['player', 'grades', 'consents', 'review'] as const
 const canContinue = computed(() => {
   if (step.value === 1) {
     return Boolean(
-      store.draft.player.firstName &&
-        store.draft.player.lastName &&
-        store.draft.player.birthDate &&
+      store.draft.player.birthDate &&
         store.draft.player.gender &&
         (store.draft.schoolId || store.draft.newSchool) &&
         store.draft.role
@@ -204,14 +203,12 @@ function back() {
         <form class="card stack form" @submit.prevent="next">
           <!-- Étape 1 : le joueur -->
           <template v-if="step === 1">
-            <div class="two">
-              <AreneField :label="$t('registrations.player.firstName')" for="firstName" required>
-                <input id="firstName" v-model="store.draft.player.firstName" class="input" required>
-              </AreneField>
-              <AreneField :label="$t('registrations.player.lastName')" for="lastName" required>
-                <input id="lastName" v-model="store.draft.player.lastName" class="input" required>
-              </AreneField>
-            </div>
+            <!-- Le nom vient du compte : saisi une fois a l'inscription, il n'est
+                 ni redemande ni modifiable. On le montre pour que le candidat
+                 verifie sous quelle identite il postule. -->
+            <AreneField :label="$t('registrations.player.name')" :hint="$t('registrations.player.nameLocked')">
+              <p class="identity">{{ store.draft.player.name || auth.user?.name }}</p>
+            </AreneField>
 
             <div class="two">
               <AreneField :label="$t('registrations.player.birthDate')" for="birthDate" required>
@@ -413,8 +410,8 @@ function back() {
             <h2>{{ $t('registrations.review.title') }}</h2>
             <dl class="recap">
               <div>
-                <dt>{{ $t('registrations.player.firstName') }}</dt>
-                <dd>{{ store.draft.player.firstName }} {{ store.draft.player.lastName }}</dd>
+                <dt>{{ $t('registrations.player.name') }}</dt>
+                <dd>{{ store.draft.player.name || auth.user?.name }}</dd>
               </div>
               <div>
                 <dt>{{ $t('registrations.player.birthDate') }}</dt>
@@ -492,6 +489,14 @@ function back() {
 
 .form-done {
   margin-block-start: var(--space-5);
+}
+
+/** Nom hérité du compte : affiché, jamais saisi. */
+.identity {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
 }
 
 .recap {

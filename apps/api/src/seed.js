@@ -25,12 +25,11 @@ const SCHOOLS = [
   { fr: 'Institut Supérieur des Sciences de la Santé', ar: 'المعهد العالي لعلوم الصحة', type: 'universite' }
 ]
 
-async function upsertUser({ email, phone, role, firstName, lastName, locale = 'fr' }) {
+async function upsertUser({ email, phone, role, name, locale = 'fr' }) {
   const existing = await User.findOne({ email })
   if (existing) return existing
   return User.create({
-    firstName,
-    lastName,
+    name,
     email,
     phone,
     role,
@@ -47,22 +46,19 @@ async function main() {
     email: 'admin@dj-arene.com',
     phone: '+25377000001',
     role: 'admin',
-    firstName: 'Amina',
-    lastName: 'Directrice'
+    name: 'Amina Directrice'
   })
   await upsertUser({
     email: 'staff@dj-arene.com',
     phone: '+25377000002',
     role: 'staff',
-    firstName: 'Omar',
-    lastName: 'Accueil'
+    name: 'Omar Accueil'
   })
   await upsertUser({
     email: 'candidate@example.dj',
     phone: '+25377000003',
     role: 'candidate',
-    firstName: 'Fatouma',
-    lastName: 'Candidate'
+    name: 'Fatouma Candidate'
   })
 
   for (const school of SCHOOLS) {

@@ -152,8 +152,6 @@
     "otpVerify": "Valider le code",
     "registerTitle": "Créer mon compte",
     "registerLead": "Le candidat crée son propre compte et remplit lui-même son dossier.",
-    "firstName": "Prénom",
-    "lastName": "Nom",
     "email": "Email (facultatif)",
     "phone": "Téléphone WhatsApp",
     "phoneHint": "Format international, par exemple +253 77 12 34 56",
@@ -164,7 +162,9 @@
     "forgotTitle": "Mot de passe oublié",
     "forgotLead": "Indiquez votre email ou votre téléphone : un lien de réinitialisation vous sera envoyé.",
     "forgotSent": "Si un compte existe, un lien vient de partir.",
-    "resetTitle": "Choisir un nouveau mot de passe"
+    "resetTitle": "Choisir un nouveau mot de passe",
+    "name": "Nom complet",
+    "nameHint": "Votre nom tel qu'il figure sur vos documents. Il ne sera plus modifiable et servira pour toutes les éditions."
   },
   "status": {
     "draft": "Brouillon",

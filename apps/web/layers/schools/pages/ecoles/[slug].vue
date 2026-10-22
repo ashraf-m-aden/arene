@@ -72,7 +72,7 @@ useSeoPage({
           <table class="table">
             <thead>
               <tr>
-                <th>{{ $t('registrations.player.firstName') }}</th>
+                <th>{{ $t('registrations.player.name') }}</th>
                 <th>{{ $t('registrations.staff.filterRole') }}</th>
                 <th>{{ $t('registrations.staff.filterCategory') }}</th>
                 <th>{{ $t('registrations.staff.filterStatus') }}</th>

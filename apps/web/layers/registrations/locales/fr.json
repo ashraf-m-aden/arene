@@ -20,8 +20,6 @@
       "review": "Récapitulatif"
     },
     "player": {
-      "firstName": "Prénom du joueur",
-      "lastName": "Nom du joueur",
       "birthDate": "Date de naissance",
       "gender": "Genre",
       "male": "Garçon",
@@ -38,7 +36,9 @@
       "defenderHint": "Garde les cages sur cinq tentatives.",
       "categoryComputed": "Catégorie déduite de l'établissement : {category}",
       "schoolPick": "Choisissez votre établissement dans la liste. S’il n’y figure pas, cochez « autre établissement ».",
-      "schoolChoose": "— Choisir un établissement —"
+      "schoolChoose": "— Choisir un établissement —",
+      "name": "Nom du candidat",
+      "nameLocked": "Repris de votre compte. Il n'est pas modifiable ici."
     },
     "grades": {
       "average": "Moyenne du dernier bulletin (sur 20)",
@@ -69,11 +69,8 @@
       "title": "Mon espace",
       "lead": "Vos dossiers, leur statut, les convocations et les badges.",
       "noFiles": "Aucun dossier pour l'instant.",
-      "newFile": "Nouveau dossier",
       "badge": "Télécharger le badge",
       "download": "Télécharger les données",
-      "delete": "Supprimer le dossier",
-      "deleteConfirm": "Supprimer définitivement ce dossier et ses documents ?",
       "slot": "Votre rendez-vous",
       "noSlot": "Votre rendez-vous vous sera communiqué par message.",
       "reviewNotes": "Message de l'organisation",
@@ -98,7 +95,8 @@
       "randomCheck": "Vérification aléatoire par appel à l'école",
       "decisionSaved": "Décision enregistrée",
       "empty": "Aucun dossier dans cette file.",
-      "export": "Exporter en CSV"
+      "export": "Exporter en CSV",
+      "openPhoto": "Voir la photo"
     },
     "notYetOpen": "Les inscriptions ne sont pas encore ouvertes. Revenez à la date d’ouverture annoncée sur la page de l’édition."
   }

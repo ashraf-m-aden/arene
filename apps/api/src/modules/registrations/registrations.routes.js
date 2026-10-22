@@ -58,7 +58,6 @@ router.post(
 )
 router.get('/:id/badge', validate({ params: common.idParam }), controller.badge)
 router.get('/:id/data', validate({ params: common.idParam }), controller.myData)
-router.delete('/:id', validate({ params: common.idParam }), controller.remove)
 router.get('/:id', validate({ params: common.idParam }), controller.detail)
 
 export default router

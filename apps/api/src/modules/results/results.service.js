@@ -66,8 +66,8 @@ export async function generateForSlot(slotId, { opponents = OPPONENTS_PER_STRIKE
 
 export async function listForSlot(slotId) {
   return Match.find({ slotId })
-    .populate('strikerRegId', 'player.firstName player.lastName bibNumber role')
-    .populate('defenderRegId', 'player.firstName player.lastName bibNumber role')
+    .populate('strikerRegId', 'player.name bibNumber role')
+    .populate('defenderRegId', 'player.name bibNumber role')
     .sort({ order: 1 })
 }
 
@@ -340,7 +340,7 @@ export async function listFinals(editionId, ageCategory) {
   const filter = { editionId: oid(editionId), phase: 'finale' }
   if (ageCategory) filter.ageCategory = ageCategory
   return Match.find(filter)
-    .populate('strikerRegId', 'player.firstName player.lastName bibNumber')
-    .populate('defenderRegId', 'player.firstName player.lastName bibNumber')
+    .populate('strikerRegId', 'player.name bibNumber')
+    .populate('defenderRegId', 'player.name bibNumber')
     .sort({ ageCategory: 1, order: 1 })
 }

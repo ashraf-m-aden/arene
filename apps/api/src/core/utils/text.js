@@ -17,7 +17,7 @@ export function slugify(value = '') {
 }
 
 /** Clé de dédoublonnage : même nom, même date de naissance, même école. */
-export function dedupeKey({ firstName, lastName, birthDate, schoolId }) {
+export function dedupeKey({ name, birthDate, schoolId }) {
   const norm = (v) =>
     String(v || '')
       .normalize('NFD')
@@ -26,7 +26,7 @@ export function dedupeKey({ firstName, lastName, birthDate, schoolId }) {
       .replace(/\s+/g, ' ')
       .trim()
   const day = birthDate ? new Date(birthDate).toISOString().slice(0, 10) : ''
-  return [norm(firstName), norm(lastName), day, String(schoolId || '')].join('|')
+  return [norm(name), day, String(schoolId || '')].join('|')
 }
 
 /** Normalise un numéro djiboutien vers E.164. */

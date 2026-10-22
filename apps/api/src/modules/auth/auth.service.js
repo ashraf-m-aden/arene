@@ -124,7 +124,7 @@ export async function forgotPassword(identifier) {
     channel: user.email ? 'email' : 'whatsapp',
     to: user.email || user.phone,
     locale: user.locale,
-    payload: { token, firstName: user.firstName }
+    payload: { token, prenom: user.name }
   })
   return { sent: true }
 }

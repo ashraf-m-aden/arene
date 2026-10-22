@@ -19,7 +19,15 @@ if (!edition.value) {
 const { state: windowState, isOpen } = useEditionWindow(edition)
 const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
 
-const categories = computed(() => Object.entries(edition.value?.seats || {}))
+/**
+ * Seules les catégories dévoilées par l'API portent des chiffres : en dessous du
+ * seuil de remplissage, elle renvoie `tight: false` et rien d'autre.
+ */
+const categories = computed(() =>
+  Object.entries(edition.value?.seats || {}).filter(([, roles]: any) => roles?.tight)
+)
+
+const seatsRevealed = computed(() => categories.value.length > 0)
 
 useSeoPage({
   title: `${text(edition.value.title)} — L'Arène`,
@@ -87,19 +95,25 @@ useSeoPage({
     <section class="section">
       <div class="container grid grid--sidebar">
         <div class="stack">
-          <h2>{{ $t('editions.seatsByRole') }}</h2>
-          <div class="grid grid--2">
-            <article v-for="[category, roles] in categories" :key="category" class="card">
-              <h3 class="card__title">{{ $t(`category.${category}`) }}</h3>
-              <AreneMeter
-                v-for="(seat, role) in roles"
-                :key="role"
-                :label="$t(`role.${role}`)"
-                :used="seat.used"
-                :capacity="seat.capacity"
-              />
-            </article>
-          </div>
+          <!-- Places restantes : affichées seulement quand une catégorie approche
+               de son plafond, pour que le chiffre veuille dire quelque chose. -->
+          <template v-if="seatsRevealed">
+            <h2>{{ $t('editions.seatsByRole') }}</h2>
+            <p class="muted">{{ $t('editions.seatsTight') }}</p>
+            <div class="grid grid--2">
+              <article v-for="[category, roles] in categories" :key="category" class="card">
+                <h3 class="card__title">{{ $t(`category.${category}`) }}</h3>
+                <template v-for="(seat, role) in roles" :key="role">
+                  <AreneMeter
+                    v-if="role !== 'tight'"
+                    :label="$t(`role.${role}`)"
+                    :used="seat.used"
+                    :capacity="seat.capacity"
+                  />
+                </template>
+              </article>
+            </div>
+          </template>
 
           <h2>{{ $t('editions.tabs.rules') }}</h2>
           <ul class="facts">

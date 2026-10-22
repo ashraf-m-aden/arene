@@ -35,6 +35,31 @@ Modélisation : le `User` porte le compte permanent, la `Registration` porte la 
 une édition donnée** (`editionId` + `candidateId`). Le champ s'appelle `candidateId` et non
 `parentId` pour cette raison.
 
+### Le nom est saisi une seule fois
+
+Le candidat saisit son **nom complet en un seul champ**, à la création de son compte. Pas de
+prénom/nom séparés : les noms djiboutiens s'écrivent en chaîne (nom propre, nom du père, nom du
+grand-père) et ne se découpent pas en deux cases.
+
+Ce nom **n'est plus jamais modifié** et vaut pour toutes les éditions. Le formulaire de
+candidature ne le redemande pas : il l'affiche en lecture seule. `Registration.player.name` en
+garde une copie, posée par l'API à la création du brouillon, que le candidat ne peut pas changer
+— le dossier conserve ainsi le nom tel qu'il était au moment de la candidature.
+
+Le reste du dossier (école, notes, bulletin, photo, rôle) change librement d'une édition à
+l'autre. Affichage public : premier nom + initiales des suivants
+(`registrationSchema.virtual('publicName')`), jamais le nom complet d'un mineur.
+
+### Un seul dossier par édition, et pas de suppression
+
+- `registrations.service.createDraft` rend le dossier existant si le candidat en a déjà un pour
+  cette édition, **quel que soit son statut**. Sans ce contrôle, un candidat dont le dossier
+  était déjà envoyé repartait sur un dossier vierge et se retrouvait avec deux candidatures
+  concurrentes dans la même édition.
+- **Le candidat ne peut pas supprimer son dossier.** Un dossier engage l'organisation (place
+  réservée, rendez-vous, vérification déjà faite) : son retrait passe par le staff. Il n'existe
+  ni route `DELETE /registrations/:id` ni bouton dans l'espace candidat.
+
 ## Parcours de candidature (de bout en bout)
 
 1. **Pré-inscription en ligne** (`inscription/formulaire.vue`, module `registrations`) : le
@@ -151,13 +176,14 @@ le code**. Ne pas les décrire comme faits.
    `SCHOOL_POINTS` (tous dans `packages/shared/src/constants.js`), plus `results.service`. Une
    édition intellectuelle demandera au minimum un `Edition.discipline` et de rendre les rôles,
    le barème et le format de rencontre dépendants de l'édition plutôt que globaux.
-3. **Réinscription allégée d'un candidat connu** — un candidat qui revient refait aujourd'hui
-   les 4 étapes complètes : `registrations.service.createDraft` crée un dossier vide, sans
-   reprendre les données de ses dossiers passés. La cible est de **pré-remplir l'identité,
-   l'école et la photo depuis la dernière candidature** et de ne demander que les notes et le
-   nouveau bulletin, en sautant la revérification d'identité en présentiel.
+3. **Réinscription allégée d'un candidat connu** — partiellement fait. Le **nom** est désormais
+   repris du compte et n'est plus redemandé (voir « Le nom est saisi une seule fois »). Le reste
+   ne l'est pas : `registrations.service.createDraft` ouvre un dossier qui ne reprend ni l'école,
+   ni la photo, ni la date de naissance des candidatures passées. La cible est de **les
+   pré-remplir depuis la dernière candidature** et de ne demander que les notes et le nouveau
+   bulletin, en sautant la revérification d'identité en présentiel.
 4. **`anonymizeEdition` travaille contre la réutilisation** — à la clôture d'une édition,
-   `registrations.service.anonymizeEdition` efface `player.lastName`, `player.birthDate`,
+   `registrations.service.anonymizeEdition` efface `player.name`, `player.birthDate`,
    `player.photoFileId` et `grades.bulletinFileId` sur les dossiers de l'édition. Le compte
    `User` survit, mais plus aucune donnée de dossier n'est récupérable pour pré-remplir une
    candidature suivante. Si le point 3 est implémenté, il faudra décider où vit le profil

@@ -4,8 +4,7 @@ const auth = useAuthStore()
 const localePath = useLocalePath()
 
 const form = reactive({
-  firstName: '',
-  lastName: '',
+  name: '',
   email: '',
   phone: '',
   password: '',
@@ -49,14 +48,17 @@ async function submit() {
       <AreneNotice v-if="error" tone="danger">{{ error }}</AreneNotice>
 
       <form class="card stack" @submit.prevent="submit">
-        <div class="two">
-          <AreneField :label="$t('auth.firstName')" for="firstName" required :error="fieldErrors.firstName">
-            <input id="firstName" v-model="form.firstName" class="input" autocomplete="given-name" required>
-          </AreneField>
-          <AreneField :label="$t('auth.lastName')" for="lastName" required :error="fieldErrors.lastName">
-            <input id="lastName" v-model="form.lastName" class="input" autocomplete="family-name" required>
-          </AreneField>
-        </div>
+        <!-- Le nom est saisi ici, une seule fois : il porte le compte permanent
+             et n'est plus jamais redemande, ni modifiable. -->
+        <AreneField
+          :label="$t('auth.name')"
+          :hint="$t('auth.nameHint')"
+          for="name"
+          required
+          :error="fieldErrors.name"
+        >
+          <input id="name" v-model="form.name" class="input" autocomplete="name" required>
+        </AreneField>
 
         <AreneField
           :label="$t('auth.phone')"

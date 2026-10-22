@@ -107,7 +107,7 @@ async function selectFinalists() {
 
 const playerName = (registration: any) =>
   registration
-    ? `${registration.player?.firstName ?? ''} ${registration.player?.lastName ?? ''}`.trim()
+    ? String(registration.player?.name ?? '').trim()
     : '—'
 </script>
 

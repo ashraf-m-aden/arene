@@ -69,7 +69,7 @@ export async function listForEdition(editionId, { publishedOnly = true } = {}) {
 export async function getBySlug(slug, { publishedOnly = true } = {}) {
   const gallery = await Gallery.findOne({ slug }).populate(
     'items.featuredRegIds',
-    'player.firstName player.lastName role'
+    'player.name role'
   )
   if (!gallery || (publishedOnly && !gallery.isPublished)) throw notFound('Galerie introuvable')
   return withUrls(gallery)

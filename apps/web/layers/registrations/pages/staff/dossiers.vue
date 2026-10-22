@@ -59,9 +59,8 @@ watch(
   }
 )
 
-/** Le bulletin est servi par un lien signé de courte durée. */
-async function openBulletin(file: any) {
-  const fileId = file.grades?.bulletinFileId
+/** Les pièces sont servies par un lien signé de courte durée, jamais en direct. */
+async function openPiece(fileId?: string | null) {
   if (!fileId) return
   try {
     const { data } = await $api.get<{ data: any }>(`/files/${fileId}/url`)
@@ -181,7 +180,7 @@ const statuses = [
       <table class="table">
         <thead>
           <tr>
-            <th>{{ $t('registrations.player.firstName') }}</th>
+            <th>{{ $t('registrations.player.name') }}</th>
             <th>{{ $t('registrations.player.school') }}</th>
             <th>{{ $t('registrations.staff.filterRole') }}</th>
             <th class="numeric">{{ $t('registrations.staff.declaredAverage') }}</th>
@@ -193,7 +192,7 @@ const statuses = [
         <tbody>
           <tr v-for="file in items" :key="file._id">
             <td>
-              <strong>{{ file.player?.firstName }} {{ file.player?.lastName }}</strong>
+              <strong>{{ file.player?.name }}</strong>
               <span v-if="file.flags?.length" class="badge badge--warning">{{ file.flags.length }}</span>
             </td>
             <td>{{ file.schoolId ? text(file.schoolId.name) : '—' }}</td>
@@ -206,8 +205,19 @@ const statuses = [
             <td>{{ file.slotId ? file.slotId.label : '—' }}</td>
             <td>
               <div class="cluster">
-                <button class="btn btn--quiet btn--sm" @click="openBulletin(file)">
+                <button
+                  class="btn btn--quiet btn--sm"
+                  :disabled="!file.grades?.bulletinFileId"
+                  @click="openPiece(file.grades?.bulletinFileId)"
+                >
                   {{ $t('registrations.staff.openBulletin') }}
+                </button>
+                <button
+                  class="btn btn--quiet btn--sm"
+                  :disabled="!file.player?.photoFileId"
+                  @click="openPiece(file.player?.photoFileId)"
+                >
+                  {{ $t('registrations.staff.openPhoto') }}
                 </button>
                 <button
                   v-if="['submitted', 'under_review'].includes(file.status)"
@@ -229,7 +239,7 @@ const statuses = [
     <aside v-if="selected" class="decision card">
       <div class="spread">
         <h2 class="card__title">
-          {{ selected.player?.firstName }} {{ selected.player?.lastName }}
+          {{ selected.player?.name }}
         </h2>
         <button class="btn btn--quiet btn--sm" @click="selected = null">
           {{ $t('common.close') }}
@@ -295,8 +305,19 @@ const statuses = [
       </label>
 
       <div class="cluster">
-        <button class="btn btn--quiet btn--sm" @click="openBulletin(selected)">
+        <button
+          class="btn btn--quiet btn--sm"
+          :disabled="!selected.grades?.bulletinFileId"
+          @click="openPiece(selected.grades?.bulletinFileId)"
+        >
           {{ $t('registrations.staff.openBulletin') }}
+        </button>
+        <button
+          class="btn btn--quiet btn--sm"
+          :disabled="!selected.player?.photoFileId"
+          @click="openPiece(selected.player?.photoFileId)"
+        >
+          {{ $t('registrations.staff.openPhoto') }}
         </button>
         <button class="btn btn--primary" :disabled="pending" @click="submitDecision">
           {{ $t('common.save') }}

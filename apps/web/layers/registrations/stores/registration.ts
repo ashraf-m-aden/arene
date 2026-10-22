@@ -7,8 +7,8 @@ interface DraftState {
   editionId: string | null
   step: Step
   player: {
-    firstName: string
-    lastName: string
+    /** Copie du nom du compte, posée par l'API. Jamais saisie ici. */
+    name: string
     birthDate: string
     gender: 'm' | 'f' | ''
     photoFileId: string | null
@@ -31,7 +31,7 @@ const emptyDraft = (): DraftState => ({
   registrationId: null,
   editionId: null,
   step: 1,
-  player: { firstName: '', lastName: '', birthDate: '', gender: '', photoFileId: null },
+  player: { name: '', birthDate: '', gender: '', photoFileId: null },
   schoolId: null,
   schoolLabel: '',
   newSchool: null,
@@ -62,7 +62,7 @@ export const useRegistrationStore = defineStore('registration', {
   getters: {
     hasDraft: (state) => Boolean(state.draft.registrationId),
     stepsDone: (state) => ({
-      1: Boolean(state.draft.player.firstName && state.draft.player.birthDate && state.draft.role),
+      1: Boolean(state.draft.player.birthDate && state.draft.role),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),
       3: Boolean(
         state.draft.consents.participation && state.draft.consents.bulletinAuthenticity
@@ -72,7 +72,6 @@ export const useRegistrationStore = defineStore('registration', {
     missingFields(): string[] {
       const missing: string[] = []
       const draft = this.draft
-      if (!draft.player.firstName || !draft.player.lastName) missing.push('player.name')
       if (!draft.player.birthDate) missing.push('player.birthDate')
       if (!draft.schoolId && !draft.newSchool) missing.push('school')
       if (!draft.role) missing.push('role')
@@ -114,8 +113,6 @@ export const useRegistrationStore = defineStore('registration', {
 
         if (step === 1) {
           payload.player = {
-            firstName: this.draft.player.firstName,
-            lastName: this.draft.player.lastName,
             birthDate: this.draft.player.birthDate,
             gender: this.draft.player.gender,
             ...(this.draft.player.photoFileId ? { photoFileId: this.draft.player.photoFileId } : {})
@@ -197,12 +194,6 @@ export const useRegistrationStore = defineStore('registration', {
       const { data } = await $api.get<{ data: any[] }>('/registrations/mine')
       this.mine = data
       return data
-    },
-
-    async remove(id: string) {
-      const { $api } = useNuxtApp()
-      await $api.delete(`/registrations/${id}`)
-      this.mine = this.mine.filter((item) => item._id !== id)
     }
   },
 

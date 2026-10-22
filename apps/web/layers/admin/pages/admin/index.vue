@@ -13,8 +13,7 @@ const error = ref('')
 const feedback = ref('')
 
 const staffForm = reactive({
-  firstName: '',
-  lastName: '',
+  name: '',
   email: '',
   phone: '',
   password: '',
@@ -43,8 +42,7 @@ async function createStaff() {
     if (!staffForm.phone) delete payload.phone
     await $api.post('/auth/staff', payload)
     feedback.value = t('admin.staffCreated')
-    staffForm.firstName = ''
-    staffForm.lastName = ''
+    staffForm.name = ''
     staffForm.email = ''
     staffForm.phone = ''
     staffForm.password = ''
@@ -116,7 +114,7 @@ async function importSchools(event: Event) {
         <table class="table">
           <thead>
             <tr>
-              <th>{{ $t('auth.firstName') }}</th>
+              <th>{{ $t('auth.name') }}</th>
               <th>{{ $t('auth.email') }}</th>
               <th>{{ $t('admin.status') }}</th>
               <th />
@@ -125,7 +123,7 @@ async function importSchools(event: Event) {
           <tbody>
             <tr v-for="member in team" :key="member._id">
               <td>
-                <strong>{{ member.firstName }} {{ member.lastName }}</strong>
+                <strong>{{ member.name }}</strong>
                 <span class="badge">{{ member.role }}</span>
               </td>
               <td>{{ member.email }}</td>
@@ -145,11 +143,8 @@ async function importSchools(event: Event) {
       </div>
 
       <form class="card card--flat staff-form" @submit.prevent="createStaff">
-        <AreneField :label="$t('auth.firstName')" for="sFirst" required>
-          <input id="sFirst" v-model="staffForm.firstName" class="input" required>
-        </AreneField>
-        <AreneField :label="$t('auth.lastName')" for="sLast" required>
-          <input id="sLast" v-model="staffForm.lastName" class="input" required>
+        <AreneField :label="$t('auth.name')" for="sName" required>
+          <input id="sName" v-model="staffForm.name" class="input" required>
         </AreneField>
         <AreneField :label="$t('auth.email')" for="sEmail" required>
           <input id="sEmail" v-model="staffForm.email" class="input" type="email" required>

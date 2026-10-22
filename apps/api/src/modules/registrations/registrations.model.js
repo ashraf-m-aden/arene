@@ -15,8 +15,12 @@ const registrationSchema = new mongoose.Schema(
     locale: { type: String, enum: LOCALES, default: 'fr' },
 
     player: {
-      firstName: { type: String, trim: true },
-      lastName: { type: String, trim: true },
+      /**
+       * Copie du nom du compte, posee a la creation du brouillon. Le candidat ne
+       * la saisit ni ne la modifie : le dossier garde le nom tel qu'il etait au
+       * moment de la candidature.
+       */
+      name: { type: String, trim: true },
       birthDate: Date,
       gender: { type: String, enum: ['m', 'f'] },
       photoFileId: { type: ObjectId, ref: 'File' }
@@ -105,13 +109,18 @@ registrationSchema.index(
 )
 
 registrationSchema.virtual('playerName').get(function playerName() {
-  return `${this.player?.firstName || ''} ${this.player?.lastName || ''}`.trim()
+  return String(this.player?.name || '').trim()
 })
 
-/** Nom affichable en public : prénom + initiale, jamais le nom complet d'un mineur. */
+/**
+ * Nom affichable en public : premier nom + initiales des suivants, jamais le nom
+ * complet d'un mineur. « Idriss Ahmed Farah » devient « Idriss A. F. ».
+ */
 registrationSchema.virtual('publicName').get(function publicName() {
-  const initial = this.player?.lastName ? `${this.player.lastName[0].toUpperCase()}.` : ''
-  return `${this.player?.firstName || ''} ${initial}`.trim()
+  const parts = String(this.player?.name || '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return ''
+  const [first, ...rest] = parts
+  return [first, ...rest.map((part) => `${part[0].toUpperCase()}.`)].join(' ')
 })
 
 registrationSchema.set('toJSON', {

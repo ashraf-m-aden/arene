@@ -52,14 +52,6 @@ async function downloadData(id: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30000)
 }
 
-async function remove(id: string) {
-  if (!window.confirm(t('registrations.account.deleteConfirm'))) return
-  try {
-    await store.remove(id)
-  } catch (err: any) {
-    error.value = err.message
-  }
-}
 </script>
 
 <template>
@@ -67,14 +59,11 @@ async function remove(id: string) {
     <div class="container">
       <div class="spread">
         <AreneSectionHead
-          :eyebrow="auth.user?.firstName"
+          :eyebrow="auth.user?.name"
           :title="$t('registrations.account.title')"
           :lead="$t('registrations.account.lead')"
         />
         <div class="cluster">
-          <NuxtLink :to="localePath('/inscription/formulaire')" class="btn btn--primary btn--sm">
-            {{ $t('registrations.account.newFile') }}
-          </NuxtLink>
           <button class="btn btn--ghost btn--sm" @click="auth.logout()">
             {{ $t('nav.logout') }}
           </button>
@@ -93,7 +82,7 @@ async function remove(id: string) {
           </div>
 
           <h2 class="card__title">
-            {{ file.player?.firstName }} {{ file.player?.lastName }}
+            {{ file.player?.name }}
           </h2>
           <p class="muted numeric">
             {{ $t('registrations.account.fileNumber') }}
@@ -143,9 +132,6 @@ async function remove(id: string) {
             </NuxtLink>
             <button class="btn btn--quiet btn--sm" @click="downloadData(file._id)">
               {{ $t('registrations.account.download') }}
-            </button>
-            <button class="btn btn--quiet btn--sm" @click="remove(file._id)">
-              {{ $t('registrations.account.delete') }}
             </button>
           </div>
         </article>
