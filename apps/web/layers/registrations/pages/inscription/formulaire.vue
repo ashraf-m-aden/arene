@@ -32,37 +32,54 @@ onMounted(async () => {
   }
 })
 
-/* ── Étape 1 : recherche d'établissement ─────────────────────────────── */
-const schoolQuery = ref('')
-const schoolResults = ref<any[]>([])
+/* ── Étape 1 : choix de l'établissement ──────────────────────────────── */
+const schools = ref<any[]>([])
 const schoolOther = ref(false)
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-
-watch(schoolQuery, (value) => {
-  if (searchTimer) clearTimeout(searchTimer)
-  if (!value || value.length < 2) {
-    schoolResults.value = []
-    return
-  }
-  // Petite temporisation : on n'interroge l'API qu'une fois la frappe calmée.
-  searchTimer = setTimeout(async () => {
-    const { $api } = useNuxtApp()
-    const { data } = await $api
-      .get<{ data: any[] }>(`/schools?q=${encodeURIComponent(value)}&limit=8`)
-      .catch(() => ({ data: [] as any[] }))
-    schoolResults.value = data
-  }, 300)
+/**
+ * Le référentiel entier est chargé une fois : il tient en quelques dizaines
+ * d'entrées. Une liste déroulante montre d'emblée ce qui existe, là où une
+ * recherche libre obligeait à deviner le nom avant de voir la moindre
+ * proposition — et poussait à cocher « autre établissement » à tort.
+ */
+onMounted(async () => {
+  const { $api } = useNuxtApp()
+  const { data } = await $api
+    .get<{ data: any[] }>('/schools?limit=100')
+    .catch(() => ({ data: [] as any[] }))
+  schools.value = data
 })
 
-function chooseSchool(school: any) {
-  store.draft.schoolId = school._id
-  store.draft.schoolLabel = text(school.name)
-  store.draft.newSchool = null
-  store.draft.ageCategory = school.type
-  schoolResults.value = []
-  schoolQuery.value = text(school.name)
-}
+/** Groupées par type, pour que le candidat trouve sa catégorie d'un coup d'œil. */
+const schoolGroups = computed(() => {
+  const collator = new Intl.Collator('fr', { sensitivity: 'base' })
+  const byType = (type: string) =>
+    schools.value
+      .filter((school) => school.type === type)
+      .sort((a, b) => collator.compare(text(a.name), text(b.name)))
+  return [
+    { type: 'lycee', items: byType('lycee') },
+    { type: 'universite', items: byType('universite') }
+  ].filter((group) => group.items.length)
+})
+
+/** Le `select` porte l'identifiant ; le reste du brouillon en découle. */
+const selectedSchoolId = computed({
+  get: () => store.draft.schoolId || '',
+  set: (id: string) => {
+    const school = schools.value.find((row) => String(row._id) === String(id))
+    if (!school) {
+      store.draft.schoolId = null
+      store.draft.schoolLabel = ''
+      return
+    }
+    store.draft.schoolId = school._id
+    store.draft.schoolLabel = text(school.name)
+    store.draft.newSchool = null
+    // La catégorie d'âge suit l'établissement : lycée ou université.
+    store.draft.ageCategory = school.type
+  }
+})
 
 const otherSchool = reactive({ name: '', type: 'lycee' as 'lycee' | 'universite' })
 
@@ -217,25 +234,26 @@ function back() {
 
             <AreneField
               :label="$t('registrations.player.school')"
-              :hint="$t('registrations.player.schoolSearch')"
+              :hint="$t('registrations.player.schoolPick')"
               for="school"
             >
-              <input
+              <select
                 id="school"
-                v-model="schoolQuery"
-                class="input"
-                type="search"
-                autocomplete="off"
+                v-model="selectedSchoolId"
+                class="select"
                 :disabled="schoolOther"
               >
-              <ul v-if="schoolResults.length" class="suggestions">
-                <li v-for="school in schoolResults" :key="school._id">
-                  <button type="button" @click="chooseSchool(school)">
+                <option value="">{{ $t('registrations.player.schoolChoose') }}</option>
+                <optgroup
+                  v-for="group in schoolGroups"
+                  :key="group.type"
+                  :label="$t(`category.${group.type}`)"
+                >
+                  <option v-for="school in group.items" :key="school._id" :value="school._id">
                     {{ text(school.name) }}
-                    <span class="badge">{{ $t(`category.${school.type}`) }}</span>
-                  </button>
-                </li>
-              </ul>
+                  </option>
+                </optgroup>
+              </select>
             </AreneField>
 
             <label class="check" :class="{ 'check--checked': schoolOther }">
@@ -474,29 +492,6 @@ function back() {
 
 .form-done {
   margin-block-start: var(--space-5);
-}
-
-.suggestions {
-  display: grid;
-  gap: 2px;
-  margin-block-start: var(--space-2);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-
-  button {
-    inline-size: 100%;
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    text-align: start;
-    background: var(--color-paper);
-
-    &:hover {
-      background: var(--color-surface-2);
-    }
-  }
 }
 
 .recap {

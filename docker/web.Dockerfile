@@ -7,7 +7,13 @@ COPY apps/web/package.json apps/web/
 # --legacy-peer-deps : le verrou est genere avec ce drapeau (voir README et
 # .github/workflows/ci.yml). Sans lui, npm derive un arbre different et rejette
 # le verrou avec EUSAGE, alors que le verrou est bon.
-RUN npm ci --legacy-peer-deps --workspace @arene/web --include-workspace-root
+#
+# --ignore-scripts : apps/web declare `postinstall: nuxt prepare`, qui a besoin
+# du code source (nuxt.config, layers). A cette ligne, seuls les package.json
+# sont copies — c'est voulu, pour que la couche de dependances reste en cache
+# tant qu'ils ne changent pas. `nuxt build` refait le prepare plus bas, une fois
+# les sources presentes.
+RUN npm ci --legacy-peer-deps --ignore-scripts --workspace @arene/web --include-workspace-root
 
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web

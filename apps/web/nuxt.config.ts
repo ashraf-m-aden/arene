@@ -1,7 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
+  /**
+   * Devtools en développement seulement. Activé en dur, il est aussi chargé au
+   * build de production, où il réclame `vite` — qu'il déclare en peerDependency.
+   * Dans l'image Docker du web, seul ce workspace est installé : `vite` n'est
+   * alors présent nulle part (en local il arrive par `vitest`, une dépendance de
+   * dev de l'API) et le build échoue sur « Cannot find package 'vite' ».
+   */
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
 
   /** Un layer par module métier ; `base` porte tout ce qui est partagé. */
   extends: [

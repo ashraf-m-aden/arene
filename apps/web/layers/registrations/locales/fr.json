@@ -29,7 +29,6 @@
       "photo": "Photo du joueur",
       "photoHint": "Portrait récent, visage dégagé. Image privée, jamais publiée sans votre accord.",
       "school": "Établissement",
-      "schoolSearch": "Rechercher un lycée ou une université",
       "schoolOther": "Mon établissement n'est pas dans la liste",
       "schoolOtherName": "Nom de l'établissement",
       "schoolOtherType": "Type d'établissement",
@@ -37,7 +36,9 @@
       "role": "Rôle choisi",
       "strikerHint": "Tire les cinq tentatives.",
       "defenderHint": "Garde les cages sur cinq tentatives.",
-      "categoryComputed": "Catégorie déduite de l'établissement : {category}"
+      "categoryComputed": "Catégorie déduite de l'établissement : {category}",
+      "schoolPick": "Choisissez votre établissement dans la liste. S’il n’y figure pas, cochez « autre établissement ».",
+      "schoolChoose": "— Choisir un établissement —"
     },
     "grades": {
       "average": "Moyenne du dernier bulletin (sur 20)",
