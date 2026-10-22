@@ -7,7 +7,8 @@ FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/
-RUN npm ci --omit=dev --workspace @arene/api --include-workspace-root
+# Meme drapeau que le web et que la CI : le verrou est genere avec.
+RUN npm ci --legacy-peer-deps --omit=dev --workspace @arene/api --include-workspace-root
 
 FROM base AS runtime
 ENV NODE_ENV=production

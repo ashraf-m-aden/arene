@@ -4,7 +4,10 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/web/package.json apps/web/
-RUN npm ci --workspace @arene/web --include-workspace-root
+# --legacy-peer-deps : le verrou est genere avec ce drapeau (voir README et
+# .github/workflows/ci.yml). Sans lui, npm derive un arbre different et rejette
+# le verrou avec EUSAGE, alors que le verrou est bon.
+RUN npm ci --legacy-peer-deps --workspace @arene/web --include-workspace-root
 
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
