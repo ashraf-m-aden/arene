@@ -10,7 +10,7 @@ const { data: edition } = await useAsyncData('inscription-edition', () => {
   return $api.get<{ data: any }>('/editions/current').then((r) => r.data).catch(() => null)
 })
 
-const isOpen = computed(() => edition.value?.status === 'registration_open')
+const { state: windowState, isOpen } = useEditionWindow(edition)
 
 useSeoPage({
   title: `${t('registrations.pitchTitle')} — L'Arène`,
@@ -50,6 +50,11 @@ const needs = ['needPhoto', 'needBulletin', 'needAverage', 'needPhone']
           </template>
         </div>
 
+        <!-- « Pas encore ouvert » et « definitivement ferme » n'appellent pas la
+             meme reaction : on ne renvoie pas un candidat qui est juste en avance. -->
+        <AreneNotice v-else-if="windowState === 'soon'" tone="warning">
+          {{ $t('registrations.notYetOpen') }}
+        </AreneNotice>
         <AreneNotice v-else tone="danger">{{ $t('registrations.closed') }}</AreneNotice>
         <p v-if="!auth.isLoggedIn && isOpen" class="muted">{{ $t('registrations.loginFirst') }}</p>
       </div>

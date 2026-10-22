@@ -12,8 +12,19 @@ const editionSchema = new mongoose.Schema(
     description: { type: i18n, default: () => ({}) },
     season: String,
     status: { type: String, enum: EDITION_STATUSES, default: 'draft', index: true },
+    /**
+     * Fenetre d'inscription. C'est elle, et elle seule, qui decide si on peut
+     * encore deposer un dossier (avec le statut de l'edition).
+     */
     registrationOpensAt: { type: Date, required: true },
     registrationClosesAt: { type: Date, required: true },
+    /**
+     * Dates du tournoi lui-meme. Informatives : elles n'ouvrent ni ne ferment
+     * les inscriptions, et le tournoi peut tres bien se tenir des semaines apres
+     * la cloture des dossiers.
+     */
+    startsAt: Date,
+    endsAt: Date,
     capacity: {
       lycee: roleCapacity,
       universite: roleCapacity
@@ -22,7 +33,14 @@ const editionSchema = new mongoose.Schema(
     ageCategories: { type: [String], enum: AGE_CATEGORIES, default: ['lycee', 'universite'] },
     rules: {
       gradeThreshold: { type: Number, default: DEFAULT_GRADE_THRESHOLD },
-      requiresOriginalBulletin: { type: Boolean, default: true }
+      requiresOriginalBulletin: { type: Boolean, default: true },
+      /**
+       * Règlement propre à cette édition, saisi par l'admin. Plusieurs éditions
+       * peuvent être ouvertes en même temps, et une édition intellectuelle n'a pas
+       * les mêmes règles qu'une sportive : le texte appartient donc à l'édition.
+       * Vide, l'affichage retombe sur les règles générales des locales.
+       */
+      text: { type: i18n, default: () => ({}) }
     },
     venue: {
       name: String,

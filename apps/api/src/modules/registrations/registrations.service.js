@@ -20,7 +20,7 @@ async function assertOwnership(registration, user) {
   if (['staff', 'admin'].includes(user.role)) return
   // candidateId est peuplé pour les besoins des notifications : on compare l'identifiant.
   const ownerId = String(registration.candidateId?._id ?? registration.candidateId)
-  if (ownerId !== String(user.id)) throw forbidden('Dossier d’un autre candidat')
+  if (ownerId !== String(user.id)) throw forbidden('Dossier d’un autre candidat').withKey('notYourFile')
 }
 
 function pushHistory(registration, to, by, note) {
@@ -32,7 +32,7 @@ export async function getById(id, user) {
   const registration = await Registration.findById(id)
     .populate('schoolId', 'name slug type city')
     .populate('candidateId', 'firstName lastName email phone locale')
-  if (!registration) throw notFound('Dossier introuvable')
+  if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
   if (user) await assertOwnership(registration, user)
   return registration
 }
@@ -40,7 +40,7 @@ export async function getById(id, user) {
 export async function createDraft({ editionId, locale }, candidateId) {
   const editions = await editionsService()
   const edition = await editions.getById(editionId)
-  if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions ne sont pas ouvertes')
+  if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions ne sont pas ouvertes').withKey('registrationsNotOpen')
 
   const existingDraft = await Registration.findOne({ editionId, candidateId, status: 'draft' })
   if (existingDraft) return existingDraft
@@ -52,7 +52,7 @@ export async function createDraft({ editionId, locale }, candidateId) {
 export async function patch(id, user, input) {
   const registration = await getById(id, user)
   if (!CANDIDATE_EDITABLE_STATUSES.includes(registration.status) && user.role === 'candidate') {
-    throw badRequest('Ce dossier n’est plus modifiable')
+    throw badRequest('Ce dossier n’est plus modifiable').withKey('fileLocked')
   }
 
   if (input.newSchool) {
@@ -103,7 +103,7 @@ export async function patch(id, user, input) {
 export async function submit(id, user) {
   const registration = await getById(id, user)
   if (!canTransitionRegistration(registration.status, 'submitted')) {
-    throw badRequest('Ce dossier a déjà été envoyé')
+    throw badRequest('Ce dossier a déjà été envoyé').withKey('fileAlreadySubmitted')
   }
 
   const missing = []
@@ -115,11 +115,11 @@ export async function submit(id, user) {
   if (!registration.grades?.bulletinFileId) missing.push('grades.bulletinFileId')
   if (!registration.consents?.participation) missing.push('consents.participation')
   if (!registration.consents?.bulletinAuthenticity) missing.push('consents.bulletinAuthenticity')
-  if (missing.length) throw badRequest('Dossier incomplet', { missing })
+  if (missing.length) throw badRequest('Dossier incomplet', { missing }).withKey('fileIncomplete')
 
   const editions = await editionsService()
   const edition = await editions.getById(registration.editionId)
-  if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions sont fermées')
+  if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions sont fermées').withKey('registrationsClosed')
 
   const seats = await editions.seatsLeft(registration.editionId)
   const seatsLeftForRole = seats?.[registration.ageCategory]?.[registration.role]?.left ?? 0
@@ -191,7 +191,7 @@ export async function list(query) {
 export async function review(id, staffId, { decision, reason, randomCheck = false }) {
   const registration = await getById(id)
   if (!['submitted', 'under_review'].includes(registration.status)) {
-    throw badRequest('Ce dossier n’est pas en attente de validation')
+    throw badRequest('Ce dossier n’est pas en attente de validation').withKey('fileNotPendingReview')
   }
 
   const target =
@@ -201,7 +201,7 @@ export async function review(id, staffId, { decision, reason, randomCheck = fals
     const editions = await editionsService()
     const seats = await editions.seatsLeft(registration.editionId)
     const left = seats?.[registration.ageCategory]?.[registration.role]?.left ?? 0
-    if (left <= 0) throw conflict('Plus de place pour ce rôle dans cette catégorie')
+    if (left <= 0) throw conflict('Plus de place pour ce rôle dans cette catégorie').withKey('noSeatsLeft')
     registration.qrToken = crypto.randomBytes(24).toString('base64url')
     const edition = await editions.getById(registration.editionId)
     registration.payment = { ...registration.payment?.toObject?.(), amount: edition.fee, status: 'due' }
@@ -226,12 +226,38 @@ export async function review(id, staffId, { decision, reason, randomCheck = fals
   return registration
 }
 
+/**
+ * Dossiers désignés un par un, restreints à l'édition visée : un identifiant
+ * venu d'ailleurs ne doit pas permettre d'écrire à quelqu'un d'une autre édition.
+ */
+export async function listByIds(editionId, ids) {
+  return Registration.find({ editionId, _id: { $in: ids } })
+    .populate('candidateId', 'email phone locale firstName')
+    .sort({ createdAt: 1 })
+}
+
+/**
+ * Dossiers acceptés qui n'ont pas encore de rendez-vous, du plus ancien au plus
+ * récent. C'est la file d'attente que la répartition automatique consomme : le
+ * premier à avoir envoyé son dossier passe le premier.
+ */
+export async function listAwaitingSlot(editionId, { ageCategory } = {}) {
+  return Registration.find({
+    editionId,
+    status: 'approved',
+    slotId: null,
+    ...(ageCategory ? { ageCategory } : {})
+  })
+    .sort({ 'consents.submittedAt': 1, createdAt: 1 })
+    .select('_id role ageCategory candidateId')
+}
+
 /** Appelée par le module Créneaux quand une place est attribuée. */
 export async function attachSlot(registrationId, slotId, actorId) {
   const registration = await Registration.findById(registrationId)
-  if (!registration) throw notFound('Dossier introuvable')
+  if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
   if (!['approved', 'scheduled'].includes(registration.status)) {
-    throw badRequest('Seul un dossier accepté reçoit un créneau')
+    throw badRequest('Seul un dossier accepté reçoit un créneau').withKey('onlyApprovedGetsSlot')
   }
   registration.slotId = slotId
   if (registration.status === 'approved') pushHistory(registration, 'scheduled', actorId, 'créneau attribué')
@@ -243,7 +269,7 @@ export async function findByQrToken(qrToken) {
   const registration = await Registration.findOne({ qrToken })
     .populate('schoolId', 'name slug type')
     .populate('slotId', 'label startsAt endsAt venue')
-  if (!registration) throw notFound('Badge inconnu')
+  if (!registration) throw notFound('Badge inconnu').withKey('badgeUnknown')
   return registration
 }
 
@@ -254,14 +280,14 @@ export async function findByQrToken(qrToken) {
  */
 export async function checkIn(registrationId, staffId, { payment, bulletinChecked, contractSigned, occurredAt }) {
   const registration = await Registration.findById(registrationId)
-  if (!registration) throw notFound('Dossier introuvable')
+  if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
   if (registration.status === 'checked_in') {
     return { registration, alreadyCheckedIn: true }
   }
   if (!['approved', 'scheduled'].includes(registration.status)) {
     throw badRequest(`Dossier au statut ${registration.status} : inscription impossible`)
   }
-  if (!contractSigned) throw badRequest('Le contrat doit être signé sur place avant l’inscription')
+  if (!contractSigned) throw badRequest('Le contrat doit être signé sur place avant l’inscription').withKey('contractRequired')
 
   registration.payment = {
     ...registration.payment?.toObject?.(),
@@ -308,7 +334,7 @@ export async function markNoShows(slotId, actorId) {
 
 export async function setCompetitionStatus(registrationId, status, actorId, note) {
   const registration = await Registration.findById(registrationId)
-  if (!registration) throw notFound('Dossier introuvable')
+  if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
   if (registration.status === status) return registration
   if (!canTransitionRegistration(registration.status, status)) {
     throw badRequest(`Transition refusée : ${registration.status} → ${status}`)
@@ -529,7 +555,7 @@ export async function imageRightsByIds(ids) {
 export async function deleteByCandidate(id, user) {
   const registration = await getById(id, user)
   if (['checked_in', 'qualified', 'finalist'].includes(registration.status)) {
-    throw badRequest('Ce dossier a déjà concouru : contactez l’organisation pour une suppression')
+    throw badRequest('Ce dossier a déjà concouru : contactez l’organisation pour une suppression').withKey('fileAlreadyCompeted')
   }
   bus.emitEvent('registration.deleted', {
     registrationId: String(registration._id),

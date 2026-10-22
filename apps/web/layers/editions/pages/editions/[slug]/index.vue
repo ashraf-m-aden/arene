@@ -16,7 +16,7 @@ if (!edition.value) {
   throw createError({ statusCode: 404, statusMessage: 'Édition introuvable', fatal: true })
 }
 
-const isOpen = computed(() => edition.value?.status === 'registration_open')
+const { state: windowState, isOpen } = useEditionWindow(edition)
 const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
 
 const categories = computed(() => Object.entries(edition.value?.seats || {}))
@@ -71,7 +71,7 @@ useSeoPage({
             {{ $t('editions.registerCta') }}
           </NuxtLink>
           <span v-else class="badge badge--warning">
-            {{ edition.status === 'announced' ? $t('editions.soonNotice') : $t('editions.closedNotice') }}
+            {{ windowState === 'soon' ? $t('editions.soonNotice') : $t('editions.closedNotice') }}
           </span>
           <span v-if="isOpen" class="numeric muted">
             {{ $t('editions.closesIn', { days: daysUntil(edition.registrationClosesAt) }) }}

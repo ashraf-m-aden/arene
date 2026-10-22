@@ -299,9 +299,17 @@ export async function handleWebhook(provider, { providerMessageId, status, error
 }
 
 /** Annonce groupée à un segment d'inscrits (édition, rôle, créneau, école). */
-export async function broadcast({ editionId, channels, template, segment, payload }, actorId) {
-  const { list: listRegistrations } = await registrationsService()
-  const { items } = await listRegistrations({ editionId, ...segment, page: 1, limit: 200 })
+export async function broadcast(
+  { editionId, channels, template, segment, registrationIds, payload },
+  actorId
+) {
+  const { list: listRegistrations, listByIds } = await registrationsService()
+
+  // Une liste explicite l'emporte sur le critere : l'organisation a designe des
+  // personnes, pas un segment, et on n'elargit jamais son choix.
+  const items = registrationIds?.length
+    ? await listByIds(editionId, registrationIds)
+    : (await listRegistrations({ editionId, ...segment, page: 1, limit: 200 })).items
 
   let queued = 0
   for (const registration of items) {

@@ -24,8 +24,12 @@ const form = reactive({
   season: '',
   registrationOpensAt: '',
   registrationClosesAt: '',
+  tournamentStartsAt: '',
+  tournamentEndsAt: '',
   fee: 2000,
   gradeThreshold: 12,
+  rulesFr: '',
+  rulesAr: '',
   venueName: '',
   venueCity: 'Djibouti',
   capacity: {
@@ -85,9 +89,17 @@ async function createEdition() {
       season: form.season || undefined,
       registrationOpensAt: form.registrationOpensAt,
       registrationClosesAt: form.registrationClosesAt,
+      startsAt: form.tournamentStartsAt || undefined,
+      endsAt: form.tournamentEndsAt || undefined,
       capacity: form.capacity,
       fee: form.fee,
-      rules: { gradeThreshold: form.gradeThreshold },
+      rules: {
+        gradeThreshold: form.gradeThreshold,
+        // Règlement optionnel : vide, la page de l'édition affiche les règles générales.
+        ...(form.rulesFr.trim() || form.rulesAr.trim()
+          ? { text: { fr: form.rulesFr.trim(), ar: form.rulesAr.trim() } }
+          : {})
+      },
       venue: { name: form.venueName, city: form.venueCity }
     }
     const created = await editions.createEdition(payload)
@@ -99,9 +111,13 @@ async function createEdition() {
     form.titleAr = ''
     form.descriptionFr = ''
     form.descriptionAr = ''
+    form.rulesFr = ''
+    form.rulesAr = ''
     form.season = ''
     form.registrationOpensAt = ''
     form.registrationClosesAt = ''
+    form.tournamentStartsAt = ''
+    form.tournamentEndsAt = ''
     await load()
     await navigateTo(localePath(`/admin/editions/${created.slug}`))
   } catch (err: any) {
@@ -157,7 +173,25 @@ async function createEdition() {
       </div>
 
       <div class="two">
-        <AreneField :label="$t('admin.startsAt')" for="opensAt" required>
+        <AreneField
+          :label="$t('editions.rulesTextFr')"
+          :hint="$t('editions.rulesTextHint')"
+          for="rulesFr"
+        >
+          <textarea id="rulesFr" v-model="form.rulesFr" class="textarea" rows="10" />
+        </AreneField>
+        <AreneField :label="$t('editions.rulesTextAr')" for="rulesAr">
+          <textarea id="rulesAr" v-model="form.rulesAr" class="textarea" rows="10" dir="rtl" />
+        </AreneField>
+      </div>
+
+      <div class="two">
+        <AreneField
+          :label="$t('admin.regOpensAt')"
+          :hint="$t('admin.regWindowHint')"
+          for="opensAt"
+          required
+        >
           <input
             id="opensAt"
             v-model="form.registrationOpensAt"
@@ -166,13 +200,36 @@ async function createEdition() {
             required
           >
         </AreneField>
-        <AreneField :label="$t('admin.endsAt')" for="closesAt" required>
+        <AreneField :label="$t('admin.regClosesAt')" for="closesAt" required>
           <input
             id="closesAt"
             v-model="form.registrationClosesAt"
             class="input numeric"
             type="datetime-local"
             required
+          >
+        </AreneField>
+      </div>
+
+      <div class="two">
+        <AreneField
+          :label="$t('admin.tournamentStartsAt')"
+          :hint="$t('admin.tournamentDatesHint')"
+          for="tourStart"
+        >
+          <input
+            id="tourStart"
+            v-model="form.tournamentStartsAt"
+            class="input numeric"
+            type="datetime-local"
+          >
+        </AreneField>
+        <AreneField :label="$t('admin.tournamentEndsAt')" for="tourEnd">
+          <input
+            id="tourEnd"
+            v-model="form.tournamentEndsAt"
+            class="input numeric"
+            type="datetime-local"
           >
         </AreneField>
       </div>
@@ -251,9 +308,9 @@ async function createEdition() {
             <td class="numeric">
               {{
                 (edition.capacity?.lycee?.striker ?? 0) +
-                (edition.capacity?.lycee?.defender ?? 0) +
-                (edition.capacity?.universite?.striker ?? 0) +
-                (edition.capacity?.universite?.defender ?? 0)
+                  (edition.capacity?.lycee?.defender ?? 0) +
+                  (edition.capacity?.universite?.striker ?? 0) +
+                  (edition.capacity?.universite?.defender ?? 0)
               }}
             </td>
             <td>

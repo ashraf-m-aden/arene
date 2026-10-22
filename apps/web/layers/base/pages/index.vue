@@ -23,7 +23,7 @@ const { data: galleries } = await useAsyncData(
   { watch: [edition] }
 )
 
-const isOpen = computed(() => edition.value?.status === 'registration_open')
+const { isOpen } = useEditionWindow(edition)
 const isLive = computed(() =>
   ['qualifiers', 'finals', 'completed'].includes(edition.value?.status)
 )
@@ -352,7 +352,6 @@ useSeoPage({
             {{ $t('editions.seeEdition') }}
           </NuxtLink>
         </aside>
-
       </div>
     </section>
 

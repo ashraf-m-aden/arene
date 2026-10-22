@@ -102,10 +102,11 @@ async function remove(id: string) {
 
           <p v-if="file.schoolId" class="muted">{{ text(file.schoolId.name) }}</p>
 
+          <!-- Le candidat ne connaît que la date et l'heure de son rendez-vous :
+               ni le libellé du créneau, ni l'organisation interne qui le sous-tend. -->
           <div v-if="file.slotId" class="slot">
             <strong>{{ $t('registrations.account.slot') }}</strong>
-            <span>{{ file.slotId.label }}</span>
-            <span class="numeric muted">{{ date(file.slotId.startsAt, true) }}</span>
+            <span class="numeric">{{ date(file.slotId.startsAt, true) }}</span>
           </div>
           <p v-else-if="file.status === 'approved'" class="muted">
             {{ $t('registrations.account.noSlot') }}

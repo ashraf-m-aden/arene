@@ -31,10 +31,10 @@ router.post(
   upload.single('file'),
   validate({ query: uploadQuery }),
   asyncHandler(async (req, res) => {
-    if (!req.file) throw badRequest('Aucun fichier reçu')
+    if (!req.file) throw badRequest('Aucun fichier reçu').withKey('noFileReceived')
     const { kind, editionId } = req.validatedQuery
     if (kind === 'media' && !['staff', 'admin'].includes(req.user.role)) {
-      throw forbidden('Les médias de galerie sont réservés au staff')
+      throw forbidden('Les médias de galerie sont réservés au staff').withKey('galleryMediaStaffOnly')
     }
     const doc = await service.upload({
       buffer: req.file.buffer,
@@ -55,7 +55,7 @@ router.post(
   validate({ query: uploadQuery }),
   asyncHandler(async (req, res) => {
     const files = req.files || []
-    if (!files.length) throw badRequest('Aucun fichier reçu')
+    if (!files.length) throw badRequest('Aucun fichier reçu').withKey('noFileReceived')
     const docs = []
     for (const file of files) {
       docs.push(
@@ -87,10 +87,10 @@ router.get(
 router.get(
   '/:visibility(public|private)/:key',
   asyncHandler(async (req, res) => {
-    if (config.storage.driver !== 'local') throw forbidden('Lecture directe désactivée')
+    if (config.storage.driver !== 'local') throw forbidden('Lecture directe désactivée').withKey('directReadDisabled')
     const { visibility, key } = req.params
     if (visibility === 'private' && !['staff', 'admin', 'candidate'].includes(req.user?.role)) {
-      throw forbidden('Document privé')
+      throw forbidden('Document privé').withKey('privateDocument')
     }
     const buffer = await storage.get(decodeURIComponent(key), visibility)
     res.type(key.endsWith('.webp') ? 'image/webp' : 'application/octet-stream')

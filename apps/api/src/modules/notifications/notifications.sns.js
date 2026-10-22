@@ -84,12 +84,16 @@ function canonicalString(envelope) {
 export async function verifyEnvelope(envelope) {
   if (!envelope || typeof envelope !== 'object') throw badRequest('Enveloppe SNS absente')
 
+  // Refus par défaut : sans topic attendu, n'importe qui peut publier vers nous
+  // depuis son propre compte AWS avec une signature parfaitement valide, et forger
+  // des rebonds pour faire supprimer les adresses de son choix.
   const expectedTopic = config.notifications.snsTopicArn
-  if (expectedTopic && envelope.TopicArn !== expectedTopic) {
-    throw forbidden('TopicArn inattendu')
-  }
   if (!expectedTopic) {
-    logger.warn('SNS_TOPIC_ARN absent : le topic ne peut pas être contrôlé')
+    logger.error('SNS_TOPIC_ARN absent : webhook SES refusé')
+    throw forbidden('Webhook SES non configuré')
+  }
+  if (envelope.TopicArn !== expectedTopic) {
+    throw forbidden('TopicArn inattendu')
   }
 
   const algorithm = String(envelope.SignatureVersion) === '2' ? 'RSA-SHA256' : 'RSA-SHA1'

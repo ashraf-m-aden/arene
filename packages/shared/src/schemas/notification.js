@@ -22,6 +22,11 @@ export const broadcastSchema = z.object({
   editionId: objectId,
   channels: z.array(z.enum(NOTIFICATION_CHANNELS)).min(1).default(['email']),
   template: z.string().trim().min(2).max(60).default('broadcast'),
+  /**
+   * Destinataires choisis un par un. Quand la liste est fournie, elle fait foi et
+   * `segment` est ignore : l'organisation vise des personnes, pas un critere.
+   */
+  registrationIds: z.array(objectId).min(1).max(500).optional(),
   segment: z
     .object({
       status: z.enum(REGISTRATION_STATUSES).optional(),

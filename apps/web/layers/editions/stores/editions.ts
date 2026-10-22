@@ -11,7 +11,7 @@ export const useEditionsStore = defineStore('editions', {
   }),
 
   getters: {
-    isRegistrationOpen: (state) => state.current?.status === 'registration_open',
+    isRegistrationOpen: (state) => editionWindowState(state.current) === 'open',
     currentSlug: (state) => state.current?.slug ?? null
   },
 

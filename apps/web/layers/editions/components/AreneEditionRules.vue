@@ -1,21 +1,28 @@
 <script setup lang="ts">
 /**
- * Le règlement tel qu'il s'applique à UNE édition : ses conditions chiffrées en tête,
- * puis les règles générales du tournoi. Plusieurs éditions peuvent être ouvertes en même
- * temps, donc le règlement n'existe jamais seul — il appartient toujours à une édition.
+ * Le règlement d'UNE édition : ses conditions chiffrées en tête, puis le texte
+ * rédigé par l'organisation pour cette édition précisément.
+ *
+ * Il n'existe pas de règlement général du tournoi : plusieurs éditions peuvent être
+ * ouvertes en même temps, et une édition intellectuelle n'a rien à voir avec une
+ * sportive. Tant que le texte n'est pas écrit, la page le dit plutôt que d'afficher
+ * des règles qui ne seraient celles de personne.
  */
 const props = defineProps<{ edition: any }>()
 
-const { t, tm, rt } = useI18n()
+const { t, locale } = useI18n()
 const { money, date } = useFormat()
 
-/** Règles communes à toutes les éditions, écrites une fois dans les locales. */
-const sections = computed(() =>
-  (tm('rules.sections') as any[]).map((section: any) => ({
-    title: rt(section.title),
-    items: (section.items as any[]).map((item) => rt(item))
-  }))
-)
+/** Le texte de l'édition, découpé en paragraphes sur les lignes vides. */
+const paragraphs = computed(() => {
+  const text = props.edition?.rules?.text || {}
+  const raw = String(text[locale.value] || text.fr || '').trim()
+  if (!raw) return []
+  return raw
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+})
 
 /** Conditions propres à l'édition, lues sur l'édition elle-même. */
 const conditions = computed(() => {
@@ -28,6 +35,14 @@ const conditions = computed(() => {
     {
       key: 'editions.registrationWindow',
       value: `${date(edition.registrationOpensAt)} → ${date(edition.registrationClosesAt)}`
+    },
+    {
+      // Les dates du tournoi n'ont rien a voir avec la fenetre d'inscription :
+      // on les montre separement pour que personne ne confonde les deux.
+      key: 'editions.tournamentDates',
+      value: edition.startsAt
+        ? `${date(edition.startsAt)}${edition.endsAt ? ` → ${date(edition.endsAt)}` : ''}`
+        : ''
     },
     { key: 'editions.venue', value: edition.venue?.name },
     {
@@ -50,15 +65,16 @@ const conditions = computed(() => {
       </dl>
     </section>
 
-    <section class="prose">
-      <h2>{{ $t('editions.rulesGeneral') }}</h2>
-      <section v-for="(section, index) in sections" :key="index">
-        <h3>{{ section.title }}</h3>
-        <ul>
-          <li v-for="(item, i) in section.items" :key="i">{{ item }}</li>
-        </ul>
-      </section>
+    <section v-if="paragraphs.length" class="prose">
+      <h2>{{ $t('editions.rulesOwn') }}</h2>
+      <p v-for="(paragraph, index) in paragraphs" :key="index">{{ paragraph }}</p>
     </section>
+
+    <AreneEmpty
+      v-else
+      :title="$t('editions.rulesEmpty')"
+      :hint="$t('editions.rulesEmptyHint')"
+    />
   </div>
 </template>
 

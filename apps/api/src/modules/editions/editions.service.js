@@ -9,7 +9,6 @@ import { Edition } from './editions.model.js'
  * un cycle (les créneaux et les inscriptions lisent l'édition courante).
  */
 const registrationsService = () => import('../registrations/registrations.service.js')
-const slotsService = () => import('../slots/slots.service.js')
 const resultsService = () => import('../results/results.service.js')
 
 const PUBLIC_STATUSES = [
@@ -88,8 +87,14 @@ export async function update(id, patch) {
 }
 
 /**
- * Changement de statut manuel, avec les garde-fous de la documentation :
- * pas d'ouverture sans créneau, pas de finale tant qu'il reste des qualifications à saisir.
+ * Changement de statut manuel, avec ses garde-fous : pas de finale tant qu'il
+ * reste des qualifications à saisir.
+ *
+ * Il n'y a volontairement PAS de contrôle sur les rendez-vous à l'ouverture des
+ * inscriptions. L'ordre des opérations est l'inverse : on ouvre, les candidats
+ * déposent, l'organisation accepte, puis elle répartit les dossiers acceptés en
+ * rendez-vous et envoie les convocations. Exiger un rendez-vous avant d'ouvrir
+ * obligerait à inventer une grille avant de savoir combien de monde viendra.
  */
 export async function transition(id, { status, note }, actorId) {
   const edition = await getById(id)
@@ -99,13 +104,6 @@ export async function transition(id, { status, note }, actorId) {
       `Transition refusée : ${edition.status} → ${status}`,
       { allowed: EDITION_TRANSITIONS[edition.status] || [] }
     )
-  }
-
-  if (status === 'registration_open') {
-    const { countForEdition } = await slotsService()
-    if ((await countForEdition(edition._id)) === 0) {
-      throw badRequest('Impossible d’ouvrir les inscriptions sans au moins un créneau')
-    }
   }
 
   if (status === 'finals') {

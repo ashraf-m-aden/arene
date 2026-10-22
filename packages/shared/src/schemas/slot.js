@@ -8,11 +8,13 @@ export const slotSchema = z
     label: z.string().trim().min(2).max(80),
     startsAt: isoDate,
     endsAt: isoDate,
+    /** `total` fait foi ; les champs par role ne servent qu'aux editions 1v1. */
     capacity: z.object({
-      striker: z.coerce.number().int().min(1).max(500).default(50),
-      defender: z.coerce.number().int().min(1).max(500).default(50)
+      total: z.coerce.number().int().min(0).max(1000).default(0),
+      striker: z.coerce.number().int().min(0).max(500).default(0),
+      defender: z.coerce.number().int().min(0).max(500).default(0)
     }),
-    ageCategory: z.enum(AGE_CATEGORIES),
+    ageCategory: z.enum(AGE_CATEGORIES).optional(),
     pitches: z.coerce.number().int().min(1).max(20).default(2),
     venue: z.string().trim().max(140).optional(),
     status: z.enum(SLOT_STATUSES).default('planned')
@@ -23,6 +25,29 @@ export const slotSchema = z
   })
 
 export const slotUpdateSchema = slotSchema.innerType().partial().omit({ editionId: true })
+
+/**
+ * Conditions de la repartition automatique. `offsetMinutes` est le decalage UTC
+ * du client (`-new Date().getTimezoneOffset()`) : sans lui, un serveur en UTC
+ * placerait les rendez-vous trois heures a cote pour Djibouti.
+ */
+export const slotDistributeSchema = z
+  .object({
+    days: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).min(1).max(60),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/),
+    durationMinutes: z.coerce.number().int().min(5).max(600),
+    perSlot: z.coerce.number().int().min(1).max(500),
+    offsetMinutes: z.coerce.number().int().min(-840).max(840).default(0),
+    ageCategory: z.enum(AGE_CATEGORIES).optional(),
+    venue: z.string().trim().max(140).optional(),
+    labelPrefix: z.string().trim().max(60).optional(),
+    dryRun: z.boolean().default(false)
+  })
+  .refine((v) => v.endTime > v.startTime, {
+    message: 'la fin de journee doit suivre le debut',
+    path: ['endTime']
+  })
 
 export const slotAssignSchema = z.object({
   registrationId: objectId,

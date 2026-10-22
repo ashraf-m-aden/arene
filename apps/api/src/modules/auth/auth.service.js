@@ -30,7 +30,7 @@ export async function register(input) {
   const existing = await User.findOne({
     $or: [{ phone }, ...(input.email ? [{ email: input.email }] : [])]
   })
-  if (existing) throw conflict('Un compte existe déjà avec ce téléphone ou cet email')
+  if (existing) throw conflict('Un compte existe déjà avec ce téléphone ou cet email').withKey('accountExistsPhoneOrEmail')
 
   return User.create({
     ...input,
@@ -45,10 +45,10 @@ export async function login({ identifier, password }) {
   const user = await User.findOne({ $or: [{ email: value }, { phone: value }] }).select(
     '+passwordHash'
   )
-  if (!user) throw unauthorized('Identifiants incorrects')
-  if (!user.isActive) throw forbidden('Compte désactivé')
+  if (!user) throw unauthorized('Identifiants incorrects').withKey('badCredentials')
+  if (!user.isActive) throw forbidden('Compte désactivé').withKey('accountDisabled')
   if (!(await checkPassword(user.passwordHash, password))) {
-    throw unauthorized('Identifiants incorrects')
+    throw unauthorized('Identifiants incorrects').withKey('badCredentials')
   }
   user.lastLoginAt = new Date()
   await user.save()
@@ -59,7 +59,7 @@ export async function login({ identifier, password }) {
 export async function requestOtp(rawPhone) {
   const phone = toE164(rawPhone)
   const user = await User.findOne({ phone })
-  if (!user) throw notFound('Aucun compte avec ce numéro')
+  if (!user) throw notFound('Aucun compte avec ce numéro').withKey('noAccountForPhone')
 
   const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0')
   user.otp = { codeHash: sha256(code), expiresAt: new Date(Date.now() + OTP_TTL_MS), attempts: 0 }
@@ -80,14 +80,14 @@ export async function requestOtp(rawPhone) {
 export async function verifyOtp({ phone: rawPhone, code }) {
   const phone = toE164(rawPhone)
   const user = await User.findOne({ phone }).select('+otp.codeHash')
-  if (!user?.otp?.codeHash) throw unauthorized('Aucun code en attente')
-  if (user.otp.expiresAt < new Date()) throw unauthorized('Code expiré')
-  if (user.otp.attempts >= 5) throw unauthorized('Trop de tentatives, demandez un nouveau code')
+  if (!user?.otp?.codeHash) throw unauthorized('Aucun code en attente').withKey('noPendingCode')
+  if (user.otp.expiresAt < new Date()) throw unauthorized('Code expiré').withKey('codeExpired')
+  if (user.otp.attempts >= 5) throw unauthorized('Trop de tentatives, demandez un nouveau code').withKey('tooManyCodeAttempts')
 
   if (user.otp.codeHash !== sha256(code)) {
     user.otp.attempts += 1
     await user.save()
-    throw unauthorized('Code incorrect')
+    throw unauthorized('Code incorrect').withKey('codeIncorrect')
   }
 
   user.otp = undefined
@@ -97,11 +97,11 @@ export async function verifyOtp({ phone: rawPhone, code }) {
 }
 
 export async function rotateRefresh(token) {
-  if (!token) throw unauthorized('Session absente')
+  if (!token) throw unauthorized('Session absente').withKey('sessionMissing')
   const payload = verifyRefreshToken(token)
   const user = await User.findById(payload.sub)
-  if (!user || !user.isActive) throw unauthorized('Session invalide')
-  if ((payload.v ?? 0) !== user.tokenVersion) throw unauthorized('Session révoquée')
+  if (!user || !user.isActive) throw unauthorized('Session invalide').withKey('sessionInvalid')
+  if ((payload.v ?? 0) !== user.tokenVersion) throw unauthorized('Session révoquée').withKey('sessionRevoked')
   return user
 }
 
@@ -134,7 +134,7 @@ export async function resetPassword({ token, password }) {
     'passwordReset.tokenHash': sha256(token),
     'passwordReset.expiresAt': { $gt: new Date() }
   }).select('+passwordReset.tokenHash')
-  if (!user) throw badRequest('Lien de réinitialisation invalide ou expiré')
+  if (!user) throw badRequest('Lien de réinitialisation invalide ou expiré').withKey('resetLinkInvalid')
 
   user.passwordHash = await hashPassword(password)
   user.passwordReset = undefined
@@ -145,7 +145,7 @@ export async function resetPassword({ token, password }) {
 
 export async function createStaff(input) {
   const existing = await User.findOne({ email: input.email })
-  if (existing) throw conflict('Un compte existe déjà avec cet email')
+  if (existing) throw conflict('Un compte existe déjà avec cet email').withKey('accountExistsEmail')
   return User.create({
     ...input,
     phone: input.phone ? toE164(input.phone) : undefined,
@@ -163,12 +163,12 @@ export async function setActive(id, isActive) {
     { isActive, $inc: { tokenVersion: 1 } },
     { new: true }
   )
-  if (!user) throw notFound('Compte introuvable')
+  if (!user) throw notFound('Compte introuvable').withKey('accountNotFound')
   return user
 }
 
 export async function getById(id) {
   const user = await User.findById(id)
-  if (!user) throw notFound('Compte introuvable')
+  if (!user) throw notFound('Compte introuvable').withKey('accountNotFound')
   return user
 }

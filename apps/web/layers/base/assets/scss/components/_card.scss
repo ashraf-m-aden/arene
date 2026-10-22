@@ -121,6 +121,12 @@
   background: rgb(31 157 107 / 8%);
 }
 
+/** Ni erreur ni succès : une condition bloquante que l'on peut lever. */
+.notice--warning {
+  border-color: var(--color-warning);
+  background: rgb(185 121 28 / 10%);
+}
+
 .empty {
   display: grid;
   place-items: center;

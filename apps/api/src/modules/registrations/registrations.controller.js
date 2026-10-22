@@ -41,7 +41,7 @@ export const review = asyncHandler(async (req, res) => {
 
 export const badge = asyncHandler(async (req, res) => {
   const registration = await service.getById(req.params.id, req.user)
-  if (!registration.qrToken) throw forbidden('Le badge est disponible après validation du dossier')
+  if (!registration.qrToken) throw forbidden('Le badge est disponible après validation du dossier').withKey('badgeNotReady')
 
   const edition = await editionsService.getById(registration.editionId)
   const slot = registration.slotId ? await slotsService.getById(registration.slotId) : null

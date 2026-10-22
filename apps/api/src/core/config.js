@@ -46,8 +46,8 @@ export const config = {
     whatsappToken: process.env.WHATSAPP_TOKEN || '',
     whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || '',
     maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5),
-    // Topic SNS qui relaie les rebonds et plaintes SES. Sans lui, le webhook
-    // accepte toute signature AWS valide : à renseigner en production.
+    // Topic SNS qui relaie les rebonds et plaintes SES. Obligatoire : sans lui,
+    // le webhook /notifications/webhooks/ses refuse tout.
     snsTopicArn: process.env.SNS_TOPIC_ARN || ''
   },
 

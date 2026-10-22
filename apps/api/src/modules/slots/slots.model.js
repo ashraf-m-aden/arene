@@ -9,11 +9,19 @@ const slotSchema = new mongoose.Schema(
     label: { type: String, required: true, trim: true },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
+    /**
+     * Capacite d'un rendez-vous. `total` fait foi : un rendez-vous accueille N
+     * participants, sans distinction de role — une edition intellectuelle n'a ni
+     * buteur ni defenseur. Les champs par role restent la pour les editions 1v1
+     * deja en base et pour la generation des rencontres.
+     */
     capacity: {
-      striker: { type: Number, default: 50 },
-      defender: { type: Number, default: 50 }
+      total: { type: Number, default: 0, min: 0 },
+      striker: { type: Number, default: 0 },
+      defender: { type: Number, default: 0 }
     },
-    ageCategory: { type: String, enum: AGE_CATEGORIES, required: true },
+    /** Optionnelle : un rendez-vous peut melanger les categories. */
+    ageCategory: { type: String, enum: AGE_CATEGORIES },
     pitches: { type: Number, default: 2, min: 1 },
     venue: String,
     status: { type: String, enum: SLOT_STATUSES, default: 'planned', index: true },

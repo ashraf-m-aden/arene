@@ -12,10 +12,13 @@ export async function countForEdition(editionId) {
   return Slot.countDocuments({ editionId, status: { $ne: 'cancelled' } })
 }
 
-export async function listForEdition(editionId, { publicView = true } = {}) {
+/**
+ * Rendez-vous d'une edition, avec leur occupation. La liste est reservee a
+ * l'organisation : les candidats ne voient jamais la grille, seulement la date et
+ * l'heure de leur propre rendez-vous, communiquee par message.
+ */
+export async function listForEdition(editionId) {
   const slots = await Slot.find({ editionId, status: { $ne: 'cancelled' } }).sort({ startsAt: 1 })
-  if (!publicView) return slots
-  // Vue publique : horaires et places, jamais les noms.
   return Promise.all(
     slots.map(async (slot) => ({
       ...slot.toJSON(),
@@ -40,16 +43,51 @@ export async function update(id, patch) {
   return slot
 }
 
+/**
+ * Occupation d'un rendez-vous. `total` fait foi : c'est l'effectif qui remplit un
+ * rendez-vous. Les entrees par role restent calculees pour les editions 1v1, qui
+ * s'en servent pour composer les rencontres et pour l'ecran de check-in.
+ */
 export async function occupancy(slot) {
   const { rosterForSlot } = await registrationsService()
   const roster = await rosterForSlot(slot._id)
   const used = { striker: 0, defender: 0 }
   for (const registration of roster) {
-    if (registration.role) used[registration.role] += 1
+    if (registration.role && used[registration.role] !== undefined) used[registration.role] += 1
   }
   return {
-    striker: { used: used.striker, capacity: slot.capacity.striker },
-    defender: { used: used.defender, capacity: slot.capacity.defender }
+    total: { used: roster.length, capacity: capacityTotal(slot) },
+    striker: { used: used.striker, capacity: slot.capacity?.striker || 0 },
+    defender: { used: used.defender, capacity: slot.capacity?.defender || 0 }
+  }
+}
+
+/** Effectif accepte par un rendez-vous, avec repli sur la somme des roles. */
+export function capacityTotal(slot) {
+  const capacity = slot.capacity || {}
+  if (capacity.total > 0) return capacity.total
+  return (capacity.striker || 0) + (capacity.defender || 0)
+}
+
+/** Reste-t-il une place ? L'effectif global l'emporte quand il est renseigne. */
+function hasRoom(load, role) {
+  if (load.total.capacity > 0) return load.total.used < load.total.capacity
+  if (role && load[role]) return load[role].used < load[role].capacity
+  return false
+}
+
+/**
+ * Filtre Mongo sur la categorie : un rendez-vous sans categorie accueille tout le
+ * monde, un rendez-vous categorise n'accueille que la sienne.
+ */
+function categoryFilter(ageCategory) {
+  if (!ageCategory) return {}
+  return {
+    $or: [
+      { ageCategory },
+      { ageCategory: null },
+      { ageCategory: { $exists: false } }
+    ]
   }
 }
 
@@ -63,13 +101,13 @@ export async function autoAssign(registrationId, actorId = null) {
 
   const candidates = await Slot.find({
     editionId: registration.editionId,
-    ageCategory: registration.ageCategory,
-    status: { $in: ['planned', 'open'] }
+    status: { $in: ['planned', 'open'] },
+    ...categoryFilter(registration.ageCategory)
   }).sort({ startsAt: 1 })
 
   for (const slot of candidates) {
     const load = await occupancy(slot)
-    if (load[registration.role].used < load[registration.role].capacity) {
+    if (hasRoom(load, registration.role)) {
       await registrations.attachSlot(registration._id, slot._id, actorId)
       bus.emitEvent('slot.assigned', {
         registrationId: String(registration._id),
@@ -84,22 +122,160 @@ export async function autoAssign(registrationId, actorId = null) {
   return null
 }
 
+/**
+ * Construit l'instant exact correspondant a une heure locale.
+ *
+ * Le client envoie le jour (`2026-12-25`), l'heure (`08:30`) et son decalage par
+ * rapport a UTC. Sans ce decalage, un serveur en UTC placerait les rendez-vous
+ * trois heures a cote pour Djibouti.
+ */
+function instantFrom(day, time, offsetMinutes) {
+  const [year, month, dayOfMonth] = String(day).slice(0, 10).split('-').map(Number)
+  const [hours, minutes] = String(time).split(':').map(Number)
+  return new Date(Date.UTC(year, month - 1, dayOfMonth, hours, minutes) - offsetMinutes * 60000)
+}
+
+/** Les rendez-vous possibles dans la plage horaire d'une journee. */
+function cellsForDay(day, startTime, endTime, durationMinutes, offsetMinutes) {
+  const cells = []
+  const dayEnd = instantFrom(day, endTime, offsetMinutes)
+  let start = instantFrom(day, startTime, offsetMinutes)
+  while (true) {
+    const end = new Date(start.getTime() + durationMinutes * 60000)
+    if (end > dayEnd) break
+    cells.push({ startsAt: start, endsAt: end })
+    start = end
+  }
+  return cells
+}
+
+/**
+ * Repartit `needed` rendez-vous sur les jours demandes, au plus equilibre.
+ *
+ * Remplir le premier jour avant d'entamer le suivant ferait venir tout le monde
+ * le lundi ; on etale donc la charge, en donnant une unite de plus aux premiers
+ * jours quand la division n'est pas ronde. Chaque journee garde ses rendez-vous
+ * contigus depuis son heure d'ouverture.
+ */
+function spreadOverDays(grid, needed) {
+  const dayKeys = [...new Set(grid.map((cell) => cell.day))]
+  const perDay = Math.floor(needed / dayKeys.length)
+  const extra = needed % dayKeys.length
+
+  const quota = new Map(dayKeys.map((key, index) => [key, perDay + (index < extra ? 1 : 0)]))
+  const taken = []
+  for (const cell of grid) {
+    const left = quota.get(cell.day) || 0
+    if (left <= 0) continue
+    quota.set(cell.day, left - 1)
+    taken.push(cell)
+  }
+  return taken.sort((a, b) => a.startsAt - b.startsAt)
+}
+
+/**
+ * Repartition automatique : cree la grille de rendez-vous demandee puis y place
+ * les dossiers acceptes qui attendent une convocation.
+ *
+ * Rien n'est envoye ici. L'organisation relit le calendrier, puis declenche les
+ * convocations par l'envoi groupe — une repartition se corrige, un message parti
+ * ne se rattrape pas.
+ */
+export async function distribute(editionId, input, actorId = null) {
+  const {
+    days,
+    startTime,
+    endTime,
+    durationMinutes,
+    perSlot,
+    offsetMinutes = 0,
+    ageCategory,
+    venue,
+    labelPrefix,
+    dryRun = false
+  } = input
+
+  const registrations = await registrationsService()
+
+  const grid = []
+  for (const day of [...new Set(days)].sort()) {
+    for (const cell of cellsForDay(day, startTime, endTime, durationMinutes, offsetMinutes)) {
+      grid.push({ ...cell, day: String(day).slice(0, 10) })
+    }
+  }
+  if (!grid.length) {
+    throw badRequest('La plage horaire ne permet aucun rendez-vous').withKey('emptySchedule')
+  }
+
+  const waiting = await registrations.listAwaitingSlot(editionId, { ageCategory })
+  const capacity = grid.length * perSlot
+  const needed = Math.min(grid.length, Math.ceil(waiting.length / perSlot) || 0)
+  const chosen = needed ? spreadOverDays(grid, needed) : []
+
+  const summary = {
+    waiting: waiting.length,
+    gridSlots: grid.length,
+    gridCapacity: capacity,
+    slotsUsed: chosen.length,
+    placed: Math.min(waiting.length, chosen.length * perSlot),
+    leftOver: Math.max(0, waiting.length - chosen.length * perSlot),
+    firstStartsAt: chosen[0]?.startsAt ?? null,
+    lastEndsAt: chosen[chosen.length - 1]?.endsAt ?? null
+  }
+
+  // Apercu : on annonce ce qui se passerait, sans rien ecrire.
+  if (dryRun) return { ...summary, dryRun: true, created: [] }
+
+  let cursor = 0
+  const created = []
+  for (const [index, cell] of chosen.entries()) {
+    const slot = await Slot.create({
+      editionId,
+      label: `${labelPrefix || 'Rendez-vous'} ${index + 1}`,
+      startsAt: cell.startsAt,
+      endsAt: cell.endsAt,
+      capacity: { total: perSlot },
+      ageCategory: ageCategory || undefined,
+      venue,
+      status: 'planned'
+    })
+
+    for (const registration of waiting.slice(cursor, cursor + perSlot)) {
+      await registrations.attachSlot(registration._id, slot._id, actorId)
+      bus.emitEvent('slot.assigned', {
+        registrationId: String(registration._id),
+        editionId: String(editionId),
+        slotId: String(slot._id)
+      })
+    }
+    cursor += perSlot
+    created.push(slot)
+  }
+
+  logger.info(
+    { editionId: String(editionId), slots: created.length, placed: summary.placed },
+    'repartition automatique effectuee'
+  )
+  return { ...summary, dryRun: false, created }
+}
+
 /** Déplacement manuel par le staff, ou demande du candidat avant la limite. */
 export async function assign(slotId, registrationId, actorId, { byCandidate = false } = {}) {
   const slot = await getById(slotId)
   const registrations = await registrationsService()
   const registration = await registrations.getById(registrationId)
 
-  if (String(registration.ageCategory) !== String(slot.ageCategory)) {
-    throw badRequest('Créneau d’une autre catégorie d’âge')
+  // Un rendez-vous sans categorie accueille tout le monde.
+  if (slot.ageCategory && String(registration.ageCategory) !== String(slot.ageCategory)) {
+    throw badRequest('Créneau d’une autre catégorie d’âge').withKey('slotWrongCategory')
   }
   if (byCandidate && slot.startsAt.getTime() - Date.now() < SWITCH_DEADLINE_MS) {
     throw badRequest('Changement possible jusqu’à 48 h avant le créneau')
   }
 
   const load = await occupancy(slot)
-  if (load[registration.role].used >= load[registration.role].capacity) {
-    throw conflict('Ce créneau est complet pour ce rôle')
+  if (!hasRoom(load, registration.role)) {
+    throw conflict('Ce rendez-vous est complet').withKey('slotFull')
   }
 
   await registrations.attachSlot(registration._id, slot._id, actorId)

@@ -6,6 +6,7 @@ import {
   checkinSyncSchema,
   common,
   slotAssignSchema,
+  slotDistributeSchema,
   slotSchema,
   slotUpdateSchema
 } from '@arene/shared'
@@ -62,15 +63,32 @@ router.post(
   asyncHandler(async (req, res) => ok(res, await service.close(req.params.id, req.user.id)))
 )
 
-/** Sous-routeur public monté sur /editions/:editionId/slots. */
+/**
+ * Sous-routeur monté sur /editions/:editionId/slots, réservé à l'organisation.
+ * Les créneaux ne sont pas publics : chaque candidat reçoit sa convocation par
+ * message et ne connaît que la date et l'heure de son rendez-vous.
+ */
 export const editionRouter = Router({ mergeParams: true })
 
 editionRouter.get(
   '/',
-  asyncHandler(async (req, res) => {
-    const publicView = !['staff', 'admin'].includes(req.user?.role)
-    ok(res, await service.listForEdition(req.params.editionId, { publicView }))
-  })
+  requireRole('staff'),
+  asyncHandler(async (req, res) =>
+    ok(res, await service.listForEdition(req.params.editionId))
+  )
+)
+
+/**
+ * Repartition automatique sur une edition : cree la grille de rendez-vous et y
+ * place les dossiers acceptes. `dryRun` renvoie l'apercu sans rien ecrire.
+ */
+editionRouter.post(
+  '/distribute',
+  requireRole('admin'),
+  validate({ body: slotDistributeSchema }),
+  asyncHandler(async (req, res) =>
+    ok(res, await service.distribute(req.params.editionId, req.body, req.user.id))
+  )
 )
 
 /** Routeur du check-in, monté sur /checkin. */

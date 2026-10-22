@@ -5,7 +5,13 @@ const base = {
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   skip: () => config.isTest,
-  message: { error: { code: 'too_many_requests', message: 'Trop de tentatives, réessayez plus tard' } }
+  message: {
+    error: {
+      code: 'too_many_requests',
+      key: 'tooManyRequests',
+      message: 'Trop de tentatives, réessayez plus tard'
+    }
+  }
 }
 
 /** L'auth, l'inscription et l'envoi de fichiers sont limités par IP. */

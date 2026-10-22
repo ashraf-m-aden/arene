@@ -15,21 +15,21 @@
     "threshold": "Moyenne minimale",
     "venue": "Lieu",
     "capacity": "Places",
+    "rulesTextFr": "Règlement (français)",
+    "rulesTextAr": "Règlement (arabe)",
+    "rulesTextHint": "Le règlement de cette édition. Chaque édition a le sien ; séparez les paragraphes par une ligne vide.",
+    "rulesOwn": "Le règlement de cette édition",
     "rulesTitle": "Règlement de l'édition",
-    "rulesLead": "Ce règlement est celui de cette édition. Ses conditions chiffrées lui sont propres ; les règles générales du tournoi suivent.",
+    "rulesLead": "Ce règlement est celui de cette édition : ses conditions et son texte ne valent que pour elle.",
     "rulesConditions": "Les conditions de cette édition",
-    "rulesGeneral": "Les règles générales",
     "categories": "Catégories admises",
     "empty": "Aucune édition publiée pour l'instant.",
     "tabs": {
       "overview": "Présentation",
       "rules": "Règlement",
-      "slots": "Créneaux",
       "rankings": "Classements",
       "galleries": "Galeries"
     },
-    "slotsTitle": "Les créneaux",
-    "slotsLead": "Chaque créneau accueille environ 100 joueurs : 50 buteurs et 50 défenseurs.",
     "slotStatus": {
       "planned": "Prévu",
       "open": "Ouvert",
@@ -39,6 +39,9 @@
     "seatsByRole": "Places par rôle",
     "registerCta": "Je m'inscris !",
     "closedNotice": "Les inscriptions de cette édition sont fermées.",
-    "soonNotice": "Les inscriptions ouvriront bientôt."
+    "soonNotice": "Les inscriptions ouvriront bientôt.",
+    "rulesEmpty": "Le règlement de cette édition n’est pas encore publié.",
+    "rulesEmptyHint": "L’organisation le met en ligne avant l’ouverture des inscriptions.",
+    "tournamentDates": "Dates du tournoi"
   }
 }

@@ -89,15 +89,15 @@ async function buildVariants(buffer, baseKey, visibility) {
 
 export async function upload({ buffer, originalName, kind, owner, editionId }) {
   const rules = KIND_RULES[kind]
-  if (!rules) throw badRequest('Type de fichier inconnu')
-  if (!buffer?.length) throw badRequest('Fichier vide')
+  if (!rules) throw badRequest('Type de fichier inconnu').withKey('unknownFileType')
+  if (!buffer?.length) throw badRequest('Fichier vide').withKey('emptyFile')
   if (buffer.length > rules.maxSize) {
     throw badRequest(`Fichier trop volumineux (max ${Math.round(rules.maxSize / 1024 / 1024)} Mo)`)
   }
 
   const mime = detectMime(buffer)
   if (!mime || !rules.mimes.includes(mime)) {
-    throw badRequest('Format refusé : PDF ou image uniquement')
+    throw badRequest('Format refusé : PDF ou image uniquement').withKey('formatRefused')
   }
 
   const visibility = rules.visibility
@@ -124,7 +124,7 @@ export async function upload({ buffer, originalName, kind, owner, editionId }) {
 /** Lien signé de courte durée, généré après contrôle des droits. */
 export async function signedUrlFor(fileId, user, { variant } = {}) {
   const file = await FileDoc.findById(fileId)
-  if (!file) throw notFound('Fichier introuvable')
+  if (!file) throw notFound('Fichier introuvable').withKey('fileMissing')
   await assertCanRead(file, user)
 
   const target =
@@ -138,15 +138,15 @@ export async function signedUrlFor(fileId, user, { variant } = {}) {
 
 export async function assertCanRead(file, user) {
   if (file.visibility === 'public') return
-  if (!user) throw forbidden('Document privé')
+  if (!user) throw forbidden('Document privé').withKey('privateDocument')
   if (user.role === 'admin' || user.role === 'staff') return
   if (String(file.owner) === String(user.id)) return
-  throw forbidden('Document privé')
+  throw forbidden('Document privé').withKey('privateDocument')
 }
 
 export async function readBuffer(fileId, user) {
   const file = await FileDoc.findById(fileId)
-  if (!file) throw notFound('Fichier introuvable')
+  if (!file) throw notFound('Fichier introuvable').withKey('fileMissing')
   await assertCanRead(file, user)
   return { file, buffer: await storage.get(file.storageKey, file.visibility) }
 }

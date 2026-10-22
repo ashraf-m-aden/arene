@@ -5,7 +5,6 @@ const route = useRoute()
 
 const tabs = computed(() => [
   { to: `/editions/${props.slug}`, label: 'editions.tabs.overview', exact: true },
-  { to: `/editions/${props.slug}/creneaux`, label: 'editions.tabs.slots' },
   { to: `/editions/${props.slug}/classements`, label: 'editions.tabs.rankings' },
   { to: `/editions/${props.slug}/galeries`, label: 'editions.tabs.galleries' },
   { to: `/editions/${props.slug}/reglement`, label: 'editions.tabs.rules' }

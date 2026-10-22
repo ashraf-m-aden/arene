@@ -73,8 +73,8 @@
       "download": "Télécharger les données",
       "delete": "Supprimer le dossier",
       "deleteConfirm": "Supprimer définitivement ce dossier et ses documents ?",
-      "slot": "Créneau",
-      "noSlot": "Créneau en attente d'attribution",
+      "slot": "Votre rendez-vous",
+      "noSlot": "Votre rendez-vous vous sera communiqué par message.",
       "reviewNotes": "Message de l'organisation",
       "flags": "Points signalés",
       "fileNumber": "Dossier n°",
@@ -98,6 +98,7 @@
       "decisionSaved": "Décision enregistrée",
       "empty": "Aucun dossier dans cette file.",
       "export": "Exporter en CSV"
-    }
+    },
+    "notYetOpen": "Les inscriptions ne sont pas encore ouvertes. Revenez à la date d’ouverture annoncée sur la page de l’édition."
   }
 }
