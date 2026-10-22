@@ -54,7 +54,7 @@ const VARIANTS = [
 
 /**
  * Déclinaisons WebP pour les médias publics, métadonnées EXIF supprimées
- * (la position GPS d'une photo d'enfant ne doit jamais sortir).
+ * (la position GPS de la photo d'un candidat ne doit jamais sortir).
  */
 async function buildVariants(buffer, baseKey, visibility) {
   const sharp = await getSharp()

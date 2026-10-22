@@ -137,7 +137,7 @@
   },
   "auth": {
     "loginTitle": "Se connecter",
-    "loginLead": "Accédez au dossier de votre enfant, à sa convocation et à son badge.",
+    "loginLead": "Accédez à votre dossier, à votre convocation et à votre badge.",
     "identifier": "Email ou téléphone",
     "password": "Mot de passe",
     "submit": "Se connecter",

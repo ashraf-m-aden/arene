@@ -52,11 +52,11 @@
       "belowThreshold": "Cette moyenne est sous le seuil de l'édition. Le dossier partira quand même, signalé à l'organisation."
     },
     "consents": {
-      "participation": "J'autorise la participation de mon enfant au tournoi et j'ai pris connaissance du règlement.",
-      "imageRights": "J'autorise la prise de photos et de vidéos de mon enfant et leur publication par l'organisation.",
-      "monetizedVideos": "J'autorise la diffusion des vidéos sur une chaîne susceptible d'être monétisée.",
-      "bulletinAuthenticity": "J'atteste sur l'honneur que le bulletin déposé est authentique.",
-      "imageNotice": "Sans l'autorisation d'image, votre enfant ne sera jamais identifié dans les galeries."
+      "participation": "Je m'engage à participer au tournoi et j'ai pris connaissance du règlement de cette édition.",
+      "imageRights": "J'autorise la prise de photos et de vidéos me représentant, et leur publication par l'organisation.",
+      "monetizedVideos": "J'autorise la diffusion de ces vidéos sur une chaîne susceptible d'être monétisée.",
+      "bulletinAuthenticity": "J'atteste sur l'honneur que le bulletin que j'ai déposé est authentique.",
+      "imageNotice": "Sans l'autorisation d'image, vous ne serez jamais identifié dans les galeries."
     },
     "review": {
       "title": "Vérifiez avant d'envoyer",
