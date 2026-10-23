@@ -1,20 +1,18 @@
 /**
  * Modèles livrés avec la v1. Ils servent de valeurs par défaut :
- * l'admin peut les surcharger en base, et les variantes WhatsApp doivent
- * correspondre à un modèle pré-approuvé par Meta (`metaTemplateName`).
+ * l'admin peut les surcharger en base.
  *
  * Les messages s'adressent au candidat lui-meme : il est titulaire de son dossier,
  * il n'y a pas de parent destinataire. Le telephone du parent, quand il existe,
  * n'est qu'un contact de secours pour l'organisation.
  *
  * Variables disponibles : {{prenom}}, {{edition}}, {{motif}}, {{date}}, {{lieu}},
- * {{frais}}, {{lien}}, {{code}}. ({{creneau}} reste fourni mais n'est plus employe :
+ * {{frais}}, {{lien}}. ({{creneau}} reste fourni mais n'est plus employe :
  * le candidat ne connait que la date et l'heure de son rendez-vous, pas la grille.)
  */
 export const DEFAULT_TEMPLATES = {
   registration_received: {
-    channels: ['email', 'whatsapp'],
-    metaTemplateName: 'arene_dossier_recu',
+    channels: ['email'],
     subject: {
       fr: 'Dossier bien reçu — {{edition}}',
       ar: 'تم استلام الملف — {{edition}}'
@@ -25,8 +23,7 @@ export const DEFAULT_TEMPLATES = {
     }
   },
   registration_changes_requested: {
-    channels: ['email', 'whatsapp'],
-    metaTemplateName: 'arene_correction_demandee',
+    channels: ['email'],
     subject: { fr: 'Correction demandée — {{edition}}', ar: 'طلب تصحيح — {{edition}}' },
     body: {
       fr: '{{prenom}}, votre dossier demande une correction : {{motif}}. Reprenez le formulaire ici : {{lien}}',
@@ -34,8 +31,7 @@ export const DEFAULT_TEMPLATES = {
     }
   },
   registration_approved: {
-    channels: ['email', 'whatsapp'],
-    metaTemplateName: 'arene_dossier_accepte',
+    channels: ['email'],
     subject: { fr: 'Dossier accepté — {{edition}}', ar: 'تم قبول الملف — {{edition}}' },
     body: {
       fr: 'Bonne nouvelle {{prenom}} : votre dossier est accepté. Votre convocation arrive avec la date de votre rendez-vous et votre badge. {{lien}}',
@@ -51,8 +47,7 @@ export const DEFAULT_TEMPLATES = {
     }
   },
   slot_assigned: {
-    channels: ['email', 'whatsapp'],
-    metaTemplateName: 'arene_convocation',
+    channels: ['email'],
     subject: { fr: 'Convocation — {{edition}}', ar: 'دعوة — {{edition}}' },
     body: {
       fr: '{{prenom}}, votre rendez-vous est fixé au {{date}}, à {{lieu}}. Frais à régler en espèces à l’accueil : {{frais}} DJF. Badge et documents : {{lien}}',
@@ -60,8 +55,7 @@ export const DEFAULT_TEMPLATES = {
     }
   },
   slot_reminder: {
-    channels: ['whatsapp'],
-    metaTemplateName: 'arene_rappel_convocation',
+    channels: ['email'],
     subject: { fr: 'Rappel de convocation', ar: 'تذكير بالدعوة' },
     body: {
       fr: 'Rappel {{prenom}} : nous vous attendons demain à {{lieu}}. Pensez à votre badge, votre pièce d’identité, votre bulletin original et aux {{frais}} DJF.',
@@ -69,21 +63,11 @@ export const DEFAULT_TEMPLATES = {
     }
   },
   registration_qualified: {
-    channels: ['email', 'whatsapp'],
-    metaTemplateName: 'arene_qualification_finale',
+    channels: ['email'],
     subject: { fr: 'Qualification pour la finale — {{edition}}', ar: 'التأهل للنهائي — {{edition}}' },
     body: {
       fr: 'Bravo {{prenom}} : vous êtes qualifié pour la finale de {{edition}}. Détails de la finale : {{lien}}',
       ar: 'تهانينا {{prenom}}: تأهلتم إلى نهائي {{edition}}. تفاصيل النهائي: {{lien}}'
-    }
-  },
-  otp_code: {
-    channels: ['whatsapp'],
-    metaTemplateName: 'arene_code_connexion',
-    subject: { fr: 'Code de connexion', ar: 'رمز الدخول' },
-    body: {
-      fr: "Votre code de connexion à l'Arène : {{code}}. Il expire dans 10 minutes.",
-      ar: 'رمز الدخول الخاص بكم: {{code}}. تنتهي صلاحيته خلال 10 دقائق.'
     }
   },
   password_reset: {

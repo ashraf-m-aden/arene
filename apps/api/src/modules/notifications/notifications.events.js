@@ -28,7 +28,7 @@ async function buildContext(registrationId, extra = {}) {
     registration,
     edition,
     locale,
-    to: { email: candidate?.email, whatsapp: candidate?.phone },
+    to: { email: candidate?.email },
     userId: candidate?._id,
     payload: {
       prenom: registration.player?.name || '',
@@ -100,7 +100,7 @@ export function registerNotificationEvents() {
       const context = await buildContext(registrationId)
       await service.queueMessage({
         template: 'slot_reminder',
-        channel: 'whatsapp',
+        channel: 'email',
         to: context.to,
         locale: context.locale,
         payload: context.payload,

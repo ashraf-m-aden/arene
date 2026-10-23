@@ -9,20 +9,20 @@ const userSchema = new mongoose.Schema(
      * d'une edition a l'autre.
      */
     name: { type: String, required: true, trim: true },
+    /**
+     * Seul canal de la plateforme, et donc obligatoire à l'inscription —
+     * `registerSchema` l'exige. Volontairement pas `required` ici : les comptes
+     * créés avant cette règle n'en ont pas, et le marquer obligatoire ferait
+     * échouer toute sauvegarde de ces documents, connexion comprise.
+     */
     email: { type: String, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     passwordHash: { type: String, select: false },
     role: { type: String, enum: USER_ROLES, default: 'candidate', index: true },
     locale: { type: String, enum: LOCALES, default: 'fr' },
-    acceptsWhatsapp: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
     tokenVersion: { type: Number, default: 0 },
     lastLoginAt: Date,
-    otp: {
-      codeHash: { type: String, select: false },
-      expiresAt: Date,
-      attempts: { type: Number, default: 0 }
-    },
     passwordReset: {
       tokenHash: { type: String, select: false },
       expiresAt: Date
@@ -48,7 +48,6 @@ userSchema.set('toJSON', {
   virtuals: true,
   transform(_doc, ret) {
     delete ret.passwordHash
-    delete ret.otp
     delete ret.passwordReset
     delete ret.__v
     return ret

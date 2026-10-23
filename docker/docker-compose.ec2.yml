@@ -50,8 +50,6 @@ services:
       # Topic SNS des rebonds/plaintes SES. Vide, le webhook accepte n'importe quel
       # topic AWS correctement signé : à renseigner (voir docker/DEPLOY.md, § 7).
       SNS_TOPIC_ARN: ${SNS_TOPIC_ARN:-}
-      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
-      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
       API_PUBLIC_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
       DEFAULT_LOCALE: fr
@@ -90,8 +88,6 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?clé arene-s3 requise}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
-      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
-      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:?domaine requis}
     networks:
       - arene-network

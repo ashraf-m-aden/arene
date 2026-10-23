@@ -966,7 +966,7 @@ async function createSlot() {
           <h2 class="card__title">{{ $t('admin.composeMessage') }}</h2>
 
           <div class="cluster">
-            <label v-for="channel in ['email', 'whatsapp']" :key="channel" class="check">
+            <label v-for="channel in ['email']" :key="channel" class="check">
               <input
                 type="checkbox"
                 :checked="message.channels.includes(channel)"

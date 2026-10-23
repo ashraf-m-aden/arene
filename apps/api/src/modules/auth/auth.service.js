@@ -7,7 +7,6 @@ import { enqueue, QUEUES } from '../../core/queue.js'
 import logger from '../../core/logger.js'
 import { User } from './auth.model.js'
 
-const OTP_TTL_MS = 10 * 60 * 1000
 const RESET_TTL_MS = 60 * 60 * 1000
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex')
@@ -55,47 +54,6 @@ export async function login({ identifier, password }) {
   return user
 }
 
-/** Code à usage unique envoyé par WhatsApp, pour les candidats sans email. */
-export async function requestOtp(rawPhone) {
-  const phone = toE164(rawPhone)
-  const user = await User.findOne({ phone })
-  if (!user) throw notFound('Aucun compte avec ce numéro').withKey('noAccountForPhone')
-
-  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0')
-  user.otp = { codeHash: sha256(code), expiresAt: new Date(Date.now() + OTP_TTL_MS), attempts: 0 }
-  await user.save()
-
-  await enqueue(QUEUES.notifications, {
-    template: 'otp_code',
-    channel: 'whatsapp',
-    to: phone,
-    locale: user.locale,
-    payload: { code }
-  })
-
-  logger.info({ phone }, 'code à usage unique envoyé')
-  return { sent: true, expiresAt: user.otp.expiresAt }
-}
-
-export async function verifyOtp({ phone: rawPhone, code }) {
-  const phone = toE164(rawPhone)
-  const user = await User.findOne({ phone }).select('+otp.codeHash')
-  if (!user?.otp?.codeHash) throw unauthorized('Aucun code en attente').withKey('noPendingCode')
-  if (user.otp.expiresAt < new Date()) throw unauthorized('Code expiré').withKey('codeExpired')
-  if (user.otp.attempts >= 5) throw unauthorized('Trop de tentatives, demandez un nouveau code').withKey('tooManyCodeAttempts')
-
-  if (user.otp.codeHash !== sha256(code)) {
-    user.otp.attempts += 1
-    await user.save()
-    throw unauthorized('Code incorrect').withKey('codeIncorrect')
-  }
-
-  user.otp = undefined
-  user.lastLoginAt = new Date()
-  await user.save()
-  return user
-}
-
 export async function rotateRefresh(token) {
   if (!token) throw unauthorized('Session absente').withKey('sessionMissing')
   const payload = verifyRefreshToken(token)
@@ -119,10 +77,18 @@ export async function forgotPassword(identifier) {
   user.passwordReset = { tokenHash: sha256(token), expiresAt: new Date(Date.now() + RESET_TTL_MS) }
   await user.save()
 
+  // Les comptes créés avant que l'email ne devienne obligatoire peuvent ne pas
+  // en avoir : il n'existe alors aucun canal pour les joindre. On répond comme
+  // pour un compte inconnu plutôt que de laisser croire à un envoi.
+  if (!user.email) {
+    logger.warn({ userId: String(user._id) }, 'réinitialisation impossible : compte sans email')
+    return { sent: true }
+  }
+
   await enqueue(QUEUES.notifications, {
     template: 'password_reset',
-    channel: user.email ? 'email' : 'whatsapp',
-    to: user.email || user.phone,
+    channel: 'email',
+    to: user.email,
     locale: user.locale,
     payload: { token, prenom: user.name }
   })

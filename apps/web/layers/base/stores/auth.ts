@@ -74,18 +74,6 @@ export const useAuthStore = defineStore('auth', {
       return data.user as SessionUser
     },
 
-    async requestOtp(phone: string) {
-      const { $api } = useNuxtApp()
-      return $api.post('/auth/otp/request', { phone })
-    },
-
-    async verifyOtp(phone: string, code: string) {
-      const { $api } = useNuxtApp()
-      const { data } = await $api.post<{ data: any }>('/auth/otp/verify', { phone, code })
-      this.setSession(data)
-      return data.user as SessionUser
-    },
-
     /** Renouvellement silencieux : vrai si une session valide a été retrouvée. */
     async refresh() {
       const { $api } = useNuxtApp()

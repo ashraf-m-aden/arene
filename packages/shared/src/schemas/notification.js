@@ -47,14 +47,7 @@ export const templateSchema = z.object({
   channels: z.array(z.enum(NOTIFICATION_CHANNELS)).min(1),
   subject: i18nText(0, 140).optional(),
   body: i18nText(2, 4000),
-  metaTemplateName: z.string().trim().max(80).optional(),
   isActive: z.boolean().default(true)
-})
-
-export const webhookSchema = z.object({
-  providerMessageId: z.string().min(1).max(200),
-  status: z.enum(NOTIFICATION_STATUSES),
-  error: z.string().max(500).optional()
 })
 
 export const localeSchema = z.enum(LOCALES)

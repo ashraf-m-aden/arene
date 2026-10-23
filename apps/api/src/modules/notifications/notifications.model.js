@@ -77,8 +77,6 @@ const templateSchema = new mongoose.Schema(
     channels: { type: [String], enum: NOTIFICATION_CHANNELS, default: ['email'] },
     subject: { type: i18n, default: () => ({}) },
     body: { type: i18n, required: true },
-    /** Nom du modèle pré-approuvé côté Meta, obligatoire pour WhatsApp. */
-    metaTemplateName: String,
     isActive: { type: Boolean, default: true }
   },
   { timestamps: true }

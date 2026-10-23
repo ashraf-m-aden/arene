@@ -3,23 +3,19 @@ import {
   createStaffSchema,
   forgotPasswordSchema,
   loginSchema,
-  otpRequestSchema,
-  otpVerifySchema,
   registerSchema,
   resetPasswordSchema,
   common
 } from '@arene/shared'
 import { requireAuth, requireRole } from '../../core/middlewares/auth.js'
 import { validate, validateBody } from '../../core/middlewares/validate.js'
-import { authLimiter, otpLimiter } from '../../core/middlewares/rateLimit.js'
+import { authLimiter } from '../../core/middlewares/rateLimit.js'
 import * as controller from './auth.controller.js'
 
 export const router = Router()
 
 router.post('/register', authLimiter, validateBody(registerSchema), controller.register)
 router.post('/login', authLimiter, validateBody(loginSchema), controller.login)
-router.post('/otp/request', otpLimiter, validateBody(otpRequestSchema), controller.requestOtp)
-router.post('/otp/verify', otpLimiter, validateBody(otpVerifySchema), controller.verifyOtp)
 router.post('/refresh', controller.refresh)
 router.post('/logout', controller.logout)
 router.post(

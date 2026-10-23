@@ -110,7 +110,7 @@ export const FINALISTS_PER_ROLE = 2
 export const FILE_KINDS = /** @type {const} */ (['bulletin', 'photo', 'media'])
 export const FILE_VISIBILITIES = /** @type {const} */ (['private', 'public'])
 
-export const NOTIFICATION_CHANNELS = /** @type {const} */ (['email', 'whatsapp'])
+export const NOTIFICATION_CHANNELS = /** @type {const} */ (['email'])
 export const NOTIFICATION_STATUSES = /** @type {const} */ ([
   'queued',
   'sending',
@@ -128,13 +128,13 @@ export const SUPPRESSION_REASONS = /** @type {const} */ (['bounce', 'complaint',
 
 /** Modèles de messages prévus en v1 (clé → canaux par défaut). */
 export const NOTIFICATION_TEMPLATES = {
-  registration_received: ['email', 'whatsapp'],
-  registration_changes_requested: ['email', 'whatsapp'],
-  registration_approved: ['email', 'whatsapp'],
+  registration_received: ['email'],
+  registration_changes_requested: ['email'],
+  registration_approved: ['email'],
   registration_rejected: ['email'],
-  slot_assigned: ['email', 'whatsapp'],
-  slot_reminder: ['whatsapp'],
-  registration_qualified: ['email', 'whatsapp'],
+  slot_assigned: ['email'],
+  slot_reminder: ['email'],
+  registration_qualified: ['email'],
   broadcast: ['email']
 }
 

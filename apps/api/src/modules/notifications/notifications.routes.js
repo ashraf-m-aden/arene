@@ -4,8 +4,7 @@ import {
   broadcastSchema,
   common,
   notificationQuerySchema,
-  templateSchema,
-  webhookSchema
+  templateSchema
 } from '@arene/shared'
 import { requireRole } from '../../core/middlewares/auth.js'
 import { validate } from '../../core/middlewares/validate.js'
@@ -23,13 +22,6 @@ router.post(
   '/webhooks/ses',
   express.json({ type: ['application/json', 'text/plain'], limit: '256kb' }),
   asyncHandler(async (req, res) => ok(res, await service.handleSnsEvent(req.body)))
-)
-
-/** Webhook WhatsApp : identifié par l'identifiant de message du fournisseur. */
-router.post(
-  '/webhooks/whatsapp',
-  validate({ body: webhookSchema }),
-  asyncHandler(async (req, res) => ok(res, await service.handleWebhook('whatsapp', req.body)))
 )
 
 router.use(requireRole('admin'))
@@ -53,7 +45,7 @@ router.get(
   '/suppressions',
   validate({
     query: z.object({
-      channel: z.enum(['email', 'whatsapp']).optional(),
+      channel: z.literal('email').optional(),
       page: z.coerce.number().int().min(1).default(1),
       limit: z.coerce.number().int().min(1).max(200).default(50)
     })

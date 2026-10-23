@@ -42,8 +42,6 @@ services:
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
       SNS_TOPIC_ARN: ${SNS_TOPIC_ARN:-}
-      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
-      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
       API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-fr}
@@ -70,8 +68,6 @@ services:
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       SES_REGION: ${SES_REGION:-eu-west-3}
       SES_FROM: ${SES_FROM:-}
-      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
-      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost}
     volumes:
       - api-storage:/app/apps/api/storage

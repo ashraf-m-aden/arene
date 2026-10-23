@@ -43,8 +43,6 @@ export const config = {
     sesEnabled: Boolean(process.env.AWS_ACCESS_KEY_ID),
     sesRegion: process.env.SES_REGION || 'eu-west-3',
     sesFrom: process.env.SES_FROM || "L'Arène <no-reply@dj-arene.com>",
-    whatsappToken: process.env.WHATSAPP_TOKEN || '',
-    whatsappPhoneId: process.env.WHATSAPP_PHONE_ID || '',
     maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5),
     // Topic SNS qui relaie les rebonds et plaintes SES. Obligatoire : sans lui,
     // le webhook /notifications/webhooks/ses refuse tout.

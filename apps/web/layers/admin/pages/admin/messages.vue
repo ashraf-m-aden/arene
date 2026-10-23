@@ -62,7 +62,6 @@ async function saveTemplate() {
       channels: selected.value.channels,
       subject: selected.value.subject ?? { fr: '', ar: '' },
       body: selected.value.body,
-      metaTemplateName: selected.value.metaTemplateName || undefined,
       isActive: selected.value.isActive !== false
     })
     feedback.value = t('admin.templateSaved')
@@ -140,7 +139,6 @@ function toggleChannel(channel: string) {
             <tr>
               <th>{{ $t('admin.templateKey') }}</th>
               <th>{{ $t('admin.channels') }}</th>
-              <th>{{ $t('admin.metaTemplate') }}</th>
               <th />
             </tr>
           </thead>
@@ -152,7 +150,6 @@ function toggleChannel(channel: string) {
                   {{ channel }}
                 </span>
               </td>
-              <td class="muted">{{ template.metaTemplateName || '—' }}</td>
               <td>
                 <button class="btn btn--quiet btn--sm" @click="edit(template)">
                   {{ $t('common.save') }}
@@ -169,10 +166,6 @@ function toggleChannel(channel: string) {
         <h2 class="card__title">{{ selected.key }}</h2>
         <button class="btn btn--quiet btn--sm" @click="selected = null">{{ $t('common.close') }}</button>
       </div>
-
-      <AreneField :label="$t('admin.metaTemplate')" for="meta">
-        <input id="meta" v-model="selected.metaTemplateName" class="input">
-      </AreneField>
 
       <div class="two">
         <AreneField :label="$t('admin.subjectFr')" for="subjectFr">
@@ -202,7 +195,7 @@ function toggleChannel(channel: string) {
       <form class="card stack" @submit.prevent="sendBroadcast">
         <div class="cluster">
           <button
-            v-for="channel in ['email', 'whatsapp']"
+            v-for="channel in ['email']"
             :key="channel"
             type="button"
             class="btn btn--sm"

@@ -5,7 +5,7 @@ résultats scolaires. Tout se joue par **éditions** : selon l'édition, la comp
 **sportive ou intellectuelle**. La plateforme pilote chaque édition de bout en bout —
 inscriptions, vérification des dossiers, créneaux et convocations, check-in le jour J (y compris
 hors ligne), résultats, classements des participants et des écoles, galeries, notifications
-email + WhatsApp.
+par email.
 
 Le candidat s'inscrit lui-même et **garde son compte d'une édition à l'autre** : d'une édition à
 la suivante, il ne remet à jour que ses résultats scolaires. Le parcours complet
@@ -98,7 +98,7 @@ au tag précédent en cas d'échec. Il n'y a pas de préproduction.
 
 Variables principales : `MONGO_URI`, `REDIS_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`,
 `S3_BUCKET_PUBLIC`, `S3_BUCKET_PRIVATE`, `SES_REGION`, `SES_FROM`, `SNS_TOPIC_ARN`,
-`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
+`PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
 
 ## API
 
@@ -106,7 +106,7 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
 
 | Module | Routes |
 | --- | --- |
-| Auth | `POST /auth/register`, `/auth/login`, `/auth/otp/request`, `/auth/otp/verify`, `/auth/refresh`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset`, `GET /auth/me` |
+| Auth | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset`, `GET /auth/me` |
 | Éditions | `GET /editions`, `/editions/current`, `/editions/:slug` · `POST /editions`, `PATCH /editions/:id`, `POST /editions/:id/transition`, `GET /editions/:id/stats` |
 | Inscriptions | `POST /registrations`, `PATCH /registrations/:id`, `POST /registrations/:id/submit`, `GET /registrations/mine`, `GET /registrations`, `POST /registrations/:id/review`, `GET /registrations/:id/badge`, `GET /registrations/export` |
 | Écoles | `GET /schools`, `GET /schools/:slug`, `POST /schools`, `PATCH /schools/:id`, `POST /schools/:id/merge`, `POST /schools/import` |

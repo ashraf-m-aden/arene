@@ -144,8 +144,8 @@ describe('transitions de statut', () => {
 describe('numéro de téléphone', () => {
   it('accepte les groupes de chiffres que les gens écrivent', () => {
     // Le champ du site donne lui-même « +253 77 12 34 56 » en exemple : la
-    // validation doit accepter cette forme, sinon la connexion par code
-    // WhatsApp renvoie « Données invalides » sur une saisie correcte.
+    // validation doit accepter cette forme, sinon toute saisie correcte
+    // repart en « Données invalides ».
     expect(toE164('+253 77 48 47 07')).toBe('+25377484707')
     expect(toE164('+253-77-48-47-07')).toBe('+25377484707')
   })

@@ -6,7 +6,7 @@
     "needPhoto": "Une photo récente du joueur",
     "needBulletin": "Le dernier bulletin scanné, avec le cachet de l'établissement (PDF ou image, 10 Mo max)",
     "needAverage": "La moyenne du dernier bulletin",
-    "needPhone": "Un numéro WhatsApp pour recevoir la convocation",
+    "needPhone": "Un numéro de téléphone joignable",
     "feeNotice": "Les frais d'inscription se règlent en espèces à l'accueil, le jour du créneau.",
     "originalBulletin": "Bulletin original exigé au check-in",
     "startCta": "Commencer le dossier",
@@ -62,7 +62,7 @@
       "title": "Vérifiez avant d'envoyer",
       "feeReminder": "Aucune signature ici : le jour de votre convocation, présentez-vous pour signer le contrat et régler les frais en espèces ({amount}).",
       "submit": "Envoyer le dossier",
-      "submitted": "Dossier envoyé. Vous recevrez la décision par email et WhatsApp.",
+      "submitted": "Dossier envoyé. Vous recevrez la décision par email.",
       "missing": "Il manque encore des informations : {fields}"
     },
     "account": {

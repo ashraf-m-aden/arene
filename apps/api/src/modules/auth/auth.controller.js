@@ -27,15 +27,6 @@ export const login = asyncHandler(async (req, res) => {
   ok(res, issueSession(res, user))
 })
 
-export const requestOtp = asyncHandler(async (req, res) => {
-  ok(res, await service.requestOtp(req.body.phone))
-})
-
-export const verifyOtp = asyncHandler(async (req, res) => {
-  const user = await service.verifyOtp(req.body)
-  ok(res, issueSession(res, user))
-})
-
 export const refresh = asyncHandler(async (req, res) => {
   const user = await service.rotateRefresh(req.cookies?.[REFRESH_COOKIE])
   ok(res, issueSession(res, user))

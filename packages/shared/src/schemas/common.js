@@ -27,7 +27,7 @@ export const locale = z.enum(LOCALES)
  * Un numéro djiboutien s'écrit par groupes — « +253 77 12 34 56 », la forme que
  * les champs du site donnent eux-mêmes en exemple. La saisie passe donc par
  * `toE164` avant d'être validée, exactement comme le fait déjà le service :
- * retrouver un compte à partir de son numéro (code WhatsApp, doublons) suppose
+ * retrouver un compte à partir de son numéro (connexion, doublons) suppose
  * une seule écriture possible en base.
  */
 export const phone = z

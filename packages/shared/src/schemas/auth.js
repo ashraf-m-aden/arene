@@ -10,25 +10,24 @@ import { email, locale, password, phone } from './common.js'
  * Il porte le compte permanent : il n'est plus jamais modifie, et il est repris tel
  * quel d'une edition a l'autre.
  */
-export const registerSchema = z
-  .object({
-    name: z.string().trim().min(3).max(120),
-    email: email.optional(),
-    phone,
-    password,
-    locale: locale.default('fr'),
-    acceptsWhatsapp: z.boolean().default(true)
-  })
-  .refine((v) => v.email || v.phone, { message: 'email ou téléphone requis' })
+/**
+ * L'email est obligatoire : c'est le seul canal de la plateforme. Sans lui, un
+ * compte ne recevrait ni décision, ni convocation, ni lien de réinitialisation.
+ * Le téléphone reste demandé, mais comme contact de secours uniquement.
+ */
+export const registerSchema = z.object({
+  name: z.string().trim().min(3).max(120),
+  email,
+  phone,
+  password,
+  locale: locale.default('fr')
+})
 
 export const loginSchema = z
   .object({
     identifier: z.string().trim().min(5).max(120),
     password: z.string().min(1)
   })
-
-export const otpRequestSchema = z.object({ phone })
-export const otpVerifySchema = z.object({ phone, code: z.string().regex(/^\d{6}$/) })
 
 export const forgotPasswordSchema = z.object({ identifier: z.string().trim().min(5) })
 export const resetPasswordSchema = z.object({

@@ -2,7 +2,7 @@ import config from '../../core/config.js'
 import logger from '../../core/logger.js'
 
 /**
- * Fournisseurs d'envoi. Sans identifiants configurés, les messages sont
+ * Fournisseur d'envoi. Sans identifiants configurés, les messages sont
  * seulement journalisés : le développement et les tests ne contactent personne.
  */
 let sesClient
@@ -74,52 +74,4 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
 }
 
-/**
- * WhatsApp Cloud API de Meta, en direct.
- * Les messages à l'initiative de la plateforme passent par un modèle pré-approuvé.
- */
-export const whatsappProvider = {
-  name: 'whatsapp',
-  async send({ to, body, metaTemplateName, locale, variables }) {
-    const { whatsappToken, whatsappPhoneId } = config.notifications
-    if (!whatsappToken || !whatsappPhoneId) {
-      logger.info({ to, channel: 'whatsapp', metaTemplateName }, 'WhatsApp simulé (non configuré)')
-      return { providerMessageId: `sim-${Date.now()}`, simulated: true }
-    }
-
-    const payload = metaTemplateName
-      ? {
-          messaging_product: 'whatsapp',
-          to,
-          type: 'template',
-          template: {
-            name: metaTemplateName,
-            language: { code: locale === 'ar' ? 'ar' : 'fr' },
-            components: variables?.length
-              ? [{ type: 'body', parameters: variables.map((text) => ({ type: 'text', text })) }]
-              : undefined
-          }
-        }
-      : { messaging_product: 'whatsapp', to, type: 'text', text: { body } }
-
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${whatsappPhoneId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${whatsappToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      }
-    )
-
-    const json = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      throw new Error(json?.error?.message || `WhatsApp a répondu ${response.status}`)
-    }
-    return { providerMessageId: json?.messages?.[0]?.id }
-  }
-}
-
-export const providers = { email: emailProvider, whatsapp: whatsappProvider }
+export const providers = { email: emailProvider }

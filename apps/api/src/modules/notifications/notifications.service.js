@@ -2,7 +2,6 @@ import config from '../../core/config.js'
 import logger from '../../core/logger.js'
 import { enqueue, QUEUES } from '../../core/queue.js'
 import { badRequest, notFound } from '../../core/errors.js'
-import { toE164 } from '../../core/utils/text.js'
 import { Notification, NotificationTemplate, Suppression } from './notifications.model.js'
 import { DEFAULT_TEMPLATES, renderTemplate } from './notifications.templates.js'
 import { providers } from './notifications.providers.js'
@@ -56,7 +55,7 @@ export async function queueMessage({
   const queued = []
 
   for (const target of targets) {
-    const recipient = target === 'whatsapp' ? toE164(to?.whatsapp ?? to) : to?.email ?? to
+    const recipient = to?.email ?? to
     if (!recipient) continue
 
     // Adresse supprimée : on garde une trace visible pour l'organisation, mais
@@ -130,14 +129,7 @@ export async function processJob({ notificationId, ...inline }) {
 
   try {
     const provider = providers[notification.channel]
-    const result = await provider.send({
-      to: notification.to,
-      subject,
-      body,
-      locale,
-      metaTemplateName: definition.metaTemplateName,
-      variables: definition.metaTemplateName ? templateVariables(variables) : undefined
-    })
+    const result = await provider.send({ to: notification.to, subject, body, locale })
 
     notification.status = 'sent'
     notification.sentAt = new Date()
@@ -156,13 +148,6 @@ export async function processJob({ notificationId, ...inline }) {
     )
     throw error
   }
-}
-
-/** Ordre des variables attendu par les modèles Meta (paramètres positionnels). */
-function templateVariables(payload) {
-  return ['prenom', 'edition', 'creneau', 'date', 'lieu', 'frais', 'motif', 'code', 'lien']
-    .filter((key) => payload[key] !== undefined)
-    .map((key) => String(payload[key]))
 }
 
 export async function list(query) {
@@ -285,19 +270,6 @@ export async function handleSnsEvent(envelope) {
 }
 
 /** Mise à jour depuis les webhooks fournisseurs : distribué, lu, échoué. */
-export async function handleWebhook(provider, { providerMessageId, status, error }) {
-  const notification = await Notification.findOne({ providerMessageId })
-  if (!notification) return { matched: false }
-
-  notification.status = status
-  if (status === 'delivered') notification.deliveredAt = new Date()
-  if (status === 'read') notification.readAt = new Date()
-  if (error) notification.error = error
-  await notification.save()
-  logger.info({ provider, providerMessageId, status }, 'statut de notification mis à jour')
-  return { matched: true }
-}
-
 /** Annonce groupée à un segment d'inscrits (édition, rôle, créneau, école). */
 export async function broadcast(
   { editionId, channels, template, segment, registrationIds, payload },
@@ -314,7 +286,7 @@ export async function broadcast(
   let queued = 0
   for (const registration of items) {
     const candidate = registration.candidateId
-    const recipients = { email: candidate?.email, whatsapp: candidate?.phone }
+    const recipients = { email: candidate?.email }
     for (const channel of channels) {
       if (!recipients[channel]) continue
       const sent = await queueMessage({

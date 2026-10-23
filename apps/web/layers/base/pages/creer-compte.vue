@@ -8,8 +8,7 @@ const form = reactive({
   email: '',
   phone: '',
   password: '',
-  locale: locale.value as 'fr' | 'ar',
-  acceptsWhatsapp: true
+  locale: locale.value as 'fr' | 'ar'
 })
 
 const pending = ref(false)
@@ -23,9 +22,7 @@ async function submit() {
   error.value = ''
   fieldErrors.value = {}
   try {
-    const payload: Record<string, unknown> = { ...form }
-    if (!form.email) delete payload.email
-    const user = await auth.register(payload)
+    const user = await auth.register({ ...form })
     await navigateTo(localePath(user.role === 'candidate' ? '/compte' : '/staff'))
   } catch (err: any) {
     error.value = err.message
@@ -78,8 +75,21 @@ async function submit() {
           >
         </AreneField>
 
-        <AreneField :label="$t('auth.email')" for="email" :error="fieldErrors.email">
-          <input id="email" v-model="form.email" class="input" type="email" autocomplete="email">
+        <AreneField
+          :label="$t('auth.email')"
+          :hint="$t('auth.emailHint')"
+          for="email"
+          required
+          :error="fieldErrors.email"
+        >
+          <input
+            id="email"
+            v-model="form.email"
+            class="input"
+            type="email"
+            autocomplete="email"
+            required
+          >
         </AreneField>
 
         <AreneField
@@ -106,11 +116,6 @@ async function submit() {
             <option value="ar">العربية</option>
           </select>
         </AreneField>
-
-        <label class="check" :class="{ 'check--checked': form.acceptsWhatsapp }">
-          <input v-model="form.acceptsWhatsapp" type="checkbox">
-          <span>{{ $t('auth.acceptsWhatsapp') }}</span>
-        </label>
 
         <button class="btn btn--primary btn--block" type="submit" :disabled="pending">
           {{ pending ? $t('common.loading') : $t('auth.createAccount') }}
