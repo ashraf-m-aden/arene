@@ -11,6 +11,8 @@
     "originalBulletin": "Bulletin original exigé au check-in",
     "startCta": "Commencer le dossier",
     "continueCta": "Reprendre mon dossier",
+    "trackCta": "Voir mon dossier",
+    "lockedLead": "Votre dossier est envoyé : il n’est plus modifiable. Suivez son avancement depuis votre espace.",
     "loginFirst": "Créez votre compte ou connectez-vous pour commencer.",
     "closed": "Les inscriptions sont fermées pour le moment.",
     "steps": {

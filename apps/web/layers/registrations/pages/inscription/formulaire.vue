@@ -192,6 +192,18 @@ function back() {
         <AreneNotice tone="danger">{{ $t('registrations.closed') }}</AreneNotice>
       </template>
 
+      <!-- Dossier deja envoye : l'API refuse toute modification. Sans cette
+           garde on affichait un formulaire modifiable qui echouait a
+           l'enregistrement, sur « Ce dossier n'est plus modifiable ». -->
+      <template v-else-if="store.draft.registrationId && !store.canEdit">
+        <AreneNotice tone="warning">{{ $t('registrations.lockedLead') }}</AreneNotice>
+        <div class="cluster">
+          <NuxtLink :to="localePath('/compte')" class="btn btn--primary">
+            {{ $t('registrations.trackCta') }}
+          </NuxtLink>
+        </div>
+      </template>
+
       <template v-else>
         <AreneSectionHead
           :eyebrow="text(edition.title)"

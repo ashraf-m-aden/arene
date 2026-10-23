@@ -2,9 +2,17 @@ import { defineStore } from 'pinia'
 
 type Step = 1 | 2 | 3 | 4
 
+/**
+ * Miroir de `CANDIDATE_EDITABLE_STATUSES` dans `registrations.service` : au-dela,
+ * l'API refuse toute modification et le formulaire n'a plus lieu d'etre affiche.
+ */
+export const CANDIDATE_EDITABLE_STATUSES = ['draft', 'changes_requested']
+
 interface DraftState {
   registrationId: string | null
   editionId: string | null
+  /** Statut du dossier cote API : il decide si le formulaire est encore ouvert. */
+  status: string
   step: Step
   player: {
     /** Copie du nom du compte, posée par l'API. Jamais saisie ici. */
@@ -30,6 +38,7 @@ interface DraftState {
 const emptyDraft = (): DraftState => ({
   registrationId: null,
   editionId: null,
+  status: 'draft',
   step: 1,
   player: { name: '', birthDate: '', gender: '', photoFileId: null },
   schoolId: null,
@@ -61,6 +70,15 @@ export const useRegistrationStore = defineStore('registration', {
 
   getters: {
     hasDraft: (state) => Boolean(state.draft.registrationId),
+    /** Un dossier envoye n'est plus modifiable : le formulaire doit le dire. */
+    canEdit: (state) => CANDIDATE_EDITABLE_STATUSES.includes(state.draft.status),
+    /**
+     * Meme question pour un dossier qui n'est pas le brouillon courant. Expose
+     * en getter plutot qu'en export : les pages n'importent rien, tout passe
+     * par l'auto-import du store.
+     */
+    isEditableStatus: () => (status?: string) =>
+      CANDIDATE_EDITABLE_STATUSES.includes(String(status)),
     stepsDone: (state) => ({
       1: Boolean(state.draft.player.birthDate && state.draft.role),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),
@@ -114,6 +132,7 @@ export const useRegistrationStore = defineStore('registration', {
       const draft = emptyDraft()
       draft.registrationId = data._id
       draft.editionId = editionId
+      draft.status = data.status || 'draft'
       // L'API avance `step` au fil des étapes validées : on reprend où le
       // candidat s'était arrêté plutôt que de le renvoyer à l'étape 1.
       draft.step = (Math.min(4, Math.max(1, Number(data.step) || 1)) as Step)
@@ -232,6 +251,22 @@ export const useRegistrationStore = defineStore('registration', {
       } finally {
         this.pending = false
       }
+    },
+
+    /**
+     * Le dossier de cette edition tel que l'API le connait.
+     *
+     * `hasDraft` ne lit que le brouillon persiste localement : sur un autre
+     * appareil ou apres un vidage du navigateur, il repond faux alors que le
+     * dossier existe. Pour choisir ce qu'on propose au candidat, il faut la
+     * reponse de l'API, pas celle du stockage local.
+     */
+    async findForEdition(editionId: string) {
+      const items = this.mine.length ? this.mine : await this.fetchMine()
+      return (
+        items.find((row: any) => String(row.editionId?._id ?? row.editionId) === String(editionId)) ??
+        null
+      )
     },
 
     async fetchMine() {

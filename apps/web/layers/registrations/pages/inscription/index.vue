@@ -21,6 +21,42 @@ useSeoPage({
   ])
 })
 
+/**
+ * Ce qu'on propose au candidat depend du dossier que l'API connait, pas du
+ * brouillon garde par le navigateur : sur un autre appareil, ou apres un
+ * vidage du stockage, `hasDraft` repond faux alors que le dossier existe, et
+ * on invitait a « commencer » une candidature deja envoyee.
+ */
+const myRegistration = ref<any>(null)
+const checking = ref(false)
+
+onMounted(async () => {
+  if (!auth.isLoggedIn || !edition.value?._id) return
+  checking.value = true
+  try {
+    myRegistration.value = await registration.findForEdition(edition.value._id)
+  } catch {
+    // Pas de dossier connu : on retombe sur le brouillon local, au pire on
+    // propose « commencer » et `createDraft` rendra l'existant de toute facon.
+    myRegistration.value = null
+  } finally {
+    checking.value = false
+  }
+})
+
+const canEdit = computed(() => registration.isEditableStatus(myRegistration.value?.status))
+
+/** Dossier envoye : le formulaire est clos, on renvoie vers l'espace candidat. */
+const isLocked = computed(() => Boolean(myRegistration.value) && !canEdit.value)
+
+const ctaLabel = computed(() => {
+  if (isLocked.value) return t('registrations.trackCta')
+  if (myRegistration.value || registration.hasDraft) return t('registrations.continueCta')
+  return t('registrations.startCta')
+})
+
+const ctaTarget = computed(() => (isLocked.value ? '/compte' : '/inscription/formulaire'))
+
 const needs = ['needPhoto', 'needBulletin', 'needAverage', 'needPhone']
 </script>
 
@@ -35,10 +71,11 @@ const needs = ['needPhoto', 'needBulletin', 'needAverage', 'needPhone']
         <div v-if="isOpen" class="cluster">
           <NuxtLink
             v-if="auth.isLoggedIn"
-            :to="localePath('/inscription/formulaire')"
+            :to="localePath(ctaTarget)"
             class="btn btn--primary btn--lg"
+            :class="{ 'is-busy': checking }"
           >
-            {{ registration.hasDraft ? $t('registrations.continueCta') : $t('registrations.startCta') }}
+            {{ ctaLabel }}
           </NuxtLink>
           <template v-else>
             <NuxtLink :to="localePath('/creer-compte')" class="btn btn--primary btn--lg">
