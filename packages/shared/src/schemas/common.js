@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { LOCALES } from '../constants.js'
+import { toE164 } from '../rules.js'
 
 export const objectId = z
   .string()
@@ -20,11 +21,26 @@ export const i18nText = (min = 1, max = 2000) =>
 
 export const locale = z.enum(LOCALES)
 
-/** Téléphone normalisé au format international E.164 (Djibouti : +253…). */
+/**
+ * Téléphone normalisé au format international E.164 (Djibouti : +253…).
+ *
+ * Un numéro djiboutien s'écrit par groupes — « +253 77 12 34 56 », la forme que
+ * les champs du site donnent eux-mêmes en exemple. La saisie passe donc par
+ * `toE164` avant d'être validée, exactement comme le fait déjà le service :
+ * retrouver un compte à partir de son numéro (code WhatsApp, doublons) suppose
+ * une seule écriture possible en base.
+ */
 export const phone = z
   .string()
   .trim()
-  .regex(/^\+[1-9]\d{6,14}$/, { message: 'numéro au format international attendu (+253…)' })
+  .transform((value) => toE164(value))
+  .pipe(
+    z
+      .string()
+      .regex(/^\+[1-9]\d{6,14}$/, {
+        message: 'numéro au format international attendu (+253…)'
+      })
+  )
 
 export const email = z.string().trim().toLowerCase().email()
 

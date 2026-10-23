@@ -6,6 +6,22 @@ import {
   REGISTRATION_TRANSITIONS
 } from './constants.js'
 
+/**
+ * Normalise un numéro djiboutien vers E.164.
+ *
+ * Vit ici et non dans l'API : le schéma Zod partagé s'en sert pour nettoyer la
+ * saisie avant de la valider. Sans cela, la validation refusait « +253 77 12 34
+ * 56 » — la forme que les champs du site donnent pourtant en exemple — et le
+ * normaliseur de l'API n'était jamais atteint.
+ */
+export function toE164(input, defaultCountry = '+253') {
+  const raw = String(input || '').replace(/[^\d+]/g, '')
+  if (raw.startsWith('+')) return raw
+  if (raw.startsWith('00')) return `+${raw.slice(2)}`
+  if (raw.startsWith('253')) return `+${raw}`
+  return `${defaultCountry}${raw.replace(/^0+/, '')}`
+}
+
 /** Âge révolu à une date de référence. */
 export function ageAt(birthDate, reference = new Date()) {
   const b = new Date(birthDate)

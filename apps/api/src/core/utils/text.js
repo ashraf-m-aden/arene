@@ -29,14 +29,9 @@ export function dedupeKey({ name, birthDate, schoolId }) {
   return [norm(name), day, String(schoolId || '')].join('|')
 }
 
-/** Normalise un numéro djiboutien vers E.164. */
-export function toE164(input, defaultCountry = '+253') {
-  const raw = String(input || '').replace(/[^\d+]/g, '')
-  if (raw.startsWith('+')) return raw
-  if (raw.startsWith('00')) return `+${raw.slice(2)}`
-  if (raw.startsWith('253')) return `+${raw}`
-  return `${defaultCountry}${raw.replace(/^0+/, '')}`
-}
+// La normalisation des numéros vit dans `@arene/shared` : le schéma Zod partagé
+// l'applique avant de valider. Réexportée ici pour les appelants de l'API.
+export { toE164 } from '@arene/shared'
 
 /** Sérialisation CSV minimale, sans dépendance. Le BOM garde les accents dans Excel. */
 export function toCsv(rows, columns) {

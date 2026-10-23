@@ -5,11 +5,13 @@ import {
   canTransitionRegistration,
   categoryFromSchoolType,
   checkEligibility,
+  common,
   computeMatchScore,
   generateMatches,
   isAgeEligible,
   rankDefenders,
-  rankStrikers
+  rankStrikers,
+  toE164
 } from '@arene/shared'
 
 const REF = new Date('2026-06-15T12:00:00Z')
@@ -136,5 +138,28 @@ describe('transitions de statut', () => {
     expect(canTransitionRegistration('submitted', 'approved')).toBe(true)
     expect(canTransitionRegistration('approved', 'checked_in')).toBe(false)
     expect(canTransitionRegistration('scheduled', 'checked_in')).toBe(true)
+  })
+})
+
+describe('numéro de téléphone', () => {
+  it('accepte les groupes de chiffres que les gens écrivent', () => {
+    // Le champ du site donne lui-même « +253 77 12 34 56 » en exemple : la
+    // validation doit accepter cette forme, sinon la connexion par code
+    // WhatsApp renvoie « Données invalides » sur une saisie correcte.
+    expect(toE164('+253 77 48 47 07')).toBe('+25377484707')
+    expect(toE164('+253-77-48-47-07')).toBe('+25377484707')
+  })
+
+  it('complète les écritures locales et internationales', () => {
+    expect(toE164('77 48 47 07')).toBe('+25377484707')
+    expect(toE164('077484707')).toBe('+25377484707')
+    expect(toE164('00253 77 48 47 07')).toBe('+25377484707')
+    expect(toE164('+33 6 12 34 56 78')).toBe('+33612345678')
+  })
+
+  it('laisse le schéma refuser ce qui ne forme pas un numéro', () => {
+    expect(common.phone.safeParse('+253 77 48 47 07').success).toBe(true)
+    expect(common.phone.safeParse('abc').success).toBe(false)
+    expect(common.phone.safeParse('').success).toBe(false)
   })
 })
