@@ -48,8 +48,7 @@ maybe('API', () => {
 
   it('crée un compte candidat puis renvoie son profil', async () => {
     const register = await request(app).post('/api/v1/auth/register').send({
-      firstName: 'Fatouma',
-      lastName: 'Test',
+      name: 'Fatouma Test Ahmed',
       email: 'candidate.test@example.dj',
       phone: '+25377123456',
       password: 'MotDePasse1',
@@ -62,6 +61,8 @@ maybe('API', () => {
     const me = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`)
     expect(me.status).toBe(200)
     expect(me.body.data.role).toBe('candidate')
+    // Le nom est saisi une seule fois, en un seul champ : il doit revenir tel quel.
+    expect(me.body.data.name).toBe('Fatouma Test Ahmed')
   })
 
   it('n’expose pas les éditions en brouillon', async () => {
