@@ -124,11 +124,15 @@ async function downloadData(id: string) {
               {{ $t('registrations.account.badge') }}
             </button>
             <NuxtLink
-              v-if="['draft', 'changes_requested'].includes(file.status)"
+              v-if="store.isEditableStatus(file.status)"
               :to="localePath('/inscription/formulaire')"
               class="btn btn--primary btn--sm"
             >
-              {{ $t('registrations.continueCta') }}
+              {{
+                store.statusReopens(file.status)
+                  ? $t('registrations.fixCta')
+                  : $t('registrations.continueCta')
+              }}
             </NuxtLink>
             <button class="btn btn--quiet btn--sm" @click="downloadData(file._id)">
               {{ $t('registrations.account.download') }}

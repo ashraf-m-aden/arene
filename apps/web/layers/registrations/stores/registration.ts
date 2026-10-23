@@ -3,10 +3,15 @@ import { defineStore } from 'pinia'
 type Step = 1 | 2 | 3 | 4
 
 /**
- * Miroir de `CANDIDATE_EDITABLE_STATUSES` dans `registrations.service` : au-dela,
- * l'API refuse toute modification et le formulaire n'a plus lieu d'etre affiche.
+ * Miroirs des deux listes de `registrations.service`.
+ *
+ * `EDITABLE` : le candidat corrige, rien d'autre ne bouge.
+ * `REOPENABLE` : le dossier a deja ete examine ; une correction le renvoie en
+ * verification et libere son creneau. Au-dela de ces deux listes, l'API refuse
+ * toute modification et le formulaire n'a plus lieu d'etre affiche.
  */
 export const CANDIDATE_EDITABLE_STATUSES = ['draft', 'changes_requested']
+export const CANDIDATE_REOPENABLE_STATUSES = ['submitted', 'under_review', 'approved', 'scheduled']
 
 interface DraftState {
   registrationId: string | null
@@ -70,15 +75,23 @@ export const useRegistrationStore = defineStore('registration', {
 
   getters: {
     hasDraft: (state) => Boolean(state.draft.registrationId),
-    /** Un dossier envoye n'est plus modifiable : le formulaire doit le dire. */
-    canEdit: (state) => CANDIDATE_EDITABLE_STATUSES.includes(state.draft.status),
+    /** Le dossier courant accepte encore une correction du candidat. */
+    canEdit: (state) =>
+      CANDIDATE_EDITABLE_STATUSES.includes(state.draft.status) ||
+      CANDIDATE_REOPENABLE_STATUSES.includes(state.draft.status),
+    /** ... mais au prix d'un retour en verification, qu'il faut annoncer. */
+    editReopens: (state) => CANDIDATE_REOPENABLE_STATUSES.includes(state.draft.status),
     /**
      * Meme question pour un dossier qui n'est pas le brouillon courant. Expose
      * en getter plutot qu'en export : les pages n'importent rien, tout passe
      * par l'auto-import du store.
      */
     isEditableStatus: () => (status?: string) =>
-      CANDIDATE_EDITABLE_STATUSES.includes(String(status)),
+      CANDIDATE_EDITABLE_STATUSES.includes(String(status)) ||
+      CANDIDATE_REOPENABLE_STATUSES.includes(String(status)),
+    /** Vrai quand corriger ce dossier le renverra en verification. */
+    statusReopens: () => (status?: string) =>
+      CANDIDATE_REOPENABLE_STATUSES.includes(String(status)),
     stepsDone: (state) => ({
       1: Boolean(state.draft.player.birthDate && state.draft.role),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),

@@ -13,7 +13,19 @@ import { Registration } from './registrations.model.js'
 const editionsService = () => import('../editions/editions.service.js')
 const schoolsService = () => import('../schools/schools.service.js')
 
+/** Statuts qu'un candidat modifie sans que rien d'autre ne bouge. */
 const CANDIDATE_EDITABLE_STATUSES = ['draft', 'changes_requested']
+
+/**
+ * Statuts qu'une modification du candidat ramene en verification.
+ *
+ * Le staff a deja examine ces dossiers : son avis ne peut pas couvrir des
+ * donnees qu'il n'a pas vues. Toute correction les renvoie donc a l'etat
+ * « preinscrit », liberant au passage le creneau eventuel. Hors de ces deux
+ * listes le dossier est fige : `rejected` est une decision, et a partir de
+ * `checked_in` la personne s'est presentee, a signe et a paye.
+ */
+const CANDIDATE_REOPENABLE_STATUSES = ['submitted', 'under_review', 'approved', 'scheduled']
 
 async function assertOwnership(registration, user) {
   if (!user) throw forbidden()
@@ -79,8 +91,21 @@ export async function createDraft({ editionId, locale }, candidateId) {
 /** Mise à jour d'une étape du formulaire ; le brouillon est enregistré à chaque étape. */
 export async function patch(id, user, input) {
   const registration = await getById(id, user)
-  if (!CANDIDATE_EDITABLE_STATUSES.includes(registration.status) && user.role === 'candidate') {
-    throw badRequest('Ce dossier n’est plus modifiable').withKey('fileLocked')
+  const statusBefore = registration.status
+  const reopening =
+    user.role === 'candidate' && CANDIDATE_REOPENABLE_STATUSES.includes(statusBefore)
+
+  if (user.role === 'candidate') {
+    if (!CANDIDATE_EDITABLE_STATUSES.includes(statusBefore) && !reopening) {
+      throw badRequest('Ce dossier n’est plus modifiable').withKey('fileLocked')
+    }
+    // La fenetre d'inscription borne la correction : passee la cloture, plus
+    // rien ne bouge, meme sur un dossier que personne n'a encore examine.
+    const editions = await editionsService()
+    const edition = await editions.getById(registration.editionId)
+    if (!edition.isRegistrationOpen) {
+      throw badRequest('Les inscriptions sont fermées').withKey('registrationsClosed')
+    }
   }
 
   if (input.newSchool) {
@@ -119,7 +144,37 @@ export async function patch(id, user, input) {
     })
   }
 
+  /*
+   * Le dossier avait deja ete examine : la correction annule cet examen. Il
+   * repart « preinscrit », son creneau est rendu — l'occupation se calcule
+   * depuis les dossiers qui le portent, l'annuler suffit a liberer la place —
+   * et ses signalements sont recalcules sur les nouvelles donnees.
+   *
+   * Un dossier deja « preinscrit » ne declenche rien : le formulaire appelle
+   * `patch` a chaque etape, on ne va pas notifier quatre fois pour une seule
+   * correction.
+   */
+  const reverting = reopening && statusBefore !== 'submitted'
+  if (reverting) {
+    const editions = await editionsService()
+    const edition = await editions.getById(registration.editionId)
+    registration.flags = await computeFlags(registration, edition)
+    registration.slotId = null
+    registration.reviewedBy = undefined
+    registration.reviewedAt = undefined
+    pushHistory(registration, 'submitted', user.id, 'dossier corrigé par le candidat')
+  }
+
   await registration.save()
+
+  if (reverting) {
+    bus.emitEvent('registration.submitted', {
+      registrationId: String(registration._id),
+      editionId: String(registration.editionId),
+      flags: registration.flags.map((f) => f.code)
+    })
+  }
+
   return registration
 }
 
@@ -127,6 +182,39 @@ export async function patch(id, user, input) {
  * Envoi du dossier : contrôles automatiques, doublon et plafond de places.
  * Un dossier hors critères part quand même au staff, avec ses signalements.
  */
+/**
+ * Signalements des controles automatiques : age, moyenne, place restante,
+ * doublon. Jamais un refus — une alerte pour le staff, qui tranche.
+ *
+ * Partage par `submit` et par `patch` : un dossier corrige apres examen
+ * repart avec des signalements recalcules, pas avec ceux de la veille.
+ */
+async function computeFlags(registration, edition) {
+  const editions = await editionsService()
+  const seats = await editions.seatsLeft(registration.editionId)
+  const seatsLeftForRole = seats?.[registration.ageCategory]?.[registration.role]?.left ?? 0
+
+  const { issues } = checkEligibility({
+    birthDate: registration.player.birthDate,
+    ageCategory: registration.ageCategory,
+    gradeAverage: registration.grades.average,
+    gradeThreshold: edition.rules?.gradeThreshold,
+    roleSeatsLeft: seatsLeftForRole
+  })
+
+  const duplicate = await Registration.findOne({
+    _id: { $ne: registration._id },
+    editionId: registration.editionId,
+    dedupeKey: registration.dedupeKey,
+    status: { $nin: ['rejected', 'draft'] }
+  })
+  if (duplicate) {
+    issues.push({ code: 'duplicate', field: 'player', detail: { registrationId: String(duplicate._id) } })
+  }
+
+  return issues
+}
+
 export async function submit(id, user) {
   const registration = await getById(id, user)
   if (!canTransitionRegistration(registration.status, 'submitted')) {
@@ -149,27 +237,7 @@ export async function submit(id, user) {
   const edition = await editions.getById(registration.editionId)
   if (!edition.isRegistrationOpen) throw badRequest('Les inscriptions sont fermées').withKey('registrationsClosed')
 
-  const seats = await editions.seatsLeft(registration.editionId)
-  const seatsLeftForRole = seats?.[registration.ageCategory]?.[registration.role]?.left ?? 0
-
-  const { issues } = checkEligibility({
-    birthDate: registration.player.birthDate,
-    ageCategory: registration.ageCategory,
-    gradeAverage: registration.grades.average,
-    gradeThreshold: edition.rules?.gradeThreshold,
-    roleSeatsLeft: seatsLeftForRole
-  })
-
-  const duplicate = await Registration.findOne({
-    _id: { $ne: registration._id },
-    editionId: registration.editionId,
-    dedupeKey: registration.dedupeKey,
-    status: { $nin: ['rejected', 'draft'] }
-  })
-  if (duplicate) {
-    issues.push({ code: 'duplicate', field: 'player', detail: { registrationId: String(duplicate._id) } })
-  }
-
+  const issues = await computeFlags(registration, edition)
   registration.flags = issues
   pushHistory(registration, 'submitted', user.id, 'envoi du dossier')
   await registration.save()

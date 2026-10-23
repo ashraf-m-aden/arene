@@ -219,6 +219,12 @@ function back() {
           :title="$t(`registrations.steps.${stepKeys[step - 1]}`)"
         />
 
+        <!-- Le dossier a deja ete examine : la correction annule cet examen,
+             le candidat doit le savoir avant de toucher a quoi que ce soit. -->
+        <AreneNotice v-if="store.editReopens" tone="warning">
+          {{ $t('registrations.reopenWarning') }}
+        </AreneNotice>
+
         <ol class="steps" :aria-label="$t('registrations.pitchTitle')">
           <li
             v-for="(key, index) in stepKeys"

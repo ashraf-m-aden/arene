@@ -51,6 +51,9 @@ const isLocked = computed(() => Boolean(myRegistration.value) && !canEdit.value)
 
 const ctaLabel = computed(() => {
   if (isLocked.value) return t('registrations.trackCta')
+  // Corriger un dossier deja examine n'est pas « reprendre » : le mot doit
+  // annoncer que quelque chose se joue.
+  if (registration.statusReopens(myRegistration.value?.status)) return t('registrations.fixCta')
   if (myRegistration.value || registration.hasDraft) return t('registrations.continueCta')
   return t('registrations.startCta')
 })

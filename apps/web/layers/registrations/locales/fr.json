@@ -11,6 +11,8 @@
     "originalBulletin": "Bulletin original exigé au check-in",
     "startCta": "Commencer le dossier",
     "continueCta": "Reprendre mon dossier",
+    "fixCta": "Corriger mon dossier",
+    "reopenWarning": "Ce dossier a déjà été examiné. Toute correction le renvoie en vérification, et le rendez-vous qui vous aurait été attribué sera annulé.",
     "trackCta": "Voir mon dossier",
     "lockedLead": "Votre dossier est envoyé : il n’est plus modifiable. Suivez son avancement depuis votre espace.",
     "loginFirst": "Créez votre compte ou connectez-vous pour commencer.",
