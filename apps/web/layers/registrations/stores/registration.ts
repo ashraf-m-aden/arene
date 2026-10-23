@@ -90,15 +90,60 @@ export const useRegistrationStore = defineStore('registration', {
       this.error = ''
     },
 
-    /** Crée le brouillon côté API, ou retrouve celui déjà ouvert. */
+    /**
+     * Charge le dossier de l'édition dans le brouillon local.
+     *
+     * L'API ne crée jamais un second dossier : `createDraft` rend celui qui
+     * existe déjà, quel que soit son statut. Encore faut-il l'afficher — en
+     * ne gardant que l'identifiant de la réponse, on présentait un formulaire
+     * vide par-dessus un dossier rempli, et le candidat croyait repartir de
+     * zéro. Tout ce que la réponse porte est donc repris ici.
+     */
     async start(editionId: string, locale: 'fr' | 'ar') {
       const { $api } = useNuxtApp()
       if (this.draft.registrationId && this.draft.editionId === editionId) {
         return this.draft.registrationId
       }
       const { data } = await $api.post<{ data: any }>('/registrations', { editionId, locale })
-      this.draft = { ...emptyDraft(), registrationId: data._id, editionId }
+      this.hydrate(data, editionId)
       return data._id
+    },
+
+    /** Recopie un dossier de l'API dans le brouillon, sans perdre ce qu'il porte. */
+    hydrate(data: any, editionId: string) {
+      const draft = emptyDraft()
+      draft.registrationId = data._id
+      draft.editionId = editionId
+      // L'API avance `step` au fil des étapes validées : on reprend où le
+      // candidat s'était arrêté plutôt que de le renvoyer à l'étape 1.
+      draft.step = (Math.min(4, Math.max(1, Number(data.step) || 1)) as Step)
+
+      draft.player.name = data.player?.name || ''
+      // L'API renvoie une date ISO complète ; l'input date attend AAAA-MM-JJ.
+      draft.player.birthDate = data.player?.birthDate
+        ? String(data.player.birthDate).slice(0, 10)
+        : ''
+      draft.player.gender = data.player?.gender || ''
+      draft.player.photoFileId = data.player?.photoFileId || null
+
+      draft.schoolId = data.schoolId || null
+      draft.role = data.role || ''
+      draft.ageCategory = data.ageCategory || ''
+
+      draft.grades.average = data.grades?.average ?? null
+      draft.grades.term = data.grades?.term || ''
+      draft.grades.bulletinFileId = data.grades?.bulletinFileId || null
+      // Le nom du fichier n'est pas stocké : on signale qu'un bulletin est là.
+      draft.grades.bulletinName = data.grades?.bulletinFileId ? '—' : ''
+
+      draft.consents.participation = Boolean(data.consents?.participation)
+      draft.consents.imageRights = Boolean(data.consents?.imageRights)
+      draft.consents.monetizedVideos = Boolean(data.consents?.monetizedVideos)
+      draft.consents.bulletinAuthenticity = Boolean(data.consents?.bulletinAuthenticity)
+
+      this.draft = draft
+      this.submitted = false
+      this.error = ''
     },
 
     /** Envoie une étape : l'API renvoie la catégorie déduite de l'établissement. */

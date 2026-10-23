@@ -51,6 +51,21 @@ onMounted(async () => {
   schools.value = data
 })
 
+/**
+ * Le dossier ne stocke que l'identifiant de l'établissement ; son nom se lit
+ * dans le référentiel. À la reprise d'un dossier existant, il faut donc le
+ * retrouver une fois la liste chargée, sinon le récapitulatif reste vide.
+ */
+watch(
+  [schools, () => store.draft.schoolId],
+  ([list, schoolId]) => {
+    if (!schoolId || store.draft.schoolLabel) return
+    const school = list.find((row: any) => String(row._id) === String(schoolId))
+    if (school) store.draft.schoolLabel = text(school.name)
+  },
+  { immediate: true }
+)
+
 /** Groupées par type, pour que le candidat trouve sa catégorie d'un coup d'œil. */
 const schoolGroups = computed(() => {
   const collator = new Intl.Collator('fr', { sensitivity: 'base' })
