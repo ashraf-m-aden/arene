@@ -23,11 +23,30 @@ const { data: galleries } = await useAsyncData(
   { watch: [edition] }
 )
 
-const { isOpen } = useEditionWindow(edition)
+const { state: windowState, isOpen, isSoon } = useEditionWindow(edition)
 const isLive = computed(() =>
   ['qualifiers', 'finals', 'completed'].includes(edition.value?.status)
 )
 const closesIn = computed(() => daysUntil(edition.value?.registrationClosesAt))
+const opensIn = computed(() => daysUntil(edition.value?.registrationOpensAt))
+
+/**
+ * Etat affiche dans le hero.
+ *
+ * Il suivait `edition.status`, qui ne dit rien des dates : une edition au
+ * statut `registration_open` dont l'ouverture est encore devant annoncait
+ * « Inscriptions ouvertes » pendant que l'API refusait les dossiers. C'est la
+ * fenetre qui fait foi — le statut ne sert plus qu'aux cas qu'elle ne couvre
+ * pas (qualifications, finale, edition terminee).
+ */
+const heroState = computed(() => {
+  if (!edition.value) return t('home.heroEyebrow')
+  if (windowState.value === 'soon') return t('editions.opensIn', { days: opensIn.value })
+  if (windowState.value === 'closed' && edition.value.status === 'registration_open') {
+    return t('editionStatus.registration_closed')
+  }
+  return t(`editionStatus.${edition.value.status}`)
+})
 
 /**
  * Le hero porte l'édition en cours : la saison en ligne blanche, le titre de
@@ -137,7 +156,7 @@ const tickerItems = computed(() => {
     t('home.ruleFinalists')
   ]
   if (!edition.value) return items
-  items.unshift(t(`editionStatus.${edition.value.status}`))
+  items.unshift(heroState.value)
   if (edition.value.fee) items.push(money(edition.value.fee))
   if (edition.value.venue?.name) items.push(edition.value.venue.name)
   if (totalSeatsLeft.value) {
@@ -231,7 +250,7 @@ useSeoPage({
         <div class="arena__text">
           <p class="arena__kicker">
             <span class="arena__pulse" aria-hidden="true" />
-            {{ edition ? $t(`editionStatus.${edition.status}`) : $t('home.heroEyebrow') }}
+            {{ heroState }}
           </p>
 
           <h1 class="arena__title">
@@ -359,7 +378,23 @@ useSeoPage({
               </p>
             </template>
           </ClientOnly>
-          <p v-else class="scoreboard__note">{{ $t(`editionStatus.${edition.status}`) }}</p>
+
+          <!-- Pas encore ouvert : c'est l'ouverture qu'on decompte, pas la
+               cloture. Le bloc affichait jusqu'ici le statut brut, qui pouvait
+               dire « ouvertes » a contretemps. -->
+          <ClientOnly v-else-if="isSoon && edition.registrationOpensAt">
+            <AreneCountdown
+              :target="edition.registrationOpensAt"
+              :label="$t('home.countdownOpenTitle')"
+            />
+            <template #fallback>
+              <p class="scoreboard__note numeric">
+                {{ $t('editions.opensIn', { days: opensIn }) }}
+              </p>
+            </template>
+          </ClientOnly>
+
+          <p v-else class="scoreboard__note">{{ heroState }}</p>
 
           <dl class="scoreboard__facts">
             <div>
