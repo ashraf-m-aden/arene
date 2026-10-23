@@ -20,11 +20,10 @@
     "backoffice": "Organisation"
   },
   "footer": {
-    "pitch": "Le tournoi de duels 1v1 réservé aux élèves et étudiants de Djibouti qui tiennent leurs résultats scolaires.",
+    "pitch": "Un contre un, seul face à l'adversaire. Le défi est lancé aux jeunes de Djibouti.",
     "tournament": "Le tournoi",
     "infos": "Informations",
-    "follow": "Suivre",
-    "minors": "Les données des mineurs sont privées et supprimées à la clôture de l'édition."
+    "follow": "Suivre"
   },
   "common": {
     "loading": "Chargement…",

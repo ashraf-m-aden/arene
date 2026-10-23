@@ -8,7 +8,10 @@ const year = new Date().getFullYear()
   <footer class="footer">
     <div class="container footer__inner">
       <div class="footer__brand">
-        <AreneLogo class="footer__mark" />
+        <div class="footer__lockup">
+          <AreneLogo class="footer__mark" />
+          <strong class="footer__name">{{ $t('brand.name') }}</strong>
+        </div>
         <p class="footer__pitch">{{ $t('footer.pitch') }}</p>
       </div>
 
@@ -37,7 +40,6 @@ const year = new Date().getFullYear()
 
     <div class="container footer__legal">
       <p class="numeric">© {{ year }} L'Arène — Djibouti</p>
-      <p>{{ $t('footer.minors') }}</p>
     </div>
   </footer>
 </template>
@@ -62,9 +64,23 @@ const year = new Date().getFullYear()
   justify-items: start;
 }
 
+.footer__lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .footer__mark {
   inline-size: 2.5rem;
   block-size: 2.5rem;
+  flex: none;
+}
+
+.footer__name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 .footer__pitch {
