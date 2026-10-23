@@ -30,6 +30,20 @@ const isLive = computed(() =>
 const closesIn = computed(() => daysUntil(edition.value?.registrationClosesAt))
 
 /**
+ * Le hero porte l'édition en cours : la saison en ligne blanche, le titre de
+ * l'édition dans l'encadré jaune, sa description en chapeau. Entre deux
+ * éditions (ou si l'API ne répond pas), on retombe sur le texte générique de
+ * la plateforme : l'accueil ne doit jamais s'afficher vide.
+ */
+const heroLine = computed(() =>
+  edition.value?.season
+    ? t('home.heroSeason', { season: edition.value.season })
+    : t('home.heroLine1')
+)
+const heroFlash = computed(() => text(edition.value?.title) || t('home.heroLine2'))
+const heroLead = computed(() => text(edition.value?.description) || t('home.heroLead'))
+
+/**
  * Pendant et après les journées de tournoi, l'accueil affiche les vrais
  * classements : c'est là que la compétition devient concrète.
  */
@@ -221,11 +235,11 @@ useSeoPage({
           </p>
 
           <h1 class="arena__title">
-            <span class="arena__line">{{ $t('home.heroLine1') }}</span>
-            <span class="arena__flash">{{ $t('home.heroLine2') }}</span>
+            <span class="arena__line">{{ heroLine }}</span>
+            <span class="arena__flash">{{ heroFlash }}</span>
           </h1>
 
-          <p class="arena__lead">{{ $t('home.heroLead') }}</p>
+          <p class="arena__lead">{{ heroLead }}</p>
 
           <div class="arena__cta">
             <NuxtLink
@@ -257,8 +271,7 @@ useSeoPage({
           </div>
 
           <ul v-if="edition" class="arena__chips">
-            <li class="badge badge--gold">{{ text(edition.title) }}</li>
-            <li v-if="edition.venue?.name" class="badge">{{ edition.venue.name }}</li>
+            <li v-if="edition.venue?.name" class="badge badge--gold">{{ edition.venue.name }}</li>
             <li class="badge">
               {{ date(edition.registrationOpensAt) }} → {{ date(edition.registrationClosesAt) }}
             </li>

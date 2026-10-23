@@ -87,12 +87,12 @@ async function main() {
     { slug: 'edition-2026' },
     {
       slug: 'edition-2026',
-      title: { fr: "L'Arène 2026", ar: 'الحلبة 2026' },
+      title: { fr: 'Seul contre tous', ar: 'واحد ضد الجميع' },
       description: {
         fr: 'Le tournoi de duels 1v1 réservé aux élèves et étudiants de Djibouti qui tiennent leurs résultats scolaires.',
         ar: 'بطولة المبارزات الفردية المخصصة لتلاميذ وطلبة جيبوتي المتفوقين دراسيًا.'
       },
-      season: '2026',
+      season: '1',
       status: 'registration_open',
       registrationOpensAt: new Date(now.getTime() - 3 * 86400000),
       registrationClosesAt: new Date(now.getTime() + 30 * 86400000),
