@@ -1,7 +1,9 @@
 <script setup lang="ts">
+/** Reserve a l'administration, comme la liste : voir `ecoles/index.vue`. */
+definePageMeta({ layout: 'backoffice', middleware: ['auth', 'role'], role: 'admin' })
+
 const route = useRoute()
 const localePath = useLocalePath()
-const { t } = useI18n()
 const { text, statusLabel, statusTone, roleLabel, categoryLabel } = useFormat()
 
 const slug = computed(() => String(route.params.slug))
@@ -20,23 +22,7 @@ const players = computed(() => data.value?.players ?? [])
 const ranking = computed(() => data.value?.ranking)
 const edition = computed(() => data.value?.edition)
 
-useSeoPage({
-  title: `${text(school.value.name)} — L'Arène`,
-  description: `${text(school.value.name)} au tournoi de duels 1v1 L'Arène : joueurs engagés, points et classement.`,
-  jsonLd: [
-    {
-      '@context': 'https://schema.org',
-      '@type': school.value.type === 'universite' ? 'CollegeOrUniversity' : 'HighSchool',
-      name: text(school.value.name),
-      address: { '@type': 'PostalAddress', addressLocality: school.value.city, addressCountry: 'DJ' }
-    },
-    breadcrumbLd([
-      { name: "L'Arène", path: '/' },
-      { name: t('schools.title'), path: '/ecoles' },
-      { name: text(school.value.name), path: `/ecoles/${slug.value}` }
-    ])
-  ]
-})
+useNoIndex(text(school.value.name))
 </script>
 
 <template>

@@ -7,7 +7,6 @@ const open = ref(false)
 const links = computed(() => [
   { to: '/editions', label: 'nav.editions' },
   { to: '/inscription', label: 'nav.register' },
-  { to: '/ecoles', label: 'nav.schools' },
   { to: '/galeries', label: 'nav.galleries' }
 ])
 

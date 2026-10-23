@@ -16,7 +16,6 @@ const year = new Date().getFullYear()
         <h2>{{ $t('footer.tournament') }}</h2>
         <NuxtLink :to="localePath('/editions')">{{ $t('nav.editions') }}</NuxtLink>
         <NuxtLink :to="localePath('/inscription')">{{ $t('nav.register') }}</NuxtLink>
-        <NuxtLink :to="localePath('/ecoles')">{{ $t('nav.schools') }}</NuxtLink>
         <NuxtLink :to="localePath('/galeries')">{{ $t('nav.galleries') }}</NuxtLink>
       </nav>
 

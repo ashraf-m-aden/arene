@@ -13,7 +13,6 @@ const STATIC_PAGES: Entry[] = [
   { path: '/', changefreq: 'daily', priority: 1 },
   { path: '/editions', changefreq: 'weekly', priority: 0.8 },
   { path: '/inscription', changefreq: 'weekly', priority: 0.9 },
-  { path: '/ecoles', changefreq: 'weekly', priority: 0.7 },
   { path: '/galeries', changefreq: 'weekly', priority: 0.6 },
   { path: '/faq', changefreq: 'monthly', priority: 0.5 },
   { path: '/a-propos', changefreq: 'yearly', priority: 0.4 },
@@ -34,10 +33,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const [editions, schools] = await Promise.all([
-    safeGet<any[]>('/editions', []),
-    safeGet<any[]>('/schools?limit=100', [])
-  ])
+  // Les écoles ne figurent plus au sitemap : leur écran est réservé à
+  // l'administration, l'annoncer enverrait les robots sur une page fermée.
+  const editions = await safeGet<any[]>('/editions', [])
 
   const galleryLists = await Promise.all(
     editions.map((edition: any) => safeGet<any[]>(`/editions/${edition._id}/galleries`, []))
@@ -65,12 +63,6 @@ export default defineEventHandler(async (event) => {
         lastmod: edition.updatedAt
       }
     ]),
-    ...schools.map((school: any) => ({
-      path: `/ecoles/${school.slug}`,
-      changefreq: 'weekly',
-      priority: 0.5,
-      lastmod: school.updatedAt
-    })),
     ...galleryLists.flat().map((gallery: any) => ({
       path: `/galeries/${gallery.slug}`,
       changefreq: 'weekly',

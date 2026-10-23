@@ -3,6 +3,7 @@ definePageMeta({ layout: 'backoffice', middleware: ['auth', 'role'], role: 'staf
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const auth = useAuthStore()
 const editions = useEditionsStore()
 const { text, money, date } = useFormat()
 
@@ -96,9 +97,12 @@ const payments = computed(() => Object.entries(stats.value?.payments ?? {}))
             <tbody>
               <tr v-for="row in stats.topSchools" :key="row.schoolId">
                 <td>
-                  <NuxtLink v-if="row.slug" :to="localePath(`/ecoles/${row.slug}`)">
+                  <!-- L'ecran des ecoles est reserve a l'admin : pour le staff
+                       le lien menerait a un 403. -->
+                  <NuxtLink v-if="row.slug && auth.isAdmin" :to="localePath(`/ecoles/${row.slug}`)">
                     {{ text(row.name) }}
                   </NuxtLink>
+                  <span v-else-if="row.name">{{ text(row.name) }}</span>
                   <span v-else>—</span>
                 </td>
                 <td class="numeric">{{ row.count }}</td>

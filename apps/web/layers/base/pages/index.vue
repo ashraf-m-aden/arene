@@ -541,9 +541,7 @@ useSeoPage({
               :class="`pedestal--${school.rank}`"
             >
               <span class="pedestal__rank numeric">{{ school.rank }}</span>
-              <NuxtLink :to="localePath(`/ecoles/${school.slug}`)" class="pedestal__name">
-                {{ text(school.name) }}
-              </NuxtLink>
+              <span class="pedestal__name">{{ text(school.name) }}</span>
               <span class="pedestal__points numeric">
                 {{ number(school.points) }} {{ $t('home.pointsShort') }}
               </span>
@@ -572,7 +570,7 @@ useSeoPage({
             <li v-for="bar in [42, 68, 54, 88, 61]" :key="bar" :style="{ '--h': `${bar}%` }" />
           </ul>
           <NuxtLink
-            :to="localePath(edition ? `/editions/${edition.slug}/classements` : '/ecoles')"
+            :to="localePath(edition ? `/editions/${edition.slug}/classements` : '/editions')"
             class="btn btn--pitch btn--sm"
           >
             {{ $t('home.schoolsCta') }}

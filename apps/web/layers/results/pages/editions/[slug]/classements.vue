@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const route = useRoute()
-const localePath = useLocalePath()
 const { t } = useI18n()
 const { text, date } = useFormat()
 
@@ -116,9 +115,7 @@ const ratio = (part: number, total: number) =>
                     </td>
                     <td><strong>{{ row.name }}</strong></td>
                     <td>
-                      <NuxtLink v-if="row.school" :to="localePath(`/ecoles/${row.school.slug}`)">
-                        {{ text(row.school.name) }}
-                      </NuxtLink>
+                      <span v-if="row.school">{{ text(row.school.name) }}</span>
                       <span v-else>—</span>
                     </td>
                     <td class="numeric"><strong>{{ row.goals }}</strong></td>
@@ -150,9 +147,7 @@ const ratio = (part: number, total: number) =>
                     </td>
                     <td><strong>{{ row.name }}</strong></td>
                     <td>
-                      <NuxtLink v-if="row.school" :to="localePath(`/ecoles/${row.school.slug}`)">
-                        {{ text(row.school.name) }}
-                      </NuxtLink>
+                      <span v-if="row.school">{{ text(row.school.name) }}</span>
                       <span v-else>—</span>
                     </td>
                     <td class="numeric"><strong>{{ row.stops }}</strong></td>
@@ -204,7 +199,7 @@ const ratio = (part: number, total: number) =>
                     {{ row.rank }}
                   </td>
                   <td>
-                    <NuxtLink :to="localePath(`/ecoles/${row.slug}`)">{{ text(row.name) }}</NuxtLink>
+                    {{ text(row.name) }}
                   </td>
                   <td class="numeric">{{ row.players }}</td>
                   <td class="numeric">{{ row.wins }}</td>

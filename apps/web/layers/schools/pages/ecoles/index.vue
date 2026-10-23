@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * Ecran reserve a l'administration : le referentiel des etablissements et le
+ * detail de leurs joueurs ne regardent ni le public ni les candidats. Le
+ * formulaire d'inscription continue d'appeler `/schools` pour sa liste
+ * deroulante — c'est l'ecran qui est ferme, pas la ressource.
+ */
+definePageMeta({ layout: 'backoffice', middleware: ['auth', 'role'], role: 'admin' })
+
 const { t } = useI18n()
 const localePath = useLocalePath()
 const { text } = useFormat()
@@ -24,14 +32,7 @@ watch(query, () => {
   timer = setTimeout(() => refresh(), 350)
 })
 
-useSeoPage({
-  title: `${t('schools.title')} — L'Arène`,
-  description: t('schools.lead'),
-  jsonLd: breadcrumbLd([
-    { name: "L'Arène", path: '/' },
-    { name: t('schools.title'), path: '/ecoles' }
-  ])
-})
+useNoIndex(t('schools.title'))
 </script>
 
 <template>
