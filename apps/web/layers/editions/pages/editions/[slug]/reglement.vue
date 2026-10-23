@@ -22,7 +22,6 @@ useSeoPage({
       <div class="container stack">
         <p class="eyebrow">{{ text(edition.title) }}</p>
         <h1>{{ $t('editions.rulesTitle') }}</h1>
-        <p class="lead">{{ $t('editions.rulesLead') }}</p>
       </div>
     </section>
 
