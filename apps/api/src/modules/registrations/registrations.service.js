@@ -55,14 +55,25 @@ export async function createDraft({ editionId, locale }, candidateId) {
   const { User } = await import('../auth/auth.model.js')
   const account = await User.findById(candidateId).select('name')
 
-  return Registration.create({
-    editionId,
-    candidateId,
-    locale,
-    status: 'draft',
-    step: 1,
-    player: { name: account?.name || '' }
-  })
+  try {
+    return await Registration.create({
+      editionId,
+      candidateId,
+      locale,
+      status: 'draft',
+      step: 1,
+      player: { name: account?.name || '' }
+    })
+  } catch (error) {
+    // Course perdue : une requete concurrente a cree le dossier entre le
+    // `findOne` ci-dessus et ce `create`. L'index unique l'a arretee du bon
+    // cote ; on rend le dossier gagnant plutot qu'un conflit a l'ecran.
+    if (error?.code === 11000) {
+      const winner = await Registration.findOne({ editionId, candidateId })
+      if (winner) return winner
+    }
+    throw error
+  }
 }
 
 /** Mise à jour d'une étape du formulaire ; le brouillon est enregistré à chaque étape. */

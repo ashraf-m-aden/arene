@@ -92,6 +92,18 @@ const registrationSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+/*
+ * Un seul dossier par candidat et par edition — garanti par la base, pas
+ * seulement par `createDraft`. Le controle applicatif lit puis ecrit : deux
+ * requetes simultanees (double clic, reessai sur reseau lent, deux onglets)
+ * passent toutes les deux le `findOne` et creent chacune leur dossier. Cet
+ * index ferme la fenetre.
+ *
+ * Non cree automatiquement en production (`autoIndex: !isProd`) : il faut
+ * passer la migration 2026-10-dossier-unique-par-edition.js.
+ */
+registrationSchema.index({ editionId: 1, candidateId: 1 }, { unique: true })
+
 registrationSchema.index({ editionId: 1, status: 1 })
 registrationSchema.index({ editionId: 1, slotId: 1 })
 registrationSchema.index({ editionId: 1, ageCategory: 1, role: 1, status: 1 })

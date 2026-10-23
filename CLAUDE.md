@@ -56,6 +56,15 @@ l'autre. Affichage public : premier nom + initiales des suivants
   cette édition, **quel que soit son statut**. Sans ce contrôle, un candidat dont le dossier
   était déjà envoyé repartait sur un dossier vierge et se retrouvait avec deux candidatures
   concurrentes dans la même édition.
+- La règle est **garantie en base** par un index unique `{ editionId, candidateId }`. Le
+  contrôle applicatif seul lit puis écrit : deux requêtes simultanées (double clic, réessai sur
+  réseau lent, deux onglets) passent toutes les deux le `findOne` et créent chacune leur
+  dossier. `createDraft` rattrape l'erreur `11000` et rend le dossier gagnant, pour que la
+  course se solde par un dossier correct plutôt que par un conflit à l'écran.
+  En production, `autoIndex` est désactivé (`core/db.js`) : l'index vient de la migration
+  `2026-10-dossier-unique-par-edition.js`, qui retire d'abord les brouillons surnuméraires et
+  refuse d'aller plus loin si un candidat porte deux dossiers déjà engagés — ce cas relève du
+  staff, pas d'un script.
 - **Le candidat ne peut pas supprimer son dossier.** Un dossier engage l'organisation (place
   réservée, rendez-vous, vérification déjà faite) : son retrait passe par le staff. Il n'existe
   ni route `DELETE /registrations/:id` ni bouton dans l'espace candidat.
