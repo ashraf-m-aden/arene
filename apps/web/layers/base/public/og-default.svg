@@ -1,13 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#0b1b2b"/>
   <circle cx="1040" cy="90" r="260" fill="#e7b23e" opacity="0.14"/>
-  <text x="80" y="300" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="78" font-weight="700">
+
+  <!-- Verrouillage marque + nom. L'anneau est le meme tracé qu'en en-tete,
+       porté à r=54 : circonférence 339,292, deux arcs de 142,646 séparés
+       par 27, décalés de 71,323. -->
+  <g transform="translate(80 150)">
+    <circle cx="54" cy="54" r="54" fill="none" stroke="#f6f4ef" stroke-width="9.6"
+            stroke-dasharray="142.646 27" stroke-dashoffset="71.323"/>
+    <path d="M54 0V108" stroke="#e7b23e" stroke-width="9.6" stroke-linecap="round"/>
+  </g>
+
+  <text x="80" y="370" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="-2">
     L'Arène
   </text>
-  <text x="80" y="370" fill="#e7b23e" font-family="Helvetica,Arial,sans-serif" font-size="36" letter-spacing="4">
-    TOURNOI DE DUELS 1V1 · DJIBOUTI
+  <text x="80" y="428" fill="#e7b23e" font-family="Helvetica,Arial,sans-serif" font-size="30" letter-spacing="8">
+    DJIBOUTI
   </text>
-  <text x="80" y="450" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="30" opacity="0.8">
-    Un buteur, un défenseur, cinq tentatives — et 12/20 minimum.
+  <text x="80" y="508" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="30" opacity="0.8">
+    Le mérite scolaire entre dans l'arène.
   </text>
 </svg>
