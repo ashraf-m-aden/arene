@@ -141,6 +141,7 @@ export async function submit(id, user) {
   if (typeof registration.grades?.average !== 'number') missing.push('grades.average')
   if (!registration.grades?.bulletinFileId) missing.push('grades.bulletinFileId')
   if (!registration.consents?.participation) missing.push('consents.participation')
+  if (!registration.consents?.imageRights) missing.push('consents.imageRights')
   if (!registration.consents?.bulletinAuthenticity) missing.push('consents.bulletinAuthenticity')
   if (missing.length) throw badRequest('Dossier incomplet', { missing }).withKey('fileIncomplete')
 

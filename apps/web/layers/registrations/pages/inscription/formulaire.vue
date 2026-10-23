@@ -21,6 +21,15 @@ const step = computed({
   }
 })
 
+/**
+ * Les champs manquants etaient listes par leur cle technique
+ * (« consents.imageRights »). Depuis que l'autorisation d'image conditionne
+ * la participation, cet avis s'affiche souvent : il doit se lire.
+ */
+const missingLabels = computed(() =>
+  store.missingFields.map((key) => t(`registrations.missing.${key}`)).join(', ')
+)
+
 const uploading = ref<'' | 'photo' | 'bulletin'>('')
 const uploadError = ref('')
 const submitError = ref('')
@@ -410,7 +419,7 @@ function back() {
             </label>
 
             <label class="check" :class="{ 'check--checked': store.draft.consents.imageRights }">
-              <input v-model="store.draft.consents.imageRights" type="checkbox">
+              <input v-model="store.draft.consents.imageRights" type="checkbox" required>
               <span>{{ $t('registrations.consents.imageRights') }}</span>
             </label>
 
@@ -427,8 +436,8 @@ function back() {
               <span>{{ $t('registrations.consents.bulletinAuthenticity') }}</span>
             </label>
 
-            <AreneNotice v-if="!store.draft.consents.imageRights">
-              {{ $t('registrations.consents.imageNotice') }}
+            <AreneNotice v-if="!store.draft.consents.monetizedVideos" tone="info">
+              {{ $t('registrations.consents.monetizedNotice') }}
             </AreneNotice>
           </template>
 
@@ -467,7 +476,7 @@ function back() {
             </AreneNotice>
 
             <AreneNotice v-if="store.missingFields.length" tone="danger">
-              {{ $t('registrations.review.missing', { fields: store.missingFields.join(', ') }) }}
+              {{ $t('registrations.review.missing', { fields: missingLabels }) }}
             </AreneNotice>
 
             <AreneNotice v-if="submitError" tone="danger">{{ submitError }}</AreneNotice>

@@ -55,10 +55,10 @@
     },
     "consents": {
       "participation": "Je m'engage à participer au tournoi et j'ai pris connaissance du règlement de cette édition.",
-      "imageRights": "J'autorise la prise de photos et de vidéos me représentant, et leur publication par l'organisation.",
+      "imageRights": "J'autorise la prise de photos et de vidéos me représentant, et leur publication par l'organisation. Obligatoire pour participer.",
       "monetizedVideos": "J'autorise la diffusion de ces vidéos sur une chaîne susceptible d'être monétisée.",
-      "bulletinAuthenticity": "J'atteste sur l'honneur que le bulletin que j'ai déposé est authentique.",
-      "imageNotice": "Sans l'autorisation d'image, vous ne serez jamais identifié dans les galeries."
+      "monetizedNotice": "La diffusion sur une chaîne monétisée reste facultative : la refuser ne vous empêche pas de concourir.",
+      "bulletinAuthenticity": "J'atteste sur l'honneur que le bulletin que j'ai déposé est authentique."
     },
     "review": {
       "title": "Vérifiez avant d'envoyer",
@@ -100,6 +100,16 @@
       "export": "Exporter en CSV",
       "openPhoto": "Voir la photo"
     },
-    "notYetOpen": "Les inscriptions ne sont pas encore ouvertes. Revenez à la date d’ouverture annoncée sur la page de l’édition."
+    "notYetOpen": "Les inscriptions ne sont pas encore ouvertes. Revenez à la date d’ouverture annoncée sur la page de l’édition.",
+    "missing": {
+      "player.birthDate": "la date de naissance",
+      "school": "l'établissement",
+      "role": "le rôle",
+      "grades.average": "la moyenne",
+      "grades.bulletin": "le bulletin",
+      "consents.participation": "l'engagement à participer",
+      "consents.imageRights": "l'autorisation d'image",
+      "consents.authenticity": "l'attestation sur le bulletin"
+    }
   }
 }

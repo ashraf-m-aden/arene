@@ -36,10 +36,18 @@ export const gradesStepSchema = z.object({
 })
 
 /** Étape 3 — les autorisations, chaque case distincte. Aucune signature : des cases à cocher. */
+/**
+ * Trois autorisations conditionnent la participation, la quatrieme reste libre.
+ *
+ * Le droit a l'image est bloquant : le tournoi se joue en public, il est
+ * photographie et filme, et l'organisation ne peut pas garantir qu'un
+ * participant n'apparaitra sur aucune image. La diffusion sur une chaine
+ * monetisee, elle, reste un choix — elle n'empeche pas de concourir.
+ */
 export const consentsStepSchema = z.object({
   consents: z.object({
     participation: z.literal(true),
-    imageRights: z.boolean(),
+    imageRights: z.literal(true),
     monetizedVideos: z.boolean(),
     bulletinAuthenticity: z.literal(true)
   })

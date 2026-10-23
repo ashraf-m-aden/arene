@@ -83,7 +83,9 @@ export const useRegistrationStore = defineStore('registration', {
       1: Boolean(state.draft.player.birthDate && state.draft.role),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),
       3: Boolean(
-        state.draft.consents.participation && state.draft.consents.bulletinAuthenticity
+        state.draft.consents.participation &&
+          state.draft.consents.imageRights &&
+          state.draft.consents.bulletinAuthenticity
       ),
       4: false
     }),
@@ -96,6 +98,7 @@ export const useRegistrationStore = defineStore('registration', {
       if (draft.grades.average === null) missing.push('grades.average')
       if (!draft.grades.bulletinFileId) missing.push('grades.bulletin')
       if (!draft.consents.participation) missing.push('consents.participation')
+      if (!draft.consents.imageRights) missing.push('consents.imageRights')
       if (!draft.consents.bulletinAuthenticity) missing.push('consents.authenticity')
       return missing
     }
