@@ -81,6 +81,38 @@ router.get(
 )
 
 /**
+ * Octets de la pièce, servis par l'API elle-même.
+ *
+ * Le lien signé de `/:id/url` suppose un navigateur en ligne, et expire en cinq
+ * minutes. L'écran de check-in, lui, précharge les portraits pour reconnaître
+ * un visage sans réseau : il lui faut les octets, pas une adresse. En
+ * développement, le lien signé renvoie d'ailleurs vers une route authentifiée
+ * qu'une balise `img` ne sait pas atteindre — le jeton voyage dans l'en-tête,
+ * pas dans un cookie.
+ *
+ * Les droits sont ceux de la pièce : `assertCanRead` laisse passer le staff,
+ * l'admin et le propriétaire, et refuse tout le reste.
+ */
+router.get(
+  '/:id/content',
+  validate({
+    params: common.idParam,
+    query: z.object({ variant: z.enum(['thumb', 'medium', 'large']).optional() })
+  }),
+  asyncHandler(async (req, res) => {
+    const { file, buffer, mime } = await service.readBuffer(req.params.id, req.user, {
+      variant: req.validatedQuery.variant
+    })
+    res.type(mime || 'application/octet-stream')
+    res.set(
+      'Cache-Control',
+      file.visibility === 'public' ? 'public, max-age=31536000, immutable' : 'private, no-store'
+    )
+    res.send(buffer)
+  })
+)
+
+/**
  * Lecture directe, utilisée par le pilote de stockage local :
  * en production les fichiers publics passent par le CDN et les privés par un lien S3 signé.
  */

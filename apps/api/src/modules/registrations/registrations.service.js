@@ -225,6 +225,12 @@ export async function submit(id, user) {
   const missing = []
   if (!registration.player?.name) missing.push('player.name')
   if (!registration.player?.birthDate) missing.push('player.birthDate')
+  /*
+   * Le portrait est exige a l'envoi, pas pendant le brouillon : c'est lui que
+   * le staff voit a l'ecran quand il scanne le badge, et sans lui le controle
+   * d'identite du rendez-vous administratif n'a rien a comparer.
+   */
+  if (!registration.player?.photoFileId) missing.push('player.photoFileId')
   if (!registration.schoolId) missing.push('schoolId')
   if (!registration.role) missing.push('role')
   if (typeof registration.grades?.average !== 'number') missing.push('grades.average')

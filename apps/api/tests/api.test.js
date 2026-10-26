@@ -65,6 +65,16 @@ maybe('API', () => {
     expect(me.body.data.name).toBe('Fatouma Test Ahmed')
   })
 
+  it('sert les octets d’une pièce par identifiant valide seulement', async () => {
+    // Les portraits préchargés par le check-in passent par cette route.
+    const badId = await request(app).get('/api/v1/files/pas-un-identifiant/content')
+    expect(badId.status).toBe(422)
+
+    const unknown = await request(app).get('/api/v1/files/507f1f77bcf86cd799439011/content')
+    expect(unknown.status).toBe(404)
+    expect(unknown.body.error.key).toBe('fileMissing')
+  })
+
   it('n’expose pas les éditions en brouillon', async () => {
     const res = await request(app).get('/api/v1/editions')
     expect(res.status).toBe(200)

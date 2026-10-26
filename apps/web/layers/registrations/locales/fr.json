@@ -3,7 +3,7 @@
     "pitchTitle": "S'inscrire au tournoi",
     "pitchLead": "Le dossier se remplit en quatre étapes, par le candidat lui-même. Comptez dix minutes et gardez le bulletin scanné à portée de main.",
     "need": "Ce qu'il faut préparer",
-    "needPhoto": "Une photo récente du joueur",
+    "needPhoto": "Une photo récente du visage du candidat, prise de face",
     "needBulletin": "Le dernier bulletin scanné, avec le cachet de l'établissement (PDF ou image, 10 Mo max)",
     "needAverage": "La moyenne du dernier bulletin",
     "needPhone": "Un numéro de téléphone joignable",
@@ -28,8 +28,8 @@
       "gender": "Genre",
       "male": "Garçon",
       "female": "Fille",
-      "photo": "Photo du joueur",
-      "photoHint": "Portrait récent, visage dégagé. Image privée, jamais publiée sans votre accord.",
+      "photo": "Photo du visage",
+      "photoHint": "Portrait récent, de face, visage dégagé et sans lunettes de soleil. Elle s'affiche à l'écran de l'organisation au contrôle d'identité, le jour de votre rendez-vous. Image privée, jamais publiée.",
       "school": "Établissement",
       "schoolOther": "Mon établissement n'est pas dans la liste",
       "schoolOtherName": "Nom de l'établissement",
@@ -42,7 +42,11 @@
       "schoolPick": "Choisissez votre établissement dans la liste. S’il n’y figure pas, cochez « autre établissement ».",
       "schoolChoose": "— Choisir un établissement —",
       "name": "Nom du candidat",
-      "nameLocked": "Repris de votre compte. Il n'est pas modifiable ici."
+      "nameLocked": "Repris de votre compte. Il n'est pas modifiable ici.",
+      "photoChoose": "Prendre ou choisir une photo",
+      "photoReplace": "Remplacer la photo",
+      "photoAlt": "Photo du visage du candidat",
+      "photoRecap": "C'est cette photo que l'organisation verra au contrôle d'identité."
     },
     "grades": {
       "average": "Moyenne du dernier bulletin (sur 20)",
@@ -113,7 +117,8 @@
       "grades.bulletin": "le bulletin",
       "consents.participation": "l'engagement à participer",
       "consents.imageRights": "l'autorisation d'image",
-      "consents.authenticity": "l'attestation sur le bulletin"
+      "consents.authenticity": "l'attestation sur le bulletin",
+      "player.photo": "la photo du visage"
     }
   }
 }

@@ -93,7 +93,9 @@ export const useRegistrationStore = defineStore('registration', {
     statusReopens: () => (status?: string) =>
       CANDIDATE_REOPENABLE_STATUSES.includes(String(status)),
     stepsDone: (state) => ({
-      1: Boolean(state.draft.player.birthDate && state.draft.role),
+      1: Boolean(
+        state.draft.player.birthDate && state.draft.role && state.draft.player.photoFileId
+      ),
       2: Boolean(state.draft.grades.average !== null && state.draft.grades.bulletinFileId),
       3: Boolean(
         state.draft.consents.participation &&
@@ -106,6 +108,9 @@ export const useRegistrationStore = defineStore('registration', {
       const missing: string[] = []
       const draft = this.draft
       if (!draft.player.birthDate) missing.push('player.birthDate')
+      // Miroir du controle de `submit` cote API : sans portrait, le staff n'a
+      // rien a comparer au visage qui se presente au rendez-vous.
+      if (!draft.player.photoFileId) missing.push('player.photo')
       if (!draft.schoolId && !draft.newSchool) missing.push('school')
       if (!draft.role) missing.push('role')
       if (draft.grades.average === null) missing.push('grades.average')
@@ -229,7 +234,11 @@ export const useRegistrationStore = defineStore('registration', {
       }
     },
 
-    /** Envoi d'un fichier (bulletin ou photo) : l'API renvoie son identifiant. */
+    /**
+     * Envoi d'un fichier : le bulletin scanne (`bulletin`) ou le portrait du
+     * candidat (`photo`). L'API renvoie son identifiant, seule chose que le
+     * dossier conserve.
+     */
     async uploadFile(file: File, kind: 'bulletin' | 'photo') {
       const { $api } = useNuxtApp()
       const body = new FormData()

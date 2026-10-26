@@ -76,8 +76,13 @@ l'autre. Affichage public : premier nom + initiales des suivants
    récapitulatif). Tant qu'il n'a pas envoyé, le dossier est un brouillon (`draft`), sauvegardé
    à chaque étape. À l'envoi il passe `submitted` : c'est l'état **« préinscrit, non
    confirmé »**.
-   - **Pièces en photo ou en scan uniquement** (bulletin scolaire, photo d'identité). Aucune
-     pièce papier n'est attendue à ce stade.
+   - **Deux pièces, en photo ou en scan uniquement.** Le **bulletin scolaire**
+     (`grades.bulletinFileId`) et le **portrait du candidat** — la photo de son visage
+     (`player.photoFileId`), prise de face. Aucune pièce papier n'est attendue à ce stade.
+   - **Le portrait est obligatoire à l'envoi**, pas pendant le brouillon : `submit` le réclame
+     (`registrations.service.submit`) mais `playerStepSchema` le laisse optionnel, pour qu'une
+     étape s'enregistre avant que le fichier soit déposé. C'est la pièce que le staff compare au
+     visage présenté au rendez-vous : sans elle, le contrôle d'identité n'a rien à comparer.
    - **Aucune signature numérique.** Les autorisations (`consents`) sont de simples cases à
      cocher (participation, droit à l'image, vidéos monétisées, authenticité du bulletin). Il
      n'y a pas de champ « nom du signataire » : le contrat se signe plus tard, sur place, sur

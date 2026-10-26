@@ -35,6 +35,36 @@ const uploadError = ref('')
 const submitError = ref('')
 const submitted = ref(false)
 
+/*
+ * Apercu du portrait. Il ne sert pas a decorer : c'est cette image que le staff
+ * verra a l'ecran en scannant le badge, et le candidat doit pouvoir constater
+ * qu'elle est nette et de face avant d'envoyer son dossier.
+ *
+ * Deux sources selon le moment. Juste apres le choix du fichier, l'image locale
+ * suffit et s'affiche sans reseau. A la reprise d'un dossier, le fichier n'est
+ * plus la : on redescend la vignette depuis l'API.
+ */
+const photoPreview = ref('')
+
+function showPreview(url: string) {
+  if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
+  photoPreview.value = url
+}
+
+async function loadPhotoPreview() {
+  const fileId = store.draft.player.photoFileId
+  if (!import.meta.client || !fileId || photoPreview.value) return
+  const { objectUrlFor } = useFiles()
+  // Vignette absente ou illisible : on laisse la zone de depot, sans erreur.
+  await objectUrlFor(fileId, 'thumb').then(showPreview).catch(() => null)
+}
+
+watch(() => store.draft.player.photoFileId, loadPhotoPreview)
+onMounted(loadPhotoPreview)
+onBeforeUnmount(() => {
+  if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
+})
+
 onMounted(async () => {
   if (!edition.value?._id) return
   if (!store.draft.registrationId || store.draft.editionId !== edition.value._id) {
@@ -131,6 +161,7 @@ async function onFile(event: Event, kind: 'bulletin' | 'photo') {
   uploadError.value = ''
   try {
     await store.uploadFile(file, kind)
+    if (kind === 'photo') showPreview(URL.createObjectURL(file))
   } catch (error: any) {
     uploadError.value = error.message
   } finally {
@@ -154,7 +185,9 @@ const canContinue = computed(() => {
       store.draft.player.birthDate &&
         store.draft.player.gender &&
         (store.draft.schoolId || store.draft.newSchool) &&
-        store.draft.role
+        store.draft.role &&
+        // Le portrait conditionne le controle d'identite sur place.
+        store.draft.player.photoFileId
     )
   }
   if (step.value === 2) {
@@ -331,17 +364,37 @@ function back() {
               </div>
             </AreneField>
 
+            <!-- Photo du visage, distincte du bulletin scanné : c'est elle qui
+                 s'affiche à l'écran du staff au scan du badge. `capture="user"`
+                 ouvre directement la caméra frontale sur un téléphone. -->
             <AreneField
               :label="$t('registrations.player.photo')"
               :hint="$t('registrations.player.photoHint')"
               for="photo"
+              required
             >
-              <label class="dropzone" :class="{ 'dropzone--filled': store.draft.player.photoFileId }">
-                <input id="photo" type="file" accept="image/*" hidden @change="onFile($event, 'photo')">
+              <label
+                class="dropzone portrait"
+                :class="{ 'dropzone--filled': store.draft.player.photoFileId }"
+              >
+                <input
+                  id="photo"
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  hidden
+                  @change="onFile($event, 'photo')"
+                >
+                <img
+                  v-if="photoPreview"
+                  :src="photoPreview"
+                  :alt="$t('registrations.player.photoAlt')"
+                  class="portrait__image"
+                >
                 <strong>{{
                   store.draft.player.photoFileId
-                    ? $t('registrations.grades.bulletinReady')
-                    : $t('registrations.grades.bulletinChoose')
+                    ? $t('registrations.player.photoReplace')
+                    : $t('registrations.player.photoChoose')
                 }}</strong>
                 <span v-if="uploading === 'photo'" class="muted">{{ $t('common.loading') }}</span>
               </label>
@@ -450,6 +503,12 @@ function back() {
           <!-- Étape 4 : récapitulatif -->
           <template v-else>
             <h2>{{ $t('registrations.review.title') }}</h2>
+
+            <figure v-if="photoPreview" class="recap__portrait">
+              <img :src="photoPreview" :alt="$t('registrations.player.photoAlt')">
+              <figcaption class="muted">{{ $t('registrations.player.photoRecap') }}</figcaption>
+            </figure>
+
             <dl class="recap">
               <div>
                 <dt>{{ $t('registrations.player.name') }}</dt>
@@ -531,6 +590,34 @@ function back() {
 
 .form-done {
   margin-block-start: var(--space-5);
+}
+
+/** Portrait : l'aperçu prend la place du libellé, le bouton reste tapable. */
+.portrait {
+  padding: var(--space-4);
+}
+
+.portrait__image {
+  inline-size: 8rem;
+  block-size: 8rem;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+}
+
+.recap__portrait {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  margin: 0;
+
+  img {
+    inline-size: 7rem;
+    block-size: 7rem;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-line);
+  }
 }
 
 /** Nom hérité du compte : affiché, jamais saisi. */

@@ -13,6 +13,12 @@ export const playerStepSchema = z.object({
   player: z.object({
     birthDate: isoDate,
     gender: z.enum(['m', 'f']),
+    /**
+     * Portrait du candidat — la photo du visage, distincte du bulletin scanne.
+     * Optionnelle ici, exigee a l'envoi (`registrations.service.submit`) : une
+     * etape s'enregistre a chaque champ rempli, et refuser la sauvegarde tant
+     * que le fichier n'est pas depose ferait perdre le reste de la saisie.
+     */
     photoFileId: objectId.optional()
   }),
   schoolId: objectId.optional(),

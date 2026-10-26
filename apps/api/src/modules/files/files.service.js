@@ -144,11 +144,26 @@ export async function assertCanRead(file, user) {
   throw forbidden('Document privé').withKey('privateDocument')
 }
 
-export async function readBuffer(fileId, user) {
+/**
+ * Octets d'une pièce, après contrôle des droits.
+ *
+ * Complète `signedUrlFor` : un lien signé suppose un navigateur en ligne et
+ * expire en cinq minutes, ce qui ne convient pas à l'écran de check-in, qui
+ * précharge les portraits pour les afficher sans réseau. `variant` permet de
+ * ne tirer que la vignette plutôt que l'original.
+ */
+export async function readBuffer(fileId, user, { variant } = {}) {
   const file = await FileDoc.findById(fileId)
   if (!file) throw notFound('Fichier introuvable').withKey('fileMissing')
   await assertCanRead(file, user)
-  return { file, buffer: await storage.get(file.storageKey, file.visibility) }
+  // Déclinaison absente (sharp indisponible à l'envoi) : on rend l'original.
+  const chosen = variant ? file.variants.find((v) => v.name === variant) : null
+  const target = chosen?.storageKey || file.storageKey
+  return {
+    file,
+    mime: chosen?.mime || file.mime,
+    buffer: await storage.get(target, file.visibility)
+  }
 }
 
 export async function remove(fileId) {
