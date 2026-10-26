@@ -28,9 +28,32 @@ wait_healthy() {
   return 1
 }
 
+# Supprime les conteneurs fantômes d'un déploiement interrompu.
+#
+# Pour remplacer un conteneur, Compose renomme d'abord l'ancien en
+# « <id-court>_<nom> », le temps de démarrer le nouveau. Si la bascule est
+# interrompue, ce nom reste pris : tout déploiement suivant échoue sur
+# « container name is already in use », puis part en retour arrière — ce qui
+# masque la cause. `--remove-orphans` n'y suffit pas, un conteneur renommé garde
+# les étiquettes du projet et n'est donc pas orphelin.
+#
+# Le motif ne vise que ce cas : un service d'Arène préfixé de douze caractères
+# hexadécimaux. Les conteneurs normaux (`arene-web`, `arene-mongodb`) et les
+# autres piles de l'EC2 n'y correspondent pas.
+drop_stale() {
+  docker ps -a --format '{{.ID}} {{.Names}}' |
+    grep -E ' [0-9a-f]{12}_arene-(api|web|worker)$' |
+    while read -r id name; do
+      echo "Conteneur fantôme supprimé : $name"
+      docker rm -f "$id" >/dev/null 2>&1 || true
+    done
+  return 0
+}
+
 PREV=$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE")
 echo "Actuel : $PREV, cible : $SHA"
 
+drop_stale
 set_tag "$SHA"
 if dc pull -q api worker web && dc up -d --remove-orphans && wait_healthy &&
    curl -fs -o /dev/null -m 15 https://dj-arene.com/; then
@@ -45,6 +68,8 @@ fi
 echo "Échec du déploiement de $SHA : retour à $PREV"
 dc logs --tail 30 api web worker || true
 set_tag "$PREV"
+# Le retour arrière recrée les mêmes conteneurs : il bute sur le même nom.
+drop_stale
 dc up -d --remove-orphans
 wait_healthy && echo "Retour à $PREV OK" || echo "ATTENTION : $PREV n'est pas healthy non plus"
 exit 1
