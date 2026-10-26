@@ -87,6 +87,18 @@ l'autre. Affichage public : premier nom + initiales des suivants
      cocher (participation, droit à l'image, vidéos monétisées, authenticité du bulletin). Il
      n'y a pas de champ « nom du signataire » : le contrat se signe plus tard, sur place, sur
      papier. Choix produit délibéré — voir « Écarts assumés ».
+   - **L'envoi prévient deux destinataires.** Le candidat reçoit son accusé de réception
+     (`registration_received`) ; l'organisation reçoit `registration_submitted_staff` sur sa
+     propre boîte — `config.notifications.orgEmail`, variable `ORG_EMAIL`, par défaut
+     `contact@dj-arene.com`. C'est le seul message qui ne s'adresse pas à un candidat : il part
+     en français, récapitule école, rôle, catégorie, moyenne déclarée et signalements, et pointe
+     la file de vérification de l'édition. Une adresse partagée plutôt que les comptes `admin`
+     de la base : la file n'appartient à personne en particulier, et l'alerte doit partir même
+     si aucun compte admin n'existe encore. Vider `ORG_EMAIL` coupe ces envois.
+   - **Un dossier corrigé n'est pas une nouvelle candidature.** `registration.submitted` sert aux
+     deux cas ; le renvoi après correction porte `corrected: true` (posé par
+     `registrations.service.patch`), et l'alerte titre « Dossier corrigé » au lieu de
+     « Nouvelle candidature ».
 2. **Première confirmation, à distance** (`staff/dossiers.vue`,
    `registrations.service.review`) : l'organisation examine les pièces. Le dossier passe
    `under_review`, puis `approved`, `rejected` ou `changes_requested`. Un dossier hors critères

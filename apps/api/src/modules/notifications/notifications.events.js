@@ -48,6 +48,54 @@ async function buildContext(registrationId, extra = {}) {
   }
 }
 
+/** Libellés du message interne : il part en français, sur la boîte de l'organisation. */
+const ROLE_LABELS = { striker: 'buteur', defender: 'défenseur' }
+const CATEGORY_LABELS = { lycee: 'lycée', universite: 'université' }
+
+/**
+ * Prévient l'organisation qu'un dossier attend dans la file de vérification.
+ *
+ * Le seul message qui ne s'adresse pas à un candidat. Il récapitule ce qui
+ * décide de la suite — école, rôle, catégorie, moyenne déclarée, signalements
+ * des contrôles automatiques — pour que l'organisation sache, sans ouvrir le
+ * back-office, si le dossier demande un examen attentif. Le lien pointe la file
+ * de l'édition concernée, pas l'espace du candidat.
+ *
+ * Un échec ici ne doit jamais empêcher le message du candidat : les deux envois
+ * sont indépendants, et celui-ci est journalisé puis oublié.
+ */
+async function notifyStaff(registrationId, { corrected = false } = {}) {
+  const to = config.notifications.orgEmail
+  if (!to) return
+
+  try {
+    const { registration, edition, payload } = await buildContext(registrationId)
+    const flags = (registration.flags || []).map((flag) => flag.code)
+
+    await service.queueMessage({
+      template: 'registration_submitted_staff',
+      channel: 'email',
+      to: { email: to },
+      locale: 'fr',
+      payload: {
+        ...payload,
+        etat: corrected ? 'Dossier corrigé' : 'Nouvelle candidature',
+        dossier: String(registration._id).slice(-6).toUpperCase(),
+        ecole: pickLocale(registration.schoolId?.name, 'fr') || '—',
+        categorie: CATEGORY_LABELS[registration.ageCategory] || '—',
+        role: ROLE_LABELS[registration.role] || '—',
+        moyenne: registration.grades?.average ?? '—',
+        signalements: flags.length ? flags.join(', ') : 'aucun',
+        lien: siteUrl('fr', `/staff/dossiers?editionId=${edition._id}`)
+      },
+      editionId: edition._id,
+      registrationId
+    })
+  } catch (error) {
+    logger.error({ err: error, registrationId }, 'alerte organisation non mise en file')
+  }
+}
+
 async function notify(template, registrationId, extra) {
   try {
     const context = await buildContext(registrationId, extra)
@@ -70,9 +118,15 @@ async function notify(template, registrationId, extra) {
  * du modèle, de la langue et du canal.
  */
 export function registerNotificationEvents() {
-  bus.onEvent('registration.submitted', ({ registrationId }) =>
-    notify('registration_received', registrationId)
-  )
+  /*
+   * Un dossier envoyé prévient deux destinataires : le candidat, qui reçoit un
+   * accusé de réception, et l'organisation, pour qui c'est du travail qui
+   * arrive. `corrected` distingue le renvoi après correction du premier dépôt.
+   */
+  bus.onEvent('registration.submitted', async ({ registrationId, corrected }) => {
+    await notify('registration_received', registrationId)
+    await notifyStaff(registrationId, { corrected })
+  })
 
   bus.onEvent('registration.changes_requested', ({ registrationId, reason }) =>
     notify('registration_changes_requested', registrationId, { motif: reason || '' })

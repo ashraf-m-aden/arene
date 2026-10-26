@@ -43,6 +43,14 @@ export const config = {
     sesEnabled: Boolean(process.env.AWS_ACCESS_KEY_ID),
     sesRegion: process.env.SES_REGION || 'eu-west-3',
     sesFrom: process.env.SES_FROM || "L'Arène <no-reply@dj-arene.com>",
+    /*
+     * Boîte de l'organisation, prévenue à chaque dépôt de dossier. Une adresse
+     * partagée plutôt que les comptes `admin` de la base : la file de
+     * vérification n'appartient à personne en particulier, et l'alerte doit
+     * partir même si aucun compte admin n'est encore créé. Vider la variable
+     * suffit à couper ces envois.
+     */
+    orgEmail: process.env.ORG_EMAIL ?? 'contact@dj-arene.com',
     maxAttempts: Number(process.env.NOTIFICATION_MAX_ATTEMPTS || 5),
     // Topic SNS qui relaie les rebonds et plaintes SES. Obligatoire : sans lui,
     // le webhook /notifications/webhooks/ses refuse tout.

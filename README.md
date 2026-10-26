@@ -98,7 +98,12 @@ au tag précédent en cas d'échec. Il n'y a pas de préproduction.
 
 Variables principales : `MONGO_URI`, `REDIS_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`,
 `S3_BUCKET_PUBLIC`, `S3_BUCKET_PRIVATE`, `SES_REGION`, `SES_FROM`, `SNS_TOPIC_ARN`,
-`PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
+`ORG_EMAIL`, `PUBLIC_SITE_URL`, `DEFAULT_LOCALE`.
+
+`ORG_EMAIL` (par défaut `contact@dj-arene.com`) est la boîte de l'organisation : elle reçoit une
+alerte à chaque dossier déposé, avec le récapitulatif du candidat et le lien vers la file de
+vérification. La vider coupe ces envois. C'est le seul message qui ne s'adresse pas à un
+candidat ; il part en français.
 
 ## API
 

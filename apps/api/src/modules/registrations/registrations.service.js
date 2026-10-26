@@ -172,7 +172,14 @@ export async function patch(id, user, input) {
     bus.emitEvent('registration.submitted', {
       registrationId: String(registration._id),
       editionId: String(registration.editionId),
-      flags: registration.flags.map((f) => f.code)
+      flags: registration.flags.map((f) => f.code),
+      /*
+       * Le meme evenement sert au premier envoi et au renvoi apres correction.
+       * L'organisation, prevenue dans les deux cas, doit savoir lequel : un
+       * dossier corrige n'est pas une nouvelle candidature, il revient dans la
+       * file apres un examen annule.
+       */
+      corrected: true
     })
   }
 

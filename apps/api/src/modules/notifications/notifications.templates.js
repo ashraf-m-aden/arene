@@ -22,6 +22,33 @@ export const DEFAULT_TEMPLATES = {
       ar: 'مرحبًا {{prenom}}، لقد استلمنا ملفكم الخاص بـ {{edition}}. سنتواصل معكم بعد التحقق. المتابعة: {{lien}}'
     }
   },
+  /*
+   * Seul message qui ne s'adresse pas a un candidat : il part sur la boite de
+   * l'organisation (`config.notifications.orgEmail`) des qu'un dossier arrive
+   * dans la file de verification, et il reste en francais — c'est un message
+   * interne, pas une communication publique.
+   *
+   * Variables propres a ce modele, en plus de {{prenom}} (le nom du candidat)
+   * et {{edition}} : {{etat}}, {{dossier}}, {{ecole}}, {{categorie}}, {{role}},
+   * {{moyenne}}, {{signalements}}. Ici {{lien}} ouvre la file de verification
+   * du back-office, pas l'espace du candidat.
+   */
+  registration_submitted_staff: {
+    channels: ['email'],
+    subject: { fr: '{{etat}} — {{prenom}} ({{edition}})' },
+    body: {
+      fr: `{{etat}} à vérifier.
+
+Candidat : {{prenom}} — dossier n° {{dossier}}
+Édition : {{edition}}
+Établissement : {{ecole}} ({{categorie}})
+Rôle : {{role}}
+Moyenne déclarée : {{moyenne}}/20
+Signalements : {{signalements}}
+
+Ouvrir la file de vérification : {{lien}}`
+    }
+  },
   registration_changes_requested: {
     channels: ['email'],
     subject: { fr: 'Correction demandée — {{edition}}', ar: 'طلب تصحيح — {{edition}}' },
