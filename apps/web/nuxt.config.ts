@@ -100,7 +100,15 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#0b1b2b' }
       ],
       link: [
+        /*
+         * Trois tailles pour une seule marque. Le SVG ne montre que les deux
+         * camps : dans un onglet, l'anneau et l'étoile du logo complet ne font
+         * plus qu'un demi-pixel. Les deux PNG, eux, portent le logo entier —
+         * iOS ignore les icônes SVG, et les raccourcis Android affichent grand.
+         */
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '512x512', href: '/icon-512.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

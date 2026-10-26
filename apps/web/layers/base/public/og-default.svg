@@ -2,13 +2,20 @@
   <rect width="1200" height="630" fill="#0b1b2b"/>
   <circle cx="1040" cy="90" r="260" fill="#e7b23e" opacity="0.14"/>
 
-  <!-- Verrouillage marque + nom. L'anneau est le meme tracé qu'en en-tete,
-       porté à r=54 : circonférence 339,292, deux arcs de 142,646 séparés
-       par 27, décalés de 71,323. -->
-  <g transform="translate(80 150)">
-    <circle cx="54" cy="54" r="54" fill="none" stroke="#f6f4ef" stroke-width="9.6"
-            stroke-dasharray="142.646 27" stroke-dashoffset="71.323"/>
-    <path d="M54 0V108" stroke="#e7b23e" stroke-width="9.6" stroke-linecap="round"/>
+  <!-- Verrouillage marque + nom. Le logo est celui de `AreneLogo.vue`, tracé
+       dans son espace d'origine (1024) puis ramené à 148 px : à cette taille,
+       l'anneau fin et l'étoile se lisent encore. Le fond de la tuile est omis —
+       la carte est déjà sombre. -->
+  <g transform="translate(80 128) scale(0.14453)">
+    <circle cx="512" cy="512" r="359" fill="none" stroke="#f2b33d" stroke-width="29"
+            stroke-dasharray="2116.35 139.4" stroke-dashoffset="494.24"/>
+    <circle cx="512" cy="512" r="401.5" fill="none" stroke="#8b6a2c" stroke-width="8"
+            stroke-dasharray="2410.53 112.12" stroke-dashoffset="574.6"/>
+    <path d="M512 104 L521.32 132.67 L551.47 132.68 L527.08 150.4 L536.39 179.07
+             L512 161.36 L487.61 179.07 L496.92 150.4 L472.53 132.68 L502.68 132.67 Z"
+          fill="#d7141a"/>
+    <path d="M324 342 L494 512 L324 682 L232 682 L402 512 L232 342 Z" fill="#f5f2ea"/>
+    <path d="M700 342 L530 512 L700 682 L792 682 L622 512 L792 342 Z" fill="#f2b33d"/>
   </g>
 
   <text x="80" y="370" fill="#f3efe6" font-family="Helvetica,Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="-2">
