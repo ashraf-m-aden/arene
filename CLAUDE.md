@@ -100,6 +100,20 @@ l'autre. Affichage public : premier nom + initiales des suivants
    que **la personne existe vraiment**. Le staff scanne le badge QR, contrôle l'identité
    (`identityChecked`), fait signer le **contrat papier** (`contractSigned`, condition
    bloquante) et encaisse les frais **en espèces**.
+   - **Le QR ne porte aucune donnée personnelle**, seulement le jeton `qrToken`
+     (`registrations.badge.js`). Ce que le scan affiche — le **portrait**, le **nom complet** et
+     le **numéro de dossier** (six derniers caractères de l'identifiant, comme sur le badge) —
+     vient de l'écran, qui a chargé la liste du créneau à l'avance. Le dossard n'apparaît
+     qu'après validation : c'est lui qu'on remet.
+   - **Les portraits sont préchargés avec la liste** et gardés en octets dans IndexedDB
+     (`useOfflineDb`, magasin `photos`), parce que le rendez-vous se tient parfois sans réseau et
+     qu'un lien signé expire en cinq minutes. Ils descendent par `GET /files/:id/content?variant=`,
+     qui sert les octets d'une pièce privée après `assertCanRead` — un lien signé ne suffit pas :
+     en développement il renvoie vers une route authentifiée qu'une balise `img` ne sait pas
+     atteindre, le jeton voyageant dans l'en-tête.
+   - **`identityChecked` est une condition, pas une donnée** : l'API l'exige vrai
+     (`checkinConfirmSchema`) et ne le stocke pas. L'écran en fait une case à cocher — « le visage
+     correspond à la personne présente » — qui ferme le bouton de validation tant qu'elle est vide.
 5. **Validation → statut « Inscrit »** : contrat signé et frais encaissés, le staff valide. Le
    dossier reçoit un numéro de dossard (`bibNumber`) et affiche **« Inscrit »**. Note
    d'implémentation : ce libellé correspond en base au statut `checked_in` (voir « Écarts

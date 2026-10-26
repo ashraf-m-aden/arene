@@ -22,6 +22,7 @@ let scanTimer: ReturnType<typeof setInterval> | null = null
 const form = reactive({
   paymentStatus: 'paid' as 'paid' | 'exempt',
   exemptionReason: '',
+  identityChecked: false,
   bulletinChecked: false,
   contractSigned: false
 })
@@ -34,9 +35,32 @@ const filtered = computed(() => {
   if (!needle) return store.roster
   return store.roster.filter((player) => {
     const name = String(player.player?.name ?? '').toLowerCase()
-    return name.includes(needle) || String(player.bibNumber ?? '').includes(needle)
+    return (
+      name.includes(needle) ||
+      String(player.bibNumber ?? '').includes(needle) ||
+      fileNumber(player).toLowerCase().includes(needle)
+    )
   })
 })
+
+/**
+ * Numéro de dossier : les six derniers caractères de l'identifiant, comme sur
+ * le badge. Le dossard, lui, n'existe qu'une fois l'inscription validée.
+ */
+function fileNumber(player: any) {
+  return String(player?._id ?? '').slice(-6).toUpperCase()
+}
+
+/** Repli quand le dossier n'a pas de portrait : les initiales du nom. */
+function initials(name?: string) {
+  return String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
 
 onMounted(async () => {
   store.watchConnection()
@@ -58,9 +82,11 @@ function select(player: any) {
   selected.value = player
   form.paymentStatus = 'paid'
   form.exemptionReason = ''
+  form.identityChecked = false
   form.bulletinChecked = false
   form.contractSigned = false
   feedback.value = ''
+  scanError.value = ''
 }
 
 async function confirm() {
@@ -71,6 +97,7 @@ async function confirm() {
       amount: form.paymentStatus === 'paid' ? edition.value?.fee ?? 0 : 0,
       ...(form.paymentStatus === 'exempt' ? { exemptionReason: form.exemptionReason } : {})
     },
+    identityChecked: form.identityChecked,
     bulletinChecked: form.bulletinChecked,
     contractSigned: form.contractSigned
   })
@@ -82,9 +109,47 @@ async function confirm() {
   selected.value = null
 }
 
+/*
+ * Jetons déjà présentés à l'API : sans cette mémoire, un badge inconnu resté
+ * dans le champ de la caméra relancerait une identification toutes les 400 ms.
+ */
+const tried = new Set<string>()
+let resolving = false
+
+/**
+ * Badge scanné. La fiche qui s'ouvre porte le portrait, le nom et le numéro de
+ * dossier : le QR, lui, ne contient qu'un jeton non devinable, et aucune
+ * donnée personnelle ne circule sur le papier.
+ */
+async function handleToken(token: string) {
+  if (resolving || tried.has(token)) return
+  tried.add(token)
+  resolving = true
+  try {
+    const { player, elsewhere } = await store.identify(token)
+    if (player) {
+      select(player)
+      stopScan()
+      return
+    }
+    // Convoqué d'un autre créneau : on le nomme plutôt que de crier au faux badge.
+    if (elsewhere) {
+      scanError.value = t('checkin.otherSlot', {
+        name: elsewhere.player?.name || '—',
+        slot: elsewhere.slotId?.label || t('checkin.noSlotYet')
+      })
+      return
+    }
+    scanError.value = t('checkin.notFound')
+  } finally {
+    resolving = false
+  }
+}
+
 /** Scan du QR par la caméra du téléphone, quand le navigateur sait le faire. */
 async function startScan() {
   scanError.value = ''
+  tried.clear()
   if (!scanSupported.value) {
     scanError.value = t('checkin.scanUnsupported')
     return
@@ -107,14 +172,7 @@ async function startScan() {
       try {
         const codes = await detector.detect(videoEl.value)
         if (!codes.length) return
-        const token = codes[0].rawValue
-        const player = store.findByToken(token)
-        if (player) {
-          select(player)
-          stopScan()
-        } else {
-          scanError.value = t('checkin.notFound')
-        }
+        await handleToken(codes[0].rawValue)
       } catch {
         // image non exploitable : on retente au tic suivant
       }
@@ -199,6 +257,12 @@ async function closeSlot() {
         <span class="stat__value numeric">{{ store.expectedCount }}</span>
         <span class="stat__label">{{ $t('checkin.rosterLoaded', { count: store.expectedCount }) }}</span>
       </div>
+      <!-- Portraits en mémoire : ce qui rend le contrôle d'identité possible
+           sans réseau, au même titre que la liste elle-même. -->
+      <div class="stat">
+        <span class="stat__value numeric">{{ store.photoCount }}</span>
+        <span class="stat__label">{{ $t('checkin.photosReady') }}</span>
+      </div>
       <button class="btn btn--ghost btn--sm" @click="closeSlot">{{ $t('checkin.closeSlot') }}</button>
     </div>
 
@@ -208,7 +272,7 @@ async function closeSlot() {
 
     <div v-if="scanning" class="scanner">
       <video ref="videoEl" muted playsinline />
-      <p class="muted">{{ $t('checkin.scan') }}</p>
+      <p class="muted">{{ $t('checkin.scanHint') }}</p>
     </div>
 
     <AreneField v-if="store.roster.length" :label="$t('checkin.manual')" for="search">
@@ -223,11 +287,23 @@ async function closeSlot() {
         :class="{ 'roster__row--done': player.status === 'checked_in' }"
         @click="select(player)"
       >
-        <span class="roster__name">
-          <strong>{{ player.player?.name }}</strong>
-          <span class="muted">
-            {{ $t(`role.${player.role}`) }}
-            <template v-if="player.schoolId"> · {{ text(player.schoolId.name) }}</template>
+        <span class="roster__who">
+          <img
+            v-if="store.photoFor(player._id)"
+            :src="store.photoFor(player._id)"
+            :alt="$t('checkin.photoAlt', { name: player.player?.name })"
+            class="avatar"
+          >
+          <span v-else class="avatar avatar--empty" aria-hidden="true">
+            {{ initials(player.player?.name) }}
+          </span>
+          <span class="roster__name">
+            <strong>{{ player.player?.name }}</strong>
+            <span class="muted">
+              {{ $t(`role.${player.role}`) }}
+              <template v-if="player.schoolId"> · {{ text(player.schoolId.name) }}</template>
+            </span>
+            <span class="muted numeric">{{ $t('checkin.fileNumber') }} {{ fileNumber(player) }}</span>
           </span>
         </span>
         <span class="cluster">
@@ -247,16 +323,38 @@ async function closeSlot() {
     <!-- Fiche du joueur scanné -->
     <aside v-if="selected" class="sheet card">
       <div class="spread">
-        <h2 class="card__title">
-          {{ selected.player?.name }}
-        </h2>
+        <h2 class="card__title">{{ $t('checkin.identity') }}</h2>
         <button class="btn btn--quiet btn--sm" @click="selected = null">{{ $t('common.close') }}</button>
       </div>
 
-      <div class="cluster">
-        <span class="badge">{{ $t(`role.${selected.role}`) }}</span>
-        <span class="badge">{{ $t(`category.${selected.ageCategory}`) }}</span>
-        <span v-if="selected.schoolId" class="badge">{{ text(selected.schoolId.name) }}</span>
+      <!-- Ce que le scan révèle : le visage, le nom, le numéro de dossier. Le
+           dossard n'apparaît qu'après validation, c'est lui qu'on remet. -->
+      <div class="identity">
+        <img
+          v-if="store.photoFor(selected._id)"
+          :src="store.photoFor(selected._id)"
+          :alt="$t('checkin.photoAlt', { name: selected.player?.name })"
+          class="identity__photo"
+        >
+        <div v-else class="identity__photo identity__photo--empty">
+          <span aria-hidden="true">{{ initials(selected.player?.name) }}</span>
+          <small class="muted">{{ $t('checkin.photoMissing') }}</small>
+        </div>
+
+        <div class="identity__text">
+          <strong class="identity__name">{{ selected.player?.name }}</strong>
+          <p class="identity__number numeric">
+            {{ $t('checkin.fileNumber') }} {{ fileNumber(selected) }}
+          </p>
+          <p v-if="selected.bibNumber" class="identity__bib numeric">
+            {{ $t('checkin.bib') }} #{{ selected.bibNumber }}
+          </p>
+          <div class="cluster">
+            <span class="badge">{{ $t(`role.${selected.role}`) }}</span>
+            <span class="badge">{{ $t(`category.${selected.ageCategory}`) }}</span>
+            <span v-if="selected.schoolId" class="badge">{{ text(selected.schoolId.name) }}</span>
+          </div>
+        </div>
       </div>
 
       <AreneNotice v-if="selected.status === 'checked_in'" tone="info">
@@ -266,6 +364,11 @@ async function closeSlot() {
       <AreneNotice v-if="edition?.rules?.requiresOriginalBulletin" tone="info">
         {{ $t('checkin.bulletinRequired') }}
       </AreneNotice>
+
+      <label class="check" :class="{ 'check--checked': form.identityChecked }">
+        <input v-model="form.identityChecked" type="checkbox">
+        <span>{{ $t('checkin.identityCheck') }}</span>
+      </label>
 
       <label class="check" :class="{ 'check--checked': form.bulletinChecked }">
         <input v-model="form.bulletinChecked" type="checkbox">
@@ -309,13 +412,21 @@ async function closeSlot() {
         <input id="exemption" v-model="form.exemptionReason" class="input" required>
       </AreneField>
 
-      <AreneNotice v-if="!form.contractSigned" tone="info">
+      <AreneNotice v-if="!form.identityChecked" tone="info">
+        {{ $t('checkin.identityRequired') }}
+      </AreneNotice>
+      <AreneNotice v-else-if="!form.contractSigned" tone="info">
         {{ $t('checkin.contractRequired') }}
       </AreneNotice>
 
       <button
         class="btn btn--primary btn--block btn--lg"
-        :disabled="selected.status === 'checked_in' || !form.contractSigned || store.pending"
+        :disabled="
+          selected.status === 'checked_in' ||
+            !form.identityChecked ||
+            !form.contractSigned ||
+            store.pending
+        "
         @click="confirm"
       >
         {{ $t('checkin.confirm') }}
@@ -377,9 +488,35 @@ async function closeSlot() {
   background: rgb(31 157 107 / 7%);
 }
 
+.roster__who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
 .roster__name {
   display: grid;
   gap: 2px;
+  font-size: var(--text-sm);
+}
+
+/** Vignette de la liste : assez grande pour reconnaître un visage au passage. */
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+}
+
+.avatar--empty {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  font-family: var(--font-display);
   font-size: var(--text-sm);
 }
 
@@ -388,5 +525,59 @@ async function closeSlot() {
   inset-block-end: var(--space-4);
   border-color: var(--color-gold);
   box-shadow: var(--shadow-lg);
+}
+
+/** Fiche d'identité : le portrait d'abord, il porte le contrôle. */
+.identity {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.identity__photo {
+  flex: none;
+  inline-size: 7.5rem;
+  block-size: 7.5rem;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-line);
+}
+
+.identity__photo--empty {
+  display: grid;
+  place-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  text-align: center;
+  background: var(--color-surface-2);
+
+  span {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    color: var(--color-muted);
+  }
+}
+
+.identity__text {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.identity__name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: 1.1;
+}
+
+.identity__number,
+.identity__bib {
+  margin: 0;
+}
+
+.identity__bib {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-pitch);
 }
 </style>

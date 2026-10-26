@@ -1,10 +1,12 @@
 /**
- * Petit accès IndexedDB sans dépendance : la liste du créneau et la file
- * d'opérations de check-in survivent à une coupure réseau et à un rechargement.
+ * Petit accès IndexedDB sans dépendance : la liste du créneau, les portraits
+ * des convoqués et la file d'opérations de check-in survivent à une coupure
+ * réseau et à un rechargement.
  */
 const DB_NAME = 'arene-checkin'
-const DB_VERSION = 1
-const STORES = { roster: 'roster', queue: 'queue' } as const
+/** v2 : ajout du magasin des portraits, préchargés avec la liste. */
+const DB_VERSION = 2
+const STORES = { roster: 'roster', queue: 'queue', photos: 'photos' } as const
 
 type StoreName = (typeof STORES)[keyof typeof STORES]
 
@@ -22,6 +24,9 @@ function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.queue)) {
         db.createObjectStore(STORES.queue, { keyPath: 'idempotencyKey' })
+      }
+      if (!db.objectStoreNames.contains(STORES.photos)) {
+        db.createObjectStore(STORES.photos, { keyPath: 'registrationId' })
       }
     }
     request.onsuccess = () => resolve(request.result)
@@ -75,5 +80,48 @@ export function useOfflineDb() {
 
   const clearQueue = () => withStore(STORES.queue, 'readwrite', (store) => store.clear())
 
-  return { saveRoster, readRoster, updateRosterEntry, enqueue, readQueue, removeFromQueue, clearQueue }
+  /*
+   * Portraits des convoqués, gardés sous forme d'octets.
+   *
+   * L'écran de check-in doit afficher un visage sans réseau : un lien signé ne
+   * suffirait pas, il suppose une connexion et expire en cinq minutes. On
+   * conserve donc le `Blob` lui-même, avec l'identifiant du fichier d'origine —
+   * si le candidat remplace sa photo, la vignette en cache est périmée et doit
+   * être retéléchargée.
+   */
+  const savePhoto = (entry: { registrationId: string; fileId: string; blob: Blob }) =>
+    withStore(STORES.photos, 'readwrite', (store) => store.put(entry))
+
+  const readPhotos = () =>
+    withStore<Array<{ registrationId: string; fileId: string; blob: Blob }>>(
+      STORES.photos,
+      'readonly',
+      (store) => store.getAll()
+    )
+
+  /** Les portraits des dossiers qui ne sont plus dans la liste sont oubliés. */
+  const prunePhotos = async (keep: string[]) => {
+    const kept = new Set(keep)
+    const photos = await readPhotos().catch(() => [])
+    for (const photo of photos) {
+      if (!kept.has(photo.registrationId)) {
+        await withStore(STORES.photos, 'readwrite', (store) =>
+          store.delete(photo.registrationId)
+        ).catch(() => null)
+      }
+    }
+  }
+
+  return {
+    saveRoster,
+    readRoster,
+    updateRosterEntry,
+    enqueue,
+    readQueue,
+    removeFromQueue,
+    clearQueue,
+    savePhoto,
+    readPhotos,
+    prunePhotos
+  }
 }

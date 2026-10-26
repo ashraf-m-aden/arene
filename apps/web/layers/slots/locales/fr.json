@@ -1,7 +1,7 @@
 {
   "checkin": {
     "title": "Check-in",
-    "lead": "Scannez le badge, contrôlez l'identité et le bulletin, encaissez les frais, remettez le dossard.",
+    "lead": "Scannez le badge : le visage, le nom et le numéro de dossier s'affichent. Contrôlez l'identité et le bulletin, encaissez les frais, remettez le dossard.",
     "slot": "Créneau du jour",
     "loadRoster": "Charger la liste pour le hors ligne",
     "rosterLoaded": "{count} joueur(s) en mémoire",
@@ -15,7 +15,7 @@
     "manual": "Recherche par nom ou numéro de dossier",
     "cameraError": "Caméra indisponible",
     "player": "Joueur",
-    "identityCheck": "Identité contrôlée",
+    "identityCheck": "Le visage correspond à la personne présente",
     "bulletinCheck": "Bulletin original présenté",
     "bulletinRequired": "Bulletin original exigé pour cette édition",
     "contractCheck": "Contrat signé sur place",
@@ -38,7 +38,17 @@
       "scheduled": "Attendu",
       "checked_in": "Inscrit",
       "no_show": "Absent"
-    }
+    },
+    "scanHint": "Cadrez le QR du badge. Le portrait du dossier s'affiche avant toute validation.",
+    "identity": "Identité du candidat",
+    "identityRequired": "Le contrôle d'identité est la raison d'être de ce rendez-vous : cochez-le avant de valider.",
+    "fileNumber": "Dossier n°",
+    "bib": "Dossard",
+    "photoAlt": "Portrait de {name}",
+    "photoMissing": "Aucun portrait au dossier",
+    "photosReady": "portraits en mémoire",
+    "otherSlot": "Ce badge est celui de {name}, convoqué sur un autre rendez-vous ({slot}).",
+    "noSlotYet": "rendez-vous non attribué"
   },
   "cash": {
     "title": "Caisse",
