@@ -87,8 +87,9 @@ l'autre. Affichage public : premier nom + initiales des suivants
    `under_review`, puis `approved`, `rejected` ou `changes_requested`. Un dossier hors critères
    (âge, moyenne, rôle complet, doublon) n'est **jamais rejeté automatiquement** : il part au
    staff avec ses signalements (`flags`), qui tranche.
-3. **Convocation** : un dossier `approved` reçoit un créneau (`slotId`, assignation automatique
-   ou manuelle) et passe `scheduled`. Le candidat est invité à se présenter.
+3. **Convocation au rendez-vous administratif** : un dossier `approved` reçoit un créneau
+   (`slotId`, pointant un `Slot` de nature `checkin`) et passe `scheduled`. Ce rendez-vous se
+   tient **dans la semaine qui précède le tournoi**, pas le jour du jeu.
 4. **Deuxième confirmation, en présentiel** (`staff/checkin.vue`,
    `registrations.service.checkIn`) : c'est l'étape qui **scelle la candidature** et qui atteste
    que **la personne existe vraiment**. Le staff scanne le badge QR, contrôle l'identité
@@ -98,8 +99,84 @@ l'autre. Affichage public : premier nom + initiales des suivants
    dossier reçoit un numéro de dossard (`bibNumber`) et affiche **« Inscrit »**. Note
    d'implémentation : ce libellé correspond en base au statut `checked_in` (voir « Écarts
    assumés »).
-6. **Compétition** : `checked_in` → `qualified`/`eliminated` → éventuellement `finalist`, ou
+6. **Affectation à une session de jeu** : l'inscrit reçoit un `sessionId` (un `Slot` de nature
+   `competition`), posé par `registrations.service.attachSession` — en masse via
+   `slots.service.distribute` avec `kind: 'competition'`, ou au cas par cas via
+   `slots.service.assign`. **Aucun statut ne change** : le candidat est déjà « Inscrit »,
+   recevoir son horaire de jeu ne l'inscrit pas une seconde fois.
+7. **Compétition** : `checked_in` → `qualified`/`eliminated` → éventuellement `finalist`, ou
    `disqualified`/`no_show` selon le déroulé.
+
+### Les deux rendez-vous sont séparés d'une semaine
+
+**Les validations, signatures et encaissements se terminent une semaine avant le premier duel.**
+Le jour J, tout le monde est déjà inscrit, dossard en main : il ne reste qu'à jouer. C'est la
+raison d'être de `Slot.kind` :
+
+| | `kind: 'checkin'` | `kind: 'competition'` |
+| --- | --- | --- |
+| Quand | la semaine précédant le tournoi | pendant le tournoi |
+| Porté par | `Registration.slotId` | `Registration.sessionId` |
+| On y fait | identité, contrat papier, encaissement, dossard | les duels |
+| Statut consommé | `scheduled` | `checked_in` |
+| Plafond qui fait foi | `capacity.total` (le rôle est sans importance) | `capacity.striker` / `capacity.defender` |
+| Clôture → absents | `scheduled` → `no_show` (`markNoShows`) | `checked_in` sans rencontre jouée → `no_show` (`markCompetitionNoShows`) |
+| Caisse | `slots.service.cashReport` | aucune |
+
+Ce qui en découle, et qui se lit mal dans le code :
+
+- **`checkIn` refuse après le coup d'envoi** (`edition.startsAt`), avec la clé `checkinClosed` —
+  encaisser et faire signer un contrat de participation alors que les duels sont en cours n'a pas
+  de sens, et le dossier échapperait aux rencontres déjà générées. La comparaison se fait sur
+  `occurredAt`, pas sur l'heure courante : l'écran de check-in travaille hors ligne et
+  `syncCheckins` rejoue ses opérations plus tard — un pointage fait à temps ne doit pas être
+  refusé parce que la synchronisation, elle, arrive en retard.
+- **`Edition.checkinDeadline`** (virtuelle, `startsAt - CHECKIN_LEAD_TIME_DAYS`) est la cible que
+  l'organisation se donne. Elle est **indicative** : elle guide la répartition, elle ne bloque pas
+  un retardataire. Ce qui est réellement refusé, c'est un créneau du mauvais côté du coup d'envoi
+  (`checkinAfterStart`, `sessionBeforeStart`).
+- **`checked_in` → `no_show` est désormais une transition légale.** Un joueur peut avoir signé et
+  payé une semaine plus tôt puis ne pas venir jouer. Tant que les deux moments étaient confondus,
+  le cas n'existait pas.
+- **Les rencontres se génèrent sur `sessionId`, jamais sur `slotId`** — les groupes du pointage
+  ont été constitués par ordre d'arrivée des dossiers, une semaine plus tôt, et mélangent les
+  rôles sans contrainte d'équilibre. `results.service.generateForSession` refuse un créneau
+  `checkin` (`notACompetitionSlot`).
+- **Deux jeux de notifications** : `slot_assigned`/`slot_reminder` annoncent le rendez-vous
+  administratif et réclament les frais en espèces ; `session_assigned`/`session_reminder` ne
+  parlent que d'horaire et de dossard. Le choix se fait sur le `kind` porté par l'évènement
+  `slot.assigned`.
+
+### Les trois phases de la compétition
+
+`MATCH_PHASES = ['qualification', 'barrage', 'finale']`.
+
+1. **Qualification**, par session de jeu : chaque buteur affronte `OPPONENTS_PER_STRIKER` (3)
+   défenseurs de sa session, 5 tentatives par duel.
+2. **Barrage** (`results.service.selectBarrage`), à l'échelle de l'édition : les
+   `BARRAGE_PER_ROLE` (8) meilleurs de chaque rôle et de chaque catégorie se rencontrent dans un
+   tableau fermé de `BARRAGE_OPPONENTS` (4) duels chacun.
+3. **Finale** (`selectFinalists`) : les `FINALISTS_PER_ROLE` (2) meilleurs de chaque rôle,
+   croisement 2×2 → 4 rencontres par catégorie, et **4 vainqueurs** (un buteur et un défenseur
+   dans chacune des deux catégories).
+
+**Pourquoi le barrage existe.** En qualification, un buteur n'affronte que 3 défenseurs tirés
+dans un effectif de plusieurs dizaines : le maximum (15 points) est atteint par plusieurs
+joueurs et les lots d'adversaires sont très inégaux. Désigner les finalistes directement sur ce
+classement revenait à trancher au tirage au sort. Le barrage place les prétendants face à la
+même opposition, et c'est **lui** que `selectFinalists` lit dès qu'il a été joué — repli sur la
+qualification pour une édition trop petite pour justifier un tour intermédiaire.
+
+Barrage et finale **n'ont pas de créneau** : leurs rencontres se composent depuis le classement,
+à l'échelle de l'édition, et se lisent par phase (`listForPhase`, `GET /editions/:id/matches?phase=`).
+`pendingBeforeFinals` compte la qualification **et** le barrage : passer en `finals` avec des
+résultats de barrage manquants désignerait les finalistes sur un classement incomplet.
+
+**Le départage ne tombe jamais sur l'heure de passage.** `rankStrikers`/`rankDefenders`
+enchaînent : points → duels gagnés → ratio → **force de l'opposition** → dernière rencontre
+jouée. L'opposition (somme des arrêts des défenseurs affrontés, et symétriquement) est calculée
+par `playerRankings`, qui collecte les adversaires dans l'agrégation ; elle n'est pas exposée
+dans la réponse sous forme de liste d'identifiants, seulement en total.
 
 ### Correspondance vocabulaire métier ↔ statuts en base
 
@@ -160,10 +237,16 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   (`status.checked_in` dans les locales) ; la valeur interne reste `checked_in`.
   Fonctionnellement c'est le même évènement : présentation sur place, contrôle d'identité,
   signature du contrat, encaissement, dossard.
-- **Contrat vs créneau** : le créneau (`Slot`) est à la fois le rendez-vous administratif
-  (identité, signature, paiement) et le moment de la compétition (les rencontres sont générées
-  par créneau). Les séparer aurait un impact large sur `results` et `slots` ; à réévaluer si un
-  rendez-vous administratif plusieurs jours avant la compétition devient nécessaire.
+- **Contrat et créneau sont séparés** — c'était un écart assumé, ce n'est plus le cas. Le `Slot`
+  porte désormais un `kind` (`checkin` / `competition`) et la `Registration` deux références
+  distinctes (`slotId` / `sessionId`). Voir « Les deux rendez-vous sont séparés d'une semaine ».
+  La migration `2026-10-creneaux-checkin-et-competition.js` étiquette les créneaux existants en
+  `checkin` et **ne recopie volontairement pas** `slotId` dans `sessionId` : les groupes du
+  pointage ne sont pas des groupes de jeu.
+- **Un `Slot` sert les deux natures, plutôt que deux modèles** : capacité, occupation, agenda,
+  attribution, clôture et QR sont identiques de part et d'autre — seule la liste visée change
+  (`slotId` ou `sessionId`). Un modèle `Session` séparé aurait dupliqué tout le CRUD des créneaux
+  et l'écran d'agenda pour une différence qui tient dans un champ.
 - **Pas de rôle parent** : le candidat est titulaire de son dossier. Le parent n'existe que
   comme numéro de contact.
 
@@ -212,4 +295,8 @@ le code**. Ne pas les décrire comme faits.
   qui compte les dossiers aux statuts de `SEAT_HOLDING_STATUSES` — un dossier `rejected` ou
   `draft` ne consomme jamais de place.
 - Le CSV d'export (`registrations.service.exportRows`) inclut une colonne « Contrat signé »
-  (oui/non).
+  (oui/non), et deux colonnes distinctes « Rendez-vous » (administratif) et « Session de jeu ».
+- Les écrans staff filtrent la grille sur la nature du créneau : `staff/checkin.vue` et
+  `staff/caisse.vue` ne listent que les `checkin`, `staff/resultats.vue` que les `competition`
+  (`editions.fetchSlots(editionId, kind)` → `GET /editions/:id/slots?kind=`). Sans ce filtre, le
+  staff choisissait dans une liste mélangée.

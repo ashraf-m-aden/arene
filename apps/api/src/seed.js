@@ -96,6 +96,14 @@ async function main() {
       status: 'registration_open',
       registrationOpensAt: new Date(now.getTime() - 3 * 86400000),
       registrationClosesAt: new Date(now.getTime() + 30 * 86400000),
+      /*
+       * Dates du tournoi. Elles comptent desormais : c'est `startsAt` qui separe
+       * les rendez-vous administratifs (avant) des sessions de jeu (apres), et
+       * qui ferme les encaissements. Qualifications sur deux jours, finale le
+       * troisieme.
+       */
+      startsAt: new Date(now.getTime() + 37 * 86400000),
+      endsAt: new Date(now.getTime() + 39 * 86400000),
       capacity: {
         lycee: { striker: 200, defender: 200 },
         universite: { striker: 150, defender: 150 }
@@ -113,14 +121,31 @@ async function main() {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   )
 
+  /*
+   * Deux grilles distinctes, une semaine d'ecart.
+   *
+   * Les rendez-vous administratifs (identite, contrat, encaissement) se tiennent
+   * aux jours 29-30, soit au plus tard sept jours avant le coup d'envoi du jour
+   * 37. Les sessions de jeu occupent les jours 37 et 38 — le jour 39 est garde
+   * pour la finale, qui n'a pas de session : ses rencontres se composent a
+   * l'echelle de l'edition depuis le classement.
+   *
+   * Une session porte un plafond par role : les rencontres opposent un buteur a
+   * un defenseur, une session qui n'aurait qu'un camp n'en produirait aucune.
+   */
   const slotPlan = [
-    { label: 'Samedi matin — Lycée', ageCategory: 'lycee', day: 7, hour: 8 },
-    { label: 'Samedi après-midi — Lycée', ageCategory: 'lycee', day: 7, hour: 15 },
-    { label: 'Dimanche matin — Université', ageCategory: 'universite', day: 8, hour: 8 },
-    { label: 'Dimanche après-midi — Université', ageCategory: 'universite', day: 8, hour: 15 }
+    { kind: 'checkin', label: 'Validation — Lycée, matin', ageCategory: 'lycee', day: 29, hour: 8 },
+    { kind: 'checkin', label: 'Validation — Lycée, après-midi', ageCategory: 'lycee', day: 29, hour: 15 },
+    { kind: 'checkin', label: 'Validation — Université, matin', ageCategory: 'universite', day: 30, hour: 8 },
+    { kind: 'checkin', label: 'Validation — Université, après-midi', ageCategory: 'universite', day: 30, hour: 15 },
+    { kind: 'competition', label: 'Qualifications — Lycée, matin', ageCategory: 'lycee', day: 37, hour: 8 },
+    { kind: 'competition', label: 'Qualifications — Lycée, après-midi', ageCategory: 'lycee', day: 37, hour: 16 },
+    { kind: 'competition', label: 'Qualifications — Université, matin', ageCategory: 'universite', day: 38, hour: 8 },
+    { kind: 'competition', label: 'Qualifications — Université, après-midi', ageCategory: 'universite', day: 38, hour: 16 }
   ]
 
   for (const plan of slotPlan) {
+    const competition = plan.kind === 'competition'
     const startsAt = new Date(now.getTime() + plan.day * 86400000)
     startsAt.setHours(plan.hour, 0, 0, 0)
     const endsAt = new Date(startsAt.getTime() + 4 * 3600000)
@@ -128,12 +153,15 @@ async function main() {
       { editionId: edition._id, label: plan.label },
       {
         editionId: edition._id,
+        kind: plan.kind,
         label: plan.label,
         ageCategory: plan.ageCategory,
         startsAt,
         endsAt,
-        capacity: { striker: 50, defender: 50 },
-        pitches: 2,
+        capacity: competition
+          ? { total: 40, striker: 20, defender: 20 }
+          : { total: 50, striker: 0, defender: 0 },
+        pitches: competition ? 2 : 1,
         venue: edition.venue.name,
         status: 'planned'
       },

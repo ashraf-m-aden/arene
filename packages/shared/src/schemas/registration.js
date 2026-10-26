@@ -85,7 +85,10 @@ export const registrationQuerySchema = z.object({
   role: z.enum(PLAYER_ROLES).optional(),
   ageCategory: z.enum(AGE_CATEGORIES).optional(),
   schoolId: objectId.optional(),
+  /** Rendez-vous administratif. */
   slotId: objectId.optional(),
+  /** Session de jeu — distincte du rendez-vous, tenu une semaine plus tot. */
+  sessionId: objectId.optional(),
   q: z.string().trim().max(80).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(25)

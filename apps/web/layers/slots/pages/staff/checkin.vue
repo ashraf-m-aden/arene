@@ -41,7 +41,11 @@ const filtered = computed(() => {
 onMounted(async () => {
   store.watchConnection()
   const current = await editions.fetchCurrent()
-  if (current?._id) slots.value = await editions.fetchSlots(current._id).catch(() => [])
+  // Rendez-vous administratifs seuls : on ne pointe pas sur une session de jeu,
+  // qui se tient une semaine plus tard et ne réunit que des inscrits.
+  if (current?._id) {
+    slots.value = await editions.fetchSlots(current._id, 'checkin').catch(() => [])
+  }
   await store.refreshQueue()
 })
 

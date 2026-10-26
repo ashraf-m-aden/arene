@@ -74,6 +74,14 @@ const quotas = reactive({
 
 const slotForm = reactive({
   label: '',
+  /**
+   * Nature du creneau. `checkin` : rendez-vous administratif — identite,
+   * contrat, encaissement — tenu dans la semaine qui precede le tournoi.
+   * `competition` : session de jeu, pendant le tournoi, ou les rencontres sont
+   * generees. L'API refuse un rendez-vous administratif pose apres le coup
+   * d'envoi, et une session placee avant.
+   */
+  kind: 'checkin' as 'checkin' | 'competition',
   startsAt: '',
   endsAt: '',
   /** Vide = rendez-vous ouvert a toutes les categories. */
@@ -85,6 +93,12 @@ const slotForm = reactive({
 /**
  * Conditions de la repartition automatique. On saisit une periode plutot qu'une
  * liste de jours : c'est ce qu'on a en tete quand on planifie des convocations.
+ *
+ * `kind` decide de la file consommee : en `checkin` ce sont les dossiers
+ * acceptes qui attendent une convocation, en `competition` les inscrits qui
+ * n'ont pas encore de session — et ceux-la sont repartis en gardant les deux
+ * roles dans chaque session, sans quoi aucune rencontre ne pourrait etre
+ * composee.
  */
 const dist = reactive({
   from: '',
@@ -93,6 +107,8 @@ const dist = reactive({
   endTime: '16:00',
   durationMinutes: 60,
   perSlot: 20,
+  kind: 'checkin' as 'checkin' | 'competition',
+  pitches: 2,
   ageCategory: '' as '' | 'lycee' | 'universite'
 })
 
@@ -470,6 +486,8 @@ async function runDistribute(dryRun: boolean) {
         endTime: dist.endTime,
         durationMinutes: dist.durationMinutes,
         perSlot: dist.perSlot,
+        kind: dist.kind,
+        pitches: dist.pitches,
         ageCategory: dist.ageCategory || undefined,
         // Le serveur ne devine pas le fuseau du navigateur : on le lui donne.
         offsetMinutes: -new Date().getTimezoneOffset(),
@@ -496,13 +514,24 @@ async function createSlot() {
   pending.value = true
   error.value = ''
   try {
+    /*
+     * Une session de jeu recoit aussi un plafond par role : les rencontres se
+     * composent d'un buteur contre un defenseur, une session qui n'aurait qu'un
+     * seul camp n'en produirait aucune. Un rendez-vous administratif s'en passe
+     * — on y pointe des gens, leur role est sans importance.
+     */
+    const half = Math.floor(slotForm.total / 2)
     await $api.post('/slots', {
       editionId: edition.value._id,
+      kind: slotForm.kind,
       label: slotForm.label,
       startsAt: slotForm.startsAt,
       endsAt: slotForm.endsAt,
       pitches: slotForm.pitches,
-      capacity: { total: slotForm.total },
+      capacity:
+        slotForm.kind === 'competition'
+          ? { total: slotForm.total, striker: half, defender: slotForm.total - half }
+          : { total: slotForm.total },
       ageCategory: slotForm.ageCategory || undefined,
       venue: edition.value.venue?.name
     })
@@ -785,12 +814,26 @@ async function createSlot() {
 
         <AreneNotice v-if="selectedSlot" tone="info">
           <strong>{{ selectedSlot.label }}</strong> ·
+          <span class="badge">
+            {{ $t(selectedSlot.kind === 'competition' ? 'admin.slotKindCompetition' : 'admin.slotKindCheckin') }}
+          </span> ·
           <span class="numeric">{{ date(selectedSlot.startsAt, true) }}</span> ·
           <span class="numeric">
             {{ selectedSlot.occupancy?.total?.used ?? 0 }} /
             {{ selectedSlot.occupancy?.total?.capacity ?? selectedSlot.capacity?.total ?? 0 }}
             {{ $t('admin.participants') }}
           </span>
+          <!-- Une session de jeu se compose d'un camp contre l'autre : on montre les deux. -->
+          <template v-if="selectedSlot.kind === 'competition'">
+            ·
+            <span class="numeric">
+              {{ selectedSlot.occupancy?.striker?.used ?? 0 }}/{{ selectedSlot.occupancy?.striker?.capacity ?? 0 }}
+              {{ $t('role.striker') }}
+              —
+              {{ selectedSlot.occupancy?.defender?.used ?? 0 }}/{{ selectedSlot.occupancy?.defender?.capacity ?? 0 }}
+              {{ $t('role.defender') }}
+            </span>
+          </template>
         </AreneNotice>
 
         <!-- Répartition automatique -->
@@ -830,12 +873,30 @@ async function createSlot() {
             </AreneField>
           </div>
 
-          <AreneField :label="$t('admin.ageCategory')" for="dCat">
-            <select id="dCat" v-model="dist.ageCategory" class="select">
-              <option value="">{{ $t('common.all') }}</option>
-              <option value="lycee">{{ $t('category.lycee') }}</option>
-              <option value="universite">{{ $t('category.universite') }}</option>
-            </select>
+          <div class="two">
+            <AreneField
+              :label="$t('admin.slotKind')"
+              :hint="$t(`admin.slotKindHint.${dist.kind}`)"
+              for="dKind"
+              required
+            >
+              <select id="dKind" v-model="dist.kind" class="select">
+                <option value="checkin">{{ $t('admin.slotKindCheckin') }}</option>
+                <option value="competition">{{ $t('admin.slotKindCompetition') }}</option>
+              </select>
+            </AreneField>
+            <AreneField :label="$t('admin.ageCategory')" for="dCat">
+              <select id="dCat" v-model="dist.ageCategory" class="select">
+                <option value="">{{ $t('common.all') }}</option>
+                <option value="lycee">{{ $t('category.lycee') }}</option>
+                <option value="universite">{{ $t('category.universite') }}</option>
+              </select>
+            </AreneField>
+          </div>
+
+          <!-- Les terrains ne concernent que les sessions de jeu. -->
+          <AreneField v-if="dist.kind === 'competition'" :label="$t('admin.pitches')" for="dPitches">
+            <input id="dPitches" v-model.number="dist.pitches" class="input numeric" type="number" min="1" max="20">
           </AreneField>
 
           <AreneNotice v-if="preview" :tone="preview.leftOver ? 'warning' : 'info'">
@@ -863,6 +924,17 @@ async function createSlot() {
         <form class="card card--flat slot-form" @submit.prevent="createSlot">
           <AreneField :label="$t('admin.slotLabel')" for="label" required>
             <input id="label" v-model="slotForm.label" class="input" required>
+          </AreneField>
+          <AreneField
+            :label="$t('admin.slotKind')"
+            :hint="$t(`admin.slotKindHint.${slotForm.kind}`)"
+            for="slotKind"
+            required
+          >
+            <select id="slotKind" v-model="slotForm.kind" class="select">
+              <option value="checkin">{{ $t('admin.slotKindCheckin') }}</option>
+              <option value="competition">{{ $t('admin.slotKindCompetition') }}</option>
+            </select>
           </AreneField>
           <AreneField :label="$t('admin.startsAt')" for="startsAt" required>
             <input id="startsAt" v-model="slotForm.startsAt" class="input numeric" type="datetime-local" required>

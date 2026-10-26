@@ -62,9 +62,17 @@ export const useEditionsStore = defineStore('editions', {
       return data
     },
 
-    async fetchSlots(editionId: string) {
+    /**
+     * Créneaux d'une édition. `kind` sépare les deux grilles : les rendez-vous
+     * administratifs (`checkin`, tenus la semaine précédant le tournoi) et les
+     * sessions de jeu (`competition`). L'écran de check-in et celui de saisie
+     * des résultats ne doivent pas proposer la même liste.
+     */
+    async fetchSlots(editionId: string, kind?: 'checkin' | 'competition') {
       const { $api } = useNuxtApp()
-      const { data } = await $api.get<{ data: any[] }>(`/editions/${editionId}/slots`)
+      const { data } = await $api.get<{ data: any[] }>(`/editions/${editionId}/slots`, {
+        params: kind ? { kind } : undefined
+      })
       return data
     },
 

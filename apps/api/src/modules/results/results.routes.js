@@ -1,8 +1,12 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import {
+  AGE_CATEGORIES,
+  barrageSelectSchema,
   common,
   finalsSelectSchema,
   generateMatchesSchema,
+  MATCH_PHASES,
   matchResultSchema,
   rankingQuerySchema
 } from '@arene/shared'
@@ -34,11 +38,16 @@ slotRouter.get(
   asyncHandler(async (req, res) => ok(res, await service.listForSlot(req.params.slotId)))
 )
 
+/**
+ * Génération des rencontres d'une session de jeu. Le service refuse un
+ * rendez-vous administratif : on ne compose pas des duels avec les groupes de la
+ * file d'attente du pointage, tenue une semaine plus tôt.
+ */
 slotRouter.post(
   '/generate',
   validate({ body: generateMatchesSchema }),
   asyncHandler(async (req, res) =>
-    created(res, await service.generateForSlot(req.params.slotId, req.body))
+    created(res, await service.generateForSession(req.params.slotId, req.body))
   )
 )
 
@@ -93,6 +102,49 @@ finalsRouter.post(
   asyncHandler(async (req, res) =>
     ok(res, await service.selectFinalists(req.params.editionId, req.body))
   )
+)
+
+/**
+ * Sous-routeur monté sur /editions/:editionId/barrage.
+ *
+ * Le barrage n'a pas de créneau propre : ses rencontres se composent à partir du
+ * classement de qualification, pas d'une session répartie. D'où un routeur à
+ * l'échelle de l'édition, comme la finale.
+ */
+export const barrageRouter = Router({ mergeParams: true })
+
+barrageRouter.get(
+  '/',
+  asyncHandler(async (req, res) =>
+    ok(res, await service.listForPhase(req.params.editionId, 'barrage', req.query.ageCategory))
+  )
+)
+
+barrageRouter.post(
+  '/select',
+  requireRole('admin'),
+  validate({ body: barrageSelectSchema }),
+  asyncHandler(async (req, res) =>
+    ok(res, await service.selectBarrage(req.params.editionId, req.body))
+  )
+)
+
+/** Rencontres d'une phase, monté sur /editions/:editionId/matches. */
+export const editionMatchesRouter = Router({ mergeParams: true })
+
+editionMatchesRouter.get(
+  '/',
+  requireRole('staff'),
+  validate({
+    query: z.object({
+      phase: z.enum(MATCH_PHASES),
+      ageCategory: z.enum(AGE_CATEGORIES).optional()
+    })
+  }),
+  asyncHandler(async (req, res) => {
+    const { phase, ageCategory } = req.validatedQuery
+    ok(res, await service.listForPhase(req.params.editionId, phase, ageCategory))
+  })
 )
 
 export default router

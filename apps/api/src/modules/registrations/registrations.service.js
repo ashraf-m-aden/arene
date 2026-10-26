@@ -160,6 +160,7 @@ export async function patch(id, user, input) {
     const edition = await editions.getById(registration.editionId)
     registration.flags = await computeFlags(registration, edition)
     registration.slotId = null
+    registration.sessionId = null
     registration.reviewedBy = undefined
     registration.reviewedAt = undefined
     pushHistory(registration, 'submitted', user.id, 'dossier corrigé par le candidat')
@@ -253,7 +254,8 @@ export async function submit(id, user) {
 export async function listMine(candidateId) {
   return Registration.find({ candidateId })
     .populate('schoolId', 'name slug type')
-    .populate('slotId', 'label startsAt endsAt venue')
+    .populate('slotId', 'label startsAt endsAt venue kind')
+    .populate('sessionId', 'label startsAt endsAt venue kind')
     .sort({ createdAt: -1 })
 }
 
@@ -273,6 +275,7 @@ export async function list(query) {
     Registration.find(filter)
       .populate('schoolId', 'name slug type')
       .populate('slotId', 'label startsAt')
+      .populate('sessionId', 'label startsAt')
       .populate('candidateId', 'name email phone locale')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -360,6 +363,52 @@ export async function attachSlot(registrationId, slotId, actorId) {
   return registration
 }
 
+/**
+ * Dossiers inscrits qui n'ont pas encore de session de jeu, du plus ancien
+ * dossard au plus récent. File d'attente de la répartition des sessions.
+ *
+ * Elle ne part pas des dossiers `approved` comme `listAwaitingSlot` mais des
+ * `checked_in` : on ne place sur un terrain que des gens déjà validés, contrat
+ * signé et frais encaissés — ce qui, depuis la séparation des deux rendez-vous,
+ * est acquis une semaine avant le premier duel.
+ */
+export async function listAwaitingSession(editionId, { ageCategory, role } = {}) {
+  return Registration.find({
+    editionId,
+    status: 'checked_in',
+    sessionId: null,
+    ...(ageCategory ? { ageCategory } : {}),
+    ...(role ? { role } : {})
+  })
+    .sort({ bibNumber: 1, checkedInAt: 1 })
+    .select('_id role ageCategory candidateId bibNumber')
+}
+
+/**
+ * Attribution d'une session de jeu. Contrairement à `attachSlot`, elle ne change
+ * aucun statut : le candidat est déjà « Inscrit » depuis son rendez-vous
+ * administratif, recevoir son horaire de jeu ne l'inscrit pas une seconde fois.
+ */
+export async function attachSession(registrationId, sessionId, actorId) {
+  const registration = await Registration.findById(registrationId)
+  if (!registration) throw notFound('Dossier introuvable').withKey('fileNotFound')
+  if (registration.status !== 'checked_in') {
+    throw badRequest('Seul un dossier inscrit reçoit une session de jeu').withKey(
+      'onlyCheckedInGetsSession'
+    )
+  }
+  registration.sessionId = sessionId
+  registration.history.push({
+    from: registration.status,
+    to: registration.status,
+    by: actorId,
+    at: new Date(),
+    note: 'session de jeu attribuée'
+  })
+  await registration.save()
+  return registration
+}
+
 export async function findByQrToken(qrToken) {
   const registration = await Registration.findOne({ qrToken })
     .populate('schoolId', 'name slug type')
@@ -372,6 +421,13 @@ export async function findByQrToken(qrToken) {
  * Check-in : signature du contrat sur place, encaissement des frais, numéro de
  * dossard, statut inscrit (`checked_in`). Le contrat signé est une condition
  * bloquante, au même titre que le contrôle d'identité côté validation.
+ *
+ * Ce rendez-vous se tient la semaine qui précède le tournoi, pas le jour du
+ * jeu : au coup d'envoi, tout le monde est déjà inscrit, dossard en main. La
+ * seule chose réellement interdite est de valider une fois le tournoi commencé
+ * — encaisser et faire signer un contrat de participation alors que les duels
+ * sont en cours n'a pas de sens, et le dossier échapperait aux rencontres déjà
+ * générées.
  */
 export async function checkIn(registrationId, staffId, { payment, bulletinChecked, contractSigned, occurredAt }) {
   const registration = await Registration.findById(registrationId)
@@ -383,6 +439,21 @@ export async function checkIn(registrationId, staffId, { payment, bulletinChecke
     throw badRequest(`Dossier au statut ${registration.status} : inscription impossible`)
   }
   if (!contractSigned) throw badRequest('Le contrat doit être signé sur place avant l’inscription').withKey('contractRequired')
+
+  /*
+   * On compare au moment ou l'operation a eu lieu, pas a maintenant : l'ecran
+   * de check-in travaille hors ligne et `syncCheckins` rejoue ses operations au
+   * retour du reseau, parfois bien plus tard. Un pointage fait a temps ne doit
+   * pas etre refuse parce que la synchronisation, elle, arrive en retard.
+   */
+  const editions = await editionsService()
+  const edition = await editions.getById(registration.editionId)
+  const at = occurredAt ? new Date(occurredAt) : new Date()
+  if (edition.startsAt && new Date(edition.startsAt) <= at) {
+    throw badRequest(
+      'Le tournoi a commencé : les validations et encaissements sont clos'
+    ).withKey('checkinClosed')
+  }
 
   registration.payment = {
     ...registration.payment?.toObject?.(),
@@ -545,14 +616,55 @@ export async function rosterForSlot(slotId) {
     .lean()
 }
 
-export async function playersForSlot(slotId, role) {
-  return Registration.find({ slotId, role, status: 'checked_in' }).select('_id ageCategory')
+/**
+ * Liste d'une session de jeu. Les joueurs y sont déjà inscrits : ni jeton de
+ * badge ni paiement à afficher, l'écran de terrain n'a besoin que de savoir qui
+ * joue, dans quel rôle et sous quel dossard.
+ */
+export async function rosterForSession(sessionId) {
+  return Registration.find({
+    sessionId,
+    status: { $in: ['checked_in', 'qualified', 'finalist', 'eliminated', 'no_show'] }
+  })
+    .populate('schoolId', 'name slug')
+    .select('player.name role ageCategory status bibNumber schoolId')
+    .sort({ bibNumber: 1 })
+    .lean()
+}
+
+/** Joueurs d'une session de jeu, par rôle : la matière des rencontres. */
+export async function playersForSession(sessionId, role) {
+  return Registration.find({ sessionId, role, status: 'checked_in' }).select('_id ageCategory')
+}
+
+/**
+ * Clôture d'une session de jeu : les inscrits qui ne se sont pas présentés
+ * passent en `no_show`.
+ *
+ * Distinct de `markNoShows`, qui vise le rendez-vous administratif et part de
+ * `scheduled`. Ici les joueurs sont `checked_in` depuis une semaine — ils ont
+ * signé et payé, puis ne sont pas venus jouer. Les dossiers ayant déjà un
+ * résultat ou une suite de parcours (`qualified`, `eliminated`…) sont laissés
+ * tels quels : on ne requalifie pas en absent quelqu'un qui a joué.
+ */
+export async function markCompetitionNoShows(sessionId, actorId, playedIds = []) {
+  const played = new Set(playedIds.map(String))
+  const pending = await Registration.find({ sessionId, status: 'checked_in' })
+  let marked = 0
+  for (const registration of pending) {
+    if (played.has(String(registration._id))) continue
+    pushHistory(registration, 'no_show', actorId, 'absent à la session de jeu')
+    await registration.save()
+    marked += 1
+  }
+  return marked
 }
 
 export async function exportRows(editionId) {
   const rows = await Registration.find({ editionId })
     .populate('schoolId', 'name type')
     .populate('slotId', 'label startsAt')
+    .populate('sessionId', 'label startsAt')
     .lean({ virtuals: false })
 
   return toCsv(rows, [
@@ -565,7 +677,8 @@ export async function exportRows(editionId) {
     { key: 'role', label: 'Rôle' },
     { label: 'Moyenne', get: (r) => r.grades?.average },
     { key: 'status', label: 'Statut' },
-    { label: 'Créneau', get: (r) => r.slotId?.label },
+    { label: 'Rendez-vous', get: (r) => r.slotId?.label },
+    { label: 'Session de jeu', get: (r) => r.sessionId?.label },
     { label: 'Paiement', get: (r) => r.payment?.status },
     { label: 'Montant', get: (r) => r.payment?.amount },
     { label: 'Contrat signé', get: (r) => (r.contract?.signed ? 'oui' : 'non') },

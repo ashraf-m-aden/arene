@@ -67,7 +67,13 @@ export const REGISTRATION_TRANSITIONS = {
   changes_requested: ['submitted'],
   approved: ['scheduled', 'disqualified'],
   scheduled: ['checked_in', 'no_show', 'disqualified'],
-  checked_in: ['eliminated', 'qualified', 'disqualified'],
+  /*
+   * `no_show` au depart de `checked_in` : l'inscription est scellee une semaine
+   * avant le tournoi, donc un inscrit peut parfaitement ne pas se presenter le
+   * jour du jeu — il a signe et paye, mais sa session se tient sept jours plus
+   * tard. Tant que les deux moments etaient confondus, le cas n'existait pas.
+   */
+  checked_in: ['eliminated', 'qualified', 'disqualified', 'no_show'],
   qualified: ['finalist', 'eliminated', 'disqualified'],
   finalist: ['eliminated', 'disqualified'],
   eliminated: [],
@@ -98,13 +104,51 @@ export const SEAT_HOLDING_STATUSES = [
 
 export const SLOT_STATUSES = /** @type {const} */ (['planned', 'open', 'closed', 'cancelled'])
 
-export const MATCH_PHASES = /** @type {const} */ (['qualification', 'finale'])
+/**
+ * Nature d'un rendez-vous. Les deux ne se tiennent ni le meme jour ni au meme
+ * endroit, et ne portent pas les memes gens.
+ *
+ * - `checkin` : rendez-vous administratif — controle d'identite, signature du
+ *   contrat papier, encaissement, dossard. Il se tient *avant* le tournoi
+ *   (voir `CHECKIN_LEAD_TIME_DAYS`) et consomme des dossiers `scheduled`.
+ * - `competition` : session de jeu — les rencontres y sont generees. Les joueurs
+ *   y arrivent deja inscrits (`checked_in`) : on ne verifie plus rien, on joue.
+ *
+ * Confondre les deux obligeait a encaisser le matin du tournoi, devant 200
+ * personnes et un terrain qui attend.
+ */
+export const SLOT_KINDS = /** @type {const} */ (['checkin', 'competition'])
+
+/**
+ * Delai entre la fin des rendez-vous administratifs et le debut du tournoi.
+ *
+ * Les validations, signatures et encaissements se terminent une semaine avant
+ * le premier duel : le jour J, il ne reste qu'a jouer. Sert de defaut a la
+ * repartition automatique et de reference a `checkinDeadline`.
+ */
+export const CHECKIN_LEAD_TIME_DAYS = 7
+
+export const MATCH_PHASES = /** @type {const} */ (['qualification', 'barrage', 'finale'])
 
 export const ATTEMPT_OUTCOMES = /** @type {const} */ (['goal', 'stop'])
 
 /** Nombre de tentatives par rencontre et nombre d'adversaires en qualification. */
 export const ATTEMPTS_PER_MATCH = 5
 export const OPPONENTS_PER_STRIKER = 3
+
+/**
+ * Barrage : tour intermediaire entre la qualification et la finale.
+ *
+ * En qualification chaque buteur n'affronte que 3 defenseurs sur l'effectif
+ * complet : a 50 joueurs par role, les lots d'adversaires sont tres inegaux et
+ * le maximum (15 points) est atteint par plusieurs joueurs. Classer directement
+ * les deux premiers reviendrait a trancher au tirage au sort. Le barrage reprend
+ * les meilleurs de chaque role dans un tableau ferme, ou tous rencontrent la
+ * meme opposition, et c'est lui qui designe les finalistes.
+ */
+export const BARRAGE_PER_ROLE = 8
+export const BARRAGE_OPPONENTS = 4
+
 export const FINALISTS_PER_ROLE = 2
 
 export const FILE_KINDS = /** @type {const} */ (['bulletin', 'photo', 'media'])
@@ -134,6 +178,13 @@ export const NOTIFICATION_TEMPLATES = {
   registration_rejected: ['email'],
   slot_assigned: ['email'],
   slot_reminder: ['email'],
+  /*
+   * Convocation a la session de jeu. Distincte de `slot_assigned` : celle-la
+   * annonce le rendez-vous administratif et reclame les frais en especes, ce
+   * qui n'a plus de sens une semaine plus tard, quand tout est deja paye.
+   */
+  session_assigned: ['email'],
+  session_reminder: ['email'],
   registration_qualified: ['email'],
   broadcast: ['email']
 }

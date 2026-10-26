@@ -5,6 +5,7 @@ import {
   canTransitionRegistration,
   categoryFromSchoolType,
   checkEligibility,
+  checkinDeadline,
   common,
   computeMatchScore,
   generateMatches,
@@ -103,6 +104,59 @@ describe('classements individuels', () => {
     ]
     expect(rankDefenders(rows)[0].id).toBe('y')
   })
+
+  it('départage d’abord sur les duels gagnés', () => {
+    // Même total de buts et même nombre de tentatives : c'est celui qui a
+    // emporté le plus de duels qui passe devant, pas celui qui a joué le plus tôt.
+    const rows = [
+      { id: 'a', goals: 9, attempts: 15, wins: 1, lastPlayedAt: '2026-06-10T09:00:00Z' },
+      { id: 'b', goals: 9, attempts: 15, wins: 3, lastPlayedAt: '2026-06-10T11:00:00Z' }
+    ]
+    expect(rankStrikers(rows).map((r) => r.id)).toEqual(['b', 'a'])
+  })
+
+  it('départage sur la force de l’opposition avant l’heure de passage', () => {
+    /*
+     * Le cas qui décide réellement d'une qualification : à 15 tentatives
+     * chacun, buts égaux et duels gagnés égaux, le ratio est identique. Seule
+     * l'opposition rencontrée sépare les deux — en qualification, un buteur
+     * n'affronte que 3 défenseurs tirés dans un effectif de plusieurs dizaines.
+     */
+    const rows = [
+      { id: 'facile', goals: 12, attempts: 15, wins: 3, opposition: 4, lastPlayedAt: '2026-06-10T09:00:00Z' },
+      { id: 'dur', goals: 12, attempts: 15, wins: 3, opposition: 9, lastPlayedAt: '2026-06-10T11:00:00Z' }
+    ]
+    expect(rankStrikers(rows).map((r) => r.id)).toEqual(['dur', 'facile'])
+    expect(
+      rankDefenders([
+        { id: 'facile', stops: 10, attempts: 15, wins: 2, opposition: 3 },
+        { id: 'dur', stops: 10, attempts: 15, wins: 2, opposition: 11 }
+      ]).map((r) => r.id)
+    ).toEqual(['dur', 'facile'])
+  })
+
+  it('reste stable quand les critères ajoutés sont absents', () => {
+    // Les classements mis en cache avant l'ajout de `wins`/`opposition` ne
+    // portent pas ces champs : le tri doit retomber sur les critères suivants
+    // sans produire d'ordre aléatoire.
+    const rows = [
+      { id: 'a', goals: 9, attempts: 15 },
+      { id: 'b', goals: 11, attempts: 15 }
+    ]
+    expect(rankStrikers(rows).map((r) => r.id)).toEqual(['b', 'a'])
+  })
+})
+
+describe('fenêtre des rendez-vous administratifs', () => {
+  it('place la date butoir une semaine avant le tournoi', () => {
+    const deadline = checkinDeadline({ startsAt: '2026-12-18T06:00:00Z' })
+    expect(deadline.toISOString()).toBe('2026-12-11T06:00:00.000Z')
+  })
+
+  it('ne promet rien sans date de tournoi', () => {
+    expect(checkinDeadline({})).toBeNull()
+    expect(checkinDeadline(null)).toBeNull()
+  })
 })
 
 describe('génération des rencontres', () => {
@@ -138,6 +192,14 @@ describe('transitions de statut', () => {
     expect(canTransitionRegistration('submitted', 'approved')).toBe(true)
     expect(canTransitionRegistration('approved', 'checked_in')).toBe(false)
     expect(canTransitionRegistration('scheduled', 'checked_in')).toBe(true)
+  })
+
+  it('laisse un inscrit manquer sa session de jeu', () => {
+    // L'inscription est scellée une semaine avant le tournoi : un joueur peut
+    // avoir signé et payé, puis ne pas venir jouer. Tant que les deux moments
+    // étaient confondus, ce cas n'existait pas et la transition était refusée.
+    expect(canTransitionRegistration('checked_in', 'no_show')).toBe(true)
+    expect(canTransitionRegistration('checked_in', 'qualified')).toBe(true)
   })
 })
 

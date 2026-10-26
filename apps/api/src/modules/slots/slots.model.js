@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { AGE_CATEGORIES, SLOT_STATUSES } from '@arene/shared/constants'
+import { AGE_CATEGORIES, SLOT_KINDS, SLOT_STATUSES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 
@@ -7,6 +7,16 @@ const slotSchema = new mongoose.Schema(
   {
     editionId: { type: ObjectId, ref: 'Edition', required: true, index: true },
     label: { type: String, required: true, trim: true },
+    /**
+     * `checkin` (rendez-vous administratif) ou `competition` (session de jeu).
+     * Les deux ne se tiennent plus le meme jour : les validations, signatures et
+     * encaissements se terminent une semaine avant le premier duel.
+     *
+     * Defaut `checkin` : les creneaux enregistres avant la separation servaient
+     * au pointage et au paiement, c'est bien leur nature. La migration
+     * 2026-10-creneaux-checkin-et-competition.js les etiquette explicitement.
+     */
+    kind: { type: String, enum: SLOT_KINDS, default: 'checkin', index: true },
     startsAt: { type: Date, required: true },
     endsAt: { type: Date, required: true },
     /**
@@ -31,6 +41,7 @@ const slotSchema = new mongoose.Schema(
 )
 
 slotSchema.index({ editionId: 1, startsAt: 1 })
+slotSchema.index({ editionId: 1, kind: 1, startsAt: 1 })
 
 slotSchema.set('toJSON', {
   transform(_doc, ret) {

@@ -16,7 +16,11 @@ const error = ref('')
 
 onMounted(async () => {
   const current = await editions.fetchCurrent()
-  if (current?._id) slots.value = await editions.fetchSlots(current._id).catch(() => [])
+  // On encaisse au rendez-vous administratif, pas sur le terrain : une session
+  // de jeu n'a pas de caisse, et l'API refuse d'en produire le récapitulatif.
+  if (current?._id) {
+    slots.value = await editions.fetchSlots(current._id, 'checkin').catch(() => [])
+  }
 })
 
 watch(slotId, async (value) => {

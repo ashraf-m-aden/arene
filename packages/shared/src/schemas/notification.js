@@ -33,6 +33,8 @@ export const broadcastSchema = z.object({
       role: z.enum(PLAYER_ROLES).optional(),
       ageCategory: z.enum(AGE_CATEGORIES).optional(),
       slotId: objectId.optional(),
+      /** Session de jeu : viser les joueurs d'un terrain, pas d'un pointage. */
+      sessionId: objectId.optional(),
       schoolId: objectId.optional()
     })
     .default({}),

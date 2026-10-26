@@ -90,16 +90,24 @@ export function registerNotificationEvents() {
     notify('registration_qualified', registrationId)
   )
 
-  /** Convocation à l'attribution du créneau, puis rappel automatique la veille. */
-  bus.onEvent('slot.assigned', async ({ registrationId, slotId }) => {
-    await notify('slot_assigned', registrationId)
+  /**
+   * Convocation à l'attribution du créneau, puis rappel automatique la veille.
+   *
+   * Deux jeux de messages selon la nature du créneau : le rendez-vous
+   * administratif annonce les frais à régler en espèces et la pièce d'identité à
+   * apporter, la session de jeu ne parle que d'horaire et de dossard — une
+   * semaine plus tard, tout est déjà signé et encaissé.
+   */
+  bus.onEvent('slot.assigned', async ({ registrationId, slotId, kind }) => {
+    const competition = kind === 'competition'
+    await notify(competition ? 'session_assigned' : 'slot_assigned', registrationId)
 
     try {
       const slots = await slotsService()
       const slot = await slots.getById(slotId)
       const context = await buildContext(registrationId)
       await service.queueMessage({
-        template: 'slot_reminder',
+        template: competition ? 'session_reminder' : 'slot_reminder',
         channel: 'email',
         to: context.to,
         locale: context.locale,

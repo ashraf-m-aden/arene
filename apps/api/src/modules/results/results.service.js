@@ -1,5 +1,7 @@
 import mongoose from 'mongoose'
 import {
+  BARRAGE_OPPONENTS,
+  BARRAGE_PER_ROLE,
   computeMatchScore,
   FINALISTS_PER_ROLE,
   generateMatches,
@@ -19,16 +21,30 @@ const editionsService = () => import('../editions/editions.service.js')
 const oid = (value) => (typeof value === 'string' ? new mongoose.Types.ObjectId(value) : value)
 
 /**
- * Génère les rencontres d'un créneau : chaque buteur pointé affronte
- * `opponents` défenseurs de sa catégorie, répartis sur les terrains.
+ * Genere les rencontres d'une session de jeu : chaque buteur affecte a la
+ * session affronte `opponents` defenseurs de la meme session, repartis sur les
+ * terrains.
+ *
+ * Les joueurs sont lus sur `sessionId`, pas sur `slotId` : le rendez-vous
+ * administratif s'est tenu une semaine plus tot, dans un autre creneau et
+ * souvent dans un autre ordre. Lire le creneau de pointage reviendrait a
+ * composer les rencontres du jour avec les groupes de la file d'attente.
  */
-export async function generateForSlot(slotId, { opponents = OPPONENTS_PER_STRIKER, reset = false } = {}) {
+export async function generateForSession(
+  sessionId,
+  { opponents = OPPONENTS_PER_STRIKER, phase = 'qualification', reset = false } = {}
+) {
   const slots = await slotsService()
-  const slot = await slots.getById(slotId)
+  const slot = await slots.getById(sessionId)
+  if (slot.kind !== 'competition') {
+    throw badRequest(
+      'Les rencontres se génèrent sur une session de jeu, pas sur un rendez-vous administratif'
+    ).withKey('notACompetitionSlot')
+  }
 
   const existing = await Match.countDocuments({ slotId: slot._id })
   if (existing > 0 && !reset) {
-    throw badRequest('Les rencontres de ce créneau sont déjà générées')
+    throw badRequest('Les rencontres de cette session sont déjà générées')
   }
   if (reset) {
     const recorded = await Match.countDocuments({ slotId: slot._id, strikerScore: { $ne: null } })
@@ -36,13 +52,15 @@ export async function generateForSlot(slotId, { opponents = OPPONENTS_PER_STRIKE
     await Match.deleteMany({ slotId: slot._id })
   }
 
-  const { playersForSlot } = await registrationsService()
+  const { playersForSession } = await registrationsService()
   const [strikers, defenders] = await Promise.all([
-    playersForSlot(slot._id, 'striker'),
-    playersForSlot(slot._id, 'defender')
+    playersForSession(slot._id, 'striker'),
+    playersForSession(slot._id, 'defender')
   ])
   if (!strikers.length || !defenders.length) {
-    throw badRequest('Il faut au moins un buteur et un défenseur pointés')
+    throw badRequest(
+      'Il faut au moins un buteur et un défenseur inscrits sur cette session'
+    ).withKey('sessionMissingRole')
   }
 
   const pairs = generateMatches({
@@ -56,7 +74,7 @@ export async function generateForSlot(slotId, { opponents = OPPONENTS_PER_STRIKE
     ...pair,
     editionId: slot.editionId,
     slotId: slot._id,
-    phase: 'qualification',
+    phase,
     ageCategory: slot.ageCategory
   }))
 
@@ -69,6 +87,23 @@ export async function listForSlot(slotId) {
     .populate('strikerRegId', 'player.name bibNumber role')
     .populate('defenderRegId', 'player.name bibNumber role')
     .sort({ order: 1 })
+}
+
+/**
+ * Dossiers ayant effectivement joue dans une session — au moins une rencontre
+ * dont le resultat est saisi. Sert a la cloture d'une session : seuls ceux qui
+ * n'apparaissent nulle part sont marques absents.
+ */
+export async function playedRegistrationIds(sessionId) {
+  const rows = await Match.find({ slotId: sessionId, strikerScore: { $ne: null } }).select(
+    'strikerRegId defenderRegId'
+  )
+  const ids = new Set()
+  for (const row of rows) {
+    ids.add(String(row.strikerRegId))
+    ids.add(String(row.defenderRegId))
+  }
+  return [...ids]
 }
 
 /** Saisie du marqueur : 5 tentatives, le score se calcule tout seul. */
@@ -105,10 +140,16 @@ export async function recordResult(matchId, { attempts, note }, staffId) {
   return match
 }
 
-export async function pendingQualificationCount(editionId) {
+/**
+ * Rencontres sans resultat saisi dans les phases qui doivent etre closes avant
+ * la finale. Le barrage y est compte : il appartient aux qualifications, et
+ * composer la finale alors qu'il lui manque des resultats designerait les
+ * finalistes sur un classement incomplet.
+ */
+export async function pendingBeforeFinals(editionId) {
   return Match.countDocuments({
     editionId: oid(editionId),
-    phase: 'qualification',
+    phase: { $in: ['qualification', 'barrage'] },
     strikerScore: null
   })
 }
@@ -116,6 +157,14 @@ export async function pendingQualificationCount(editionId) {
 /**
  * Classements individuels, calculés par agrégation sur les rencontres.
  * Les buteurs comptent leurs buts, les défenseurs leurs arrêts.
+ *
+ * L'agrégation collecte aussi les adversaires de chacun, pour en déduire la
+ * force de l'opposition : la somme des arrêts des défenseurs qu'un buteur a
+ * affrontés, et symétriquement. En qualification personne ne rencontre le même
+ * lot — 3 adversaires tirés dans un effectif de 50 — et le total de points seul
+ * récompense autant un bon buteur qu'un tirage facile. Ce critère départage à
+ * points égaux en faveur de celui qui a eu la tâche la plus dure, là où le code
+ * d'origine tranchait sur l'heure de passage.
  */
 export async function playerRankings(editionId, { phase, ageCategory } = {}) {
   const match = { editionId: oid(editionId), strikerScore: { $ne: null } }
@@ -132,6 +181,7 @@ export async function playerRankings(editionId, { phase, ageCategory } = {}) {
           attempts: { $sum: { $size: '$attempts' } },
           matches: { $sum: 1 },
           wins: { $sum: { $cond: [{ $gt: ['$strikerScore', '$defenderScore'] }, 1, 0] } },
+          opponents: { $push: '$defenderRegId' },
           lastPlayedAt: { $max: '$enteredAt' }
         }
       }
@@ -145,6 +195,7 @@ export async function playerRankings(editionId, { phase, ageCategory } = {}) {
           attempts: { $sum: { $size: '$attempts' } },
           matches: { $sum: 1 },
           wins: { $sum: { $cond: [{ $gt: ['$defenderScore', '$strikerScore'] }, 1, 0] } },
+          opponents: { $push: '$strikerRegId' },
           lastPlayedAt: { $max: '$enteredAt' }
         }
       }
@@ -154,13 +205,28 @@ export async function playerRankings(editionId, { phase, ageCategory } = {}) {
   const ids = [...strikerRows, ...defenderRows].map((row) => row._id)
   const profiles = await playerProfiles(ids)
 
-  const strikers = rankStrikers(
-    strikerRows.map((row) => ({ ...row, ...profiles.get(String(row._id)) }))
-  ).map((row, index) => ({ rank: index + 1, ...row }))
+  const stopsOf = new Map(defenderRows.map((row) => [String(row._id), row.stops]))
+  const goalsOf = new Map(strikerRows.map((row) => [String(row._id), row.goals]))
 
-  const defenders = rankDefenders(
-    defenderRows.map((row) => ({ ...row, ...profiles.get(String(row._id)) }))
-  ).map((row, index) => ({ rank: index + 1, ...row }))
+  /*
+   * `opponents` ne sort pas d'ici : ce sont des identifiants de dossiers, et le
+   * classement est public. On en garde le total, pas la liste.
+   */
+  const withOpposition = (table) => ({ opponents, ...row }) => ({
+    ...row,
+    opposition: opponents.reduce((sum, id) => sum + (table.get(String(id)) || 0), 0),
+    ...profiles.get(String(row._id))
+  })
+
+  const strikers = rankStrikers(strikerRows.map(withOpposition(stopsOf))).map((row, index) => ({
+    rank: index + 1,
+    ...row
+  }))
+
+  const defenders = rankDefenders(defenderRows.map(withOpposition(goalsOf))).map((row, index) => ({
+    rank: index + 1,
+    ...row
+  }))
 
   return { strikers, defenders }
 }
@@ -218,9 +284,19 @@ export async function schoolRankings(editionId) {
     }
   }
 
-  // Victoires en qualification : le vainqueur est celui qui a le plus marqué sur 5 tentatives.
+  /*
+   * Victoires en qualification : le vainqueur est celui qui a le plus marque sur
+   * 5 tentatives. Le barrage y est inclus — c'est un duel gagne au meme titre, et
+   * l'exclure penaliserait les ecoles dont les joueurs sont alles le plus loin.
+   */
   const wins = await Match.aggregate([
-    { $match: { editionId: edId, phase: 'qualification', strikerScore: { $ne: null } } },
+    {
+      $match: {
+        editionId: edId,
+        phase: { $in: ['qualification', 'barrage'] },
+        strikerScore: { $ne: null }
+      }
+    },
     {
       $project: {
         winner: {
@@ -287,8 +363,97 @@ export async function refreshRankings(editionId) {
 }
 
 /**
+ * Composition du barrage : les `perRole` meilleurs de chaque role sortis de la
+ * qualification s'y rencontrent dans un tableau ferme.
+ *
+ * C'est le tour qui rend la selection defendable. En qualification chaque buteur
+ * n'affronte que 3 defenseurs pris dans un effectif de plusieurs dizaines : le
+ * maximum (15 points) est atteint par plusieurs joueurs et les lots
+ * d'adversaires sont tres inegaux. Ici tous les retenus affrontent la meme
+ * opposition, et c'est ce classement-la qui designe les finalistes.
+ *
+ * Aucun statut de dossier ne change : le barrage fait partie de la competition,
+ * les joueurs restent `checked_in` jusqu'a la designation des finalistes.
+ */
+export async function selectBarrage(
+  editionId,
+  {
+    ageCategory,
+    perRole = BARRAGE_PER_ROLE,
+    opponents = BARRAGE_OPPONENTS,
+    dryRun = false
+  } = {}
+) {
+  const categories = ageCategory ? [ageCategory] : ['lycee', 'universite']
+  const edId = oid(editionId)
+  const selection = []
+
+  for (const category of categories) {
+    const recorded = await Match.countDocuments({
+      editionId: edId,
+      phase: 'barrage',
+      ageCategory: category,
+      strikerScore: { $ne: null }
+    })
+    if (recorded > 0) {
+      throw badRequest(
+        `Des résultats de barrage sont déjà saisis en ${category} : recomposition refusée`
+      ).withKey('barrageAlreadyPlayed')
+    }
+
+    const { strikers, defenders } = await playerRankings(editionId, {
+      phase: 'qualification',
+      ageCategory: category
+    })
+    const chosenStrikers = strikers.slice(0, perRole)
+    const chosenDefenders = defenders.slice(0, perRole)
+    if (
+      chosenStrikers.length < FINALISTS_PER_ROLE ||
+      chosenDefenders.length < FINALISTS_PER_ROLE
+    ) {
+      throw badRequest(
+        `Pas assez de joueurs classés en ${category} pour composer le barrage`
+      ).withKey('notEnoughRanked')
+    }
+
+    const pairs = generateMatches({
+      strikers: chosenStrikers.map((row) => row.registrationId),
+      defenders: chosenDefenders.map((row) => row.registrationId),
+      opponents,
+      pitches: 2
+    })
+
+    selection.push({
+      ageCategory: category,
+      strikers: chosenStrikers,
+      defenders: chosenDefenders,
+      matches: pairs.length
+    })
+    if (dryRun) continue
+
+    await Match.deleteMany({ editionId: edId, phase: 'barrage', ageCategory: category })
+    await Match.insertMany(
+      pairs.map((pair) => ({
+        ...pair,
+        editionId: edId,
+        phase: 'barrage',
+        ageCategory: category
+      })),
+      { ordered: false }
+    )
+  }
+
+  return { dryRun, selection }
+}
+
+/**
  * Sélection des finalistes : les 2 meilleurs de chaque rôle dans chaque catégorie,
  * puis génération des 4 rencontres de la phase finale.
+ *
+ * Le classement lu est celui du **barrage** dès qu'il a été joué, la
+ * qualification ne servant alors qu'à filtrer les prétendants. Repli sur la
+ * qualification pour une édition trop petite pour justifier un tour
+ * intermédiaire : la finale reste composable sans barrage.
  */
 export async function selectFinalists(editionId, { ageCategory, dryRun = false } = {}) {
   const categories = ageCategory ? [ageCategory] : ['lycee', 'universite']
@@ -296,8 +461,16 @@ export async function selectFinalists(editionId, { ageCategory, dryRun = false }
   const selection = []
 
   for (const category of categories) {
+    const barragePlayed = await Match.countDocuments({
+      editionId: oid(editionId),
+      phase: 'barrage',
+      ageCategory: category,
+      strikerScore: { $ne: null }
+    })
+    const source = barragePlayed > 0 ? 'barrage' : 'qualification'
+
     const { strikers, defenders } = await playerRankings(editionId, {
-      phase: 'qualification',
+      phase: source,
       ageCategory: category
     })
     const chosenStrikers = strikers.slice(0, FINALISTS_PER_ROLE)
@@ -306,7 +479,12 @@ export async function selectFinalists(editionId, { ageCategory, dryRun = false }
       throw badRequest(`Pas assez de joueurs classés en ${category} pour composer la finale`)
     }
 
-    selection.push({ ageCategory: category, strikers: chosenStrikers, defenders: chosenDefenders })
+    selection.push({
+      ageCategory: category,
+      source,
+      strikers: chosenStrikers,
+      defenders: chosenDefenders
+    })
     if (dryRun) continue
 
     for (const row of [...chosenStrikers, ...chosenDefenders]) {
@@ -336,11 +514,20 @@ export async function selectFinalists(editionId, { ageCategory, dryRun = false }
   return { dryRun, selection }
 }
 
-export async function listFinals(editionId, ageCategory) {
-  const filter = { editionId: oid(editionId), phase: 'finale' }
+/**
+ * Rencontres d'une phase sans creneau propre — barrage et finale se jouent hors
+ * des sessions reparties, sur un terrain unique et devant du public. L'ecran de
+ * saisie les liste donc par phase et non par session.
+ */
+export async function listForPhase(editionId, phase, ageCategory) {
+  const filter = { editionId: oid(editionId), phase }
   if (ageCategory) filter.ageCategory = ageCategory
   return Match.find(filter)
-    .populate('strikerRegId', 'player.name bibNumber')
-    .populate('defenderRegId', 'player.name bibNumber')
+    .populate('strikerRegId', 'player.name bibNumber role')
+    .populate('defenderRegId', 'player.name bibNumber role')
     .sort({ ageCategory: 1, order: 1 })
+}
+
+export async function listFinals(editionId, ageCategory) {
+  return listForPhase(editionId, 'finale', ageCategory)
 }

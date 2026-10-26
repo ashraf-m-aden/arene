@@ -9,7 +9,21 @@ const { date } = useFormat()
 
 useNoIndex(t('results.staff.title'))
 
-const slots = ref<any[]>([])
+/**
+ * Trois phases, deux façons de lister les rencontres.
+ *
+ * La qualification se joue par session de jeu — chaque session a ses joueurs,
+ * ses terrains et ses rencontres, générées à partir d'elle. Le barrage et la
+ * finale n'ont pas de session : leurs rencontres sont composées à l'échelle de
+ * l'édition, à partir du classement, et se jouent sur un terrain unique. L'écran
+ * les lit donc par phase.
+ */
+type Phase = 'qualification' | 'barrage' | 'finale'
+
+const PHASES: Phase[] = ['qualification', 'barrage', 'finale']
+
+const sessions = ref<any[]>([])
+const phase = ref<Phase>('qualification')
 const slotId = ref('')
 const matches = ref<any[]>([])
 const selected = ref<any>(null)
@@ -20,25 +34,33 @@ const error = ref('')
 const feedback = ref('')
 
 const edition = computed(() => editions.current)
+const bySession = computed(() => phase.value === 'qualification')
+const ready = computed(() => (bySession.value ? Boolean(slotId.value) : Boolean(edition.value?._id)))
 
 onMounted(async () => {
   const current = await editions.fetchCurrent()
   if (!current?._id) return
-  slots.value = await editions.fetchSlots(current._id).catch(() => [])
+  // Sessions de jeu seules : les rendez-vous administratifs se sont tenus une
+  // semaine plus tôt et ne portent aucune rencontre.
+  sessions.value = await editions.fetchSlots(current._id, 'competition').catch(() => [])
 })
 
-watch(slotId, async (value) => {
+watch([slotId, phase], async () => {
   selected.value = null
   matches.value = []
-  if (!value) return
-  await loadMatches()
+  feedback.value = ''
+  if (ready.value) await loadMatches()
 })
 
 async function loadMatches() {
   pending.value = true
   error.value = ''
   try {
-    const { data } = await $api.get<{ data: any[] }>(`/slots/${slotId.value}/matches`)
+    const { data } = bySession.value
+      ? await $api.get<{ data: any[] }>(`/slots/${slotId.value}/matches`)
+      : await $api.get<{ data: any[] }>(`/editions/${edition.value._id}/matches`, {
+          params: { phase: phase.value }
+        })
     matches.value = data
   } catch (err: any) {
     error.value = err.message
@@ -56,6 +78,31 @@ async function generate() {
       opponents: 3
     })
     feedback.value = t('results.staff.generated', { count: data.generated })
+    await loadMatches()
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    pending.value = false
+  }
+}
+
+/**
+ * Composition du barrage : les meilleurs de chaque rôle sortis de la
+ * qualification se retrouvent dans un tableau fermé. C'est ce tour, et non la
+ * qualification, qui désigne ensuite les finalistes.
+ */
+async function composeBarrage() {
+  if (!edition.value?._id) return
+  pending.value = true
+  error.value = ''
+  try {
+    const { data } = await $api.post<{ data: any }>(
+      `/editions/${edition.value._id}/barrage/select`,
+      { dryRun: false }
+    )
+    const count = (data.selection ?? []).reduce((sum: number, row: any) => sum + (row.matches ?? 0), 0)
+    feedback.value = t('results.staff.barrageComposed', { count })
+    phase.value = 'barrage'
     await loadMatches()
   } catch (err: any) {
     error.value = err.message
@@ -118,21 +165,36 @@ const playerName = (registration: any) =>
         <h1>{{ $t('results.staff.title') }}</h1>
         <p class="muted">{{ $t('results.staff.lead') }}</p>
       </div>
-      <button v-if="auth.isAdmin" class="btn btn--ghost btn--sm" :disabled="pending" @click="selectFinalists">
-        {{ $t('results.staff.selectFinalists') }}
-      </button>
+      <div v-if="auth.isAdmin" class="actions">
+        <button class="btn btn--ghost btn--sm" :disabled="pending" @click="composeBarrage">
+          {{ $t('results.staff.composeBarrage') }}
+        </button>
+        <button class="btn btn--ghost btn--sm" :disabled="pending" @click="selectFinalists">
+          {{ $t('results.staff.selectFinalists') }}
+        </button>
+      </div>
     </div>
 
     <div class="card card--flat controls">
-      <AreneField :label="$t('results.staff.slot')" for="slot">
+      <AreneField :label="$t('results.staff.phase')" for="phase">
+        <select id="phase" v-model="phase" class="select">
+          <option v-for="value in PHASES" :key="value" :value="value">
+            {{ $t(`results.phase.${value}`) }}
+          </option>
+        </select>
+      </AreneField>
+
+      <!-- La qualification se joue par session ; barrage et finale sont à l'échelle de l'édition. -->
+      <AreneField v-if="bySession" :label="$t('results.staff.session')" for="slot">
         <select id="slot" v-model="slotId" class="select">
           <option value="">—</option>
-          <option v-for="slot in slots" :key="slot._id" :value="slot._id">
+          <option v-for="slot in sessions" :key="slot._id" :value="slot._id">
             {{ slot.label }} — {{ date(slot.startsAt) }}
           </option>
         </select>
       </AreneField>
-      <button class="btn btn--ink" :disabled="!slotId || pending" @click="generate">
+
+      <button v-if="bySession" class="btn btn--ink" :disabled="!slotId || pending" @click="generate">
         {{ $t('results.staff.generate') }}
       </button>
     </div>
@@ -141,7 +203,8 @@ const playerName = (registration: any) =>
     <AreneNotice v-if="feedback" tone="success">{{ feedback }}</AreneNotice>
     <AreneSpinner v-if="pending && !matches.length" />
 
-    <AreneEmpty v-if="!slotId" :title="$t('results.staff.selectSlot')" />
+    <AreneEmpty v-if="bySession && !sessions.length" :title="$t('results.staff.noSessions')" />
+    <AreneEmpty v-else-if="bySession && !slotId" :title="$t('results.staff.selectSession')" />
 
     <div v-else-if="matches.length" class="table-wrap">
       <table class="table">
@@ -149,6 +212,8 @@ const playerName = (registration: any) =>
           <tr>
             <th class="numeric">{{ $t('results.staff.order') }}</th>
             <th class="numeric">{{ $t('results.staff.pitch') }}</th>
+            <!-- Barrage et finale mélangent les catégories : il faut la colonne. -->
+            <th v-if="!bySession">{{ $t('results.staff.category') }}</th>
             <th>{{ $t('results.staff.striker') }}</th>
             <th>{{ $t('results.staff.defender') }}</th>
             <th class="numeric">{{ $t('results.staff.score') }}</th>
@@ -159,6 +224,9 @@ const playerName = (registration: any) =>
           <tr v-for="match in matches" :key="match._id">
             <td class="numeric">{{ match.order }}</td>
             <td class="numeric">{{ match.pitch }}</td>
+            <td v-if="!bySession">
+              {{ match.ageCategory ? $t(`category.${match.ageCategory}`) : '—' }}
+            </td>
             <td>
               {{ playerName(match.strikerRegId) }}
               <span v-if="match.strikerRegId?.bibNumber" class="badge numeric">
@@ -247,8 +315,14 @@ const playerName = (registration: any) =>
   align-items: end;
 
   @include from(sm) {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto 1fr auto;
   }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .scoring {

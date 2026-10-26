@@ -70,7 +70,20 @@ const registrationSchema = new mongoose.Schema(
     },
 
     qrToken: { type: String },
+    /**
+     * Rendez-vous administratif (`Slot` de nature `checkin`) : controle
+     * d'identite, signature du contrat, encaissement, dossard. Il se tient la
+     * semaine qui precede le tournoi.
+     */
     slotId: { type: ObjectId, ref: 'Slot', index: true },
+    /**
+     * Session de jeu (`Slot` de nature `competition`), attribuee apres
+     * l'inscription et independante du rendez-vous administratif. Separee de
+     * `slotId` parce que les deux moments sont distants d'une semaine : un
+     * inscrit peut avoir signe et paye sans etre encore affecte a une session,
+     * et son absence le jour du jeu n'annule pas sa validation.
+     */
+    sessionId: { type: ObjectId, ref: 'Slot', index: true },
     checkedInAt: Date,
     checkedInBy: { type: ObjectId, ref: 'User' },
     bibNumber: Number,
@@ -106,6 +119,9 @@ registrationSchema.index({ editionId: 1, candidateId: 1 }, { unique: true })
 
 registrationSchema.index({ editionId: 1, status: 1 })
 registrationSchema.index({ editionId: 1, slotId: 1 })
+registrationSchema.index({ editionId: 1, sessionId: 1 })
+/* Composition des rencontres : les inscrits d'une session, par role. */
+registrationSchema.index({ sessionId: 1, role: 1, status: 1 })
 registrationSchema.index({ editionId: 1, ageCategory: 1, role: 1, status: 1 })
 registrationSchema.index(
   { qrToken: 1 },

@@ -91,7 +91,9 @@ export function createApp() {
   // Ressources imbriquées : l'URL reste celle de la documentation.
   api.use('/editions/:editionId/slots', slots.editionRouter)
   api.use('/editions/:editionId/rankings', results.rankingsRouter)
+  api.use('/editions/:editionId/barrage', results.barrageRouter)
   api.use('/editions/:editionId/finals', results.finalsRouter)
+  api.use('/editions/:editionId/matches', results.editionMatchesRouter)
   api.use('/editions/:editionId/galleries', galleries.editionRouter)
   api.use('/slots/:slotId/matches', results.slotRouter)
 

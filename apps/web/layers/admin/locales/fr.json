@@ -36,6 +36,13 @@
     "slots": "Créneaux",
     "newSlot": "Nouveau créneau",
     "slotLabel": "Intitulé",
+    "slotKind": "Nature",
+    "slotKindCheckin": "Rendez-vous administratif",
+    "slotKindCompetition": "Session de jeu",
+    "slotKindHint": {
+      "checkin": "Identité, contrat papier et encaissement. À placer dans la semaine qui précède le tournoi : au coup d’envoi, tout le monde doit être inscrit.",
+      "competition": "Les duels. Les joueurs y arrivent déjà inscrits ; l’effectif est partagé entre buteurs et défenseurs pour que les rencontres soient composables."
+    },
     "startsAt": "Début",
     "endsAt": "Fin",
     "ageCategory": "Catégorie",

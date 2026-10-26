@@ -131,10 +131,10 @@ export async function transition(id, { status, note }, actorId) {
   }
 
   if (status === 'finals') {
-    const { pendingQualificationCount } = await resultsService()
-    const pending = await pendingQualificationCount(edition._id)
+    const { pendingBeforeFinals } = await resultsService()
+    const pending = await pendingBeforeFinals(edition._id)
     if (pending > 0) {
-      throw badRequest(`${pending} rencontre(s) de qualification sans résultat saisi`)
+      throw badRequest(`${pending} rencontre(s) de qualification ou de barrage sans résultat saisi`)
     }
   }
 

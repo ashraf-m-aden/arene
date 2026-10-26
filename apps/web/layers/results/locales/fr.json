@@ -21,10 +21,18 @@
     "empty": "Aucun résultat saisi pour l'instant.",
     "phaseQualification": "Qualifications",
     "phaseFinal": "Finale",
+    "phase": {
+      "qualification": "Qualifications",
+      "barrage": "Barrage",
+      "finale": "Finale"
+    },
     "staff": {
       "title": "Saisie des résultats",
-      "lead": "Choisissez un créneau, générez les rencontres, puis saisissez les cinq tentatives.",
+      "lead": "Choisissez la phase, puis la session de jeu. Les rendez-vous administratifs se sont tenus la semaine précédente : ici, on ne fait que jouer.",
       "slot": "Créneau",
+      "phase": "Phase",
+      "session": "Session de jeu",
+      "category": "Catégorie",
       "generate": "Générer les rencontres",
       "generated": "{count} rencontre(s) générée(s)",
       "pitch": "Terrain",
@@ -39,11 +47,15 @@
       "saved": "Score enregistré",
       "correction": "Correction d'un score déjà saisi",
       "correctionReason": "Motif de la correction",
-      "noMatches": "Aucune rencontre pour ce créneau.",
+      "noMatches": "Aucune rencontre pour cette phase.",
       "selectSlot": "Sélectionnez un créneau pour commencer.",
+      "selectSession": "Sélectionnez une session de jeu pour commencer.",
+      "noSessions": "Aucune session de jeu pour cette édition. Créez-les depuis la fiche de l'édition.",
       "selectFirst": "Choisissez d'abord une rencontre.",
       "pending": "À saisir",
       "recorded": "Saisi",
+      "composeBarrage": "Composer le barrage",
+      "barrageComposed": "Barrage composé : {count} rencontre(s) générée(s).",
       "selectFinalists": "Sélectionner les finalistes",
       "finalistsSelected": "Finalistes sélectionnés et rencontres de finale générées."
     }

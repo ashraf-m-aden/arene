@@ -77,6 +77,8 @@
       "download": "Télécharger les données",
       "slot": "Votre rendez-vous",
       "noSlot": "Votre rendez-vous vous sera communiqué par message.",
+      "session": "Vous jouez le",
+      "noSession": "Votre horaire de jeu vous sera communiqué par message.",
       "reviewNotes": "Message de l'organisation",
       "flags": "Points signalés",
       "fileNumber": "Dossier n°",

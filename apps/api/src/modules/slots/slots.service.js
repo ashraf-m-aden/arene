@@ -4,21 +4,34 @@ import logger from '../../core/logger.js'
 import { CheckinOperation, Slot } from './slots.model.js'
 
 const registrationsService = () => import('../registrations/registrations.service.js')
+const editionsService = () => import('../editions/editions.service.js')
 
 /** Un candidat peut demander un autre créneau tant qu'il reste 48 h avant le début. */
 const SWITCH_DEADLINE_MS = 48 * 60 * 60 * 1000
 
-export async function countForEdition(editionId) {
-  return Slot.countDocuments({ editionId, status: { $ne: 'cancelled' } })
+export async function countForEdition(editionId, { kind } = {}) {
+  return Slot.countDocuments({
+    editionId,
+    status: { $ne: 'cancelled' },
+    ...(kind ? { kind } : {})
+  })
 }
 
 /**
  * Rendez-vous d'une edition, avec leur occupation. La liste est reservee a
  * l'organisation : les candidats ne voient jamais la grille, seulement la date et
  * l'heure de leur propre rendez-vous, communiquee par message.
+ *
+ * `kind` separe les deux grilles : l'ecran de check-in ne doit proposer que des
+ * rendez-vous administratifs, celui de saisie des resultats que des sessions de
+ * jeu. Sans filtre, le staff choisissait dans une liste melangee.
  */
-export async function listForEdition(editionId) {
-  const slots = await Slot.find({ editionId, status: { $ne: 'cancelled' } }).sort({ startsAt: 1 })
+export async function listForEdition(editionId, { kind } = {}) {
+  const slots = await Slot.find({
+    editionId,
+    status: { $ne: 'cancelled' },
+    ...(kind ? { kind } : {})
+  }).sort({ startsAt: 1 })
   return Promise.all(
     slots.map(async (slot) => ({
       ...slot.toJSON(),
@@ -33,14 +46,82 @@ export async function getById(id) {
   return slot
 }
 
+/** Nature attendue, sinon on refuse : un rendez-vous ne tient pas les deux rôles. */
+function assertKind(slot, kind) {
+  if (slot.kind !== kind) {
+    throw badRequest(
+      kind === 'checkin'
+        ? 'Ce créneau est une session de jeu, pas un rendez-vous administratif'
+        : 'Ce créneau est un rendez-vous administratif, pas une session de jeu'
+    ).withKey(kind === 'checkin' ? 'notACheckinSlot' : 'notACompetitionSlot')
+  }
+}
+
+/**
+ * Place un rendez-vous du bon cote du coup d'envoi.
+ *
+ * Les validations, signatures et encaissements se terminent avant le tournoi —
+ * un rendez-vous administratif pose pendant les duels ferait signer un contrat
+ * de participation a quelqu'un dont les rencontres sont deja generees. A
+ * l'inverse une session de jeu placee avant le debut du tournoi est une erreur
+ * de saisie. La cible d'une semaine (`checkinDeadline`) reste indicative : elle
+ * guide la repartition automatique, elle ne bloque pas un retardataire.
+ */
+async function assertWindow(editionId, { kind, startsAt, endsAt }) {
+  const editions = await editionsService()
+  const edition = await editions.getById(editionId)
+  if (!edition.startsAt) return
+
+  const start = new Date(edition.startsAt)
+  if (kind === 'checkin' && new Date(endsAt) > start) {
+    throw badRequest(
+      'Un rendez-vous administratif doit se terminer avant le début du tournoi'
+    ).withKey('checkinAfterStart')
+  }
+  if (kind === 'competition' && new Date(startsAt) < start) {
+    throw badRequest(
+      'Une session de jeu ne peut pas précéder le début du tournoi'
+    ).withKey('sessionBeforeStart')
+  }
+}
+
 export async function create(input) {
+  await assertWindow(input.editionId, input)
   return Slot.create(input)
 }
 
 export async function update(id, patch) {
+  /*
+   * On ne valide la fenetre que si le patch y touche, et sur l'etat resultant.
+   * La revalider a chaque modification bloquerait un simple changement
+   * d'intitule sur un creneau devenu hors fenetre parce que les dates du
+   * tournoi ont bouge depuis — alors que c'est justement l'etat qu'on veut
+   * pouvoir corriger.
+   */
+  const touchesWindow = ['kind', 'startsAt', 'endsAt'].some((key) => patch[key] !== undefined)
+  if (touchesWindow) {
+    const current = await getById(id)
+    await assertWindow(current.editionId, {
+      kind: patch.kind ?? current.kind,
+      startsAt: patch.startsAt ?? current.startsAt,
+      endsAt: patch.endsAt ?? current.endsAt
+    })
+  }
+
   const slot = await Slot.findByIdAndUpdate(id, patch, { new: true, runValidators: true })
   if (!slot) throw notFound('Créneau introuvable')
   return slot
+}
+
+/**
+ * Liste d'un creneau, selon sa nature : les convoques pour un rendez-vous
+ * administratif (`slotId`), les joueurs pour une session de jeu (`sessionId`).
+ */
+export async function rosterOf(slot) {
+  const { rosterForSlot, rosterForSession } = await registrationsService()
+  return slot.kind === 'competition'
+    ? rosterForSession(slot._id)
+    : rosterForSlot(slot._id)
 }
 
 /**
@@ -49,8 +130,7 @@ export async function update(id, patch) {
  * s'en servent pour composer les rencontres et pour l'ecran de check-in.
  */
 export async function occupancy(slot) {
-  const { rosterForSlot } = await registrationsService()
-  const roster = await rosterForSlot(slot._id)
+  const roster = await rosterOf(slot)
   const used = { striker: 0, defender: 0 }
   for (const registration of roster) {
     if (registration.role && used[registration.role] !== undefined) used[registration.role] += 1
@@ -69,10 +149,20 @@ export function capacityTotal(slot) {
   return (capacity.striker || 0) + (capacity.defender || 0)
 }
 
-/** Reste-t-il une place ? L'effectif global l'emporte quand il est renseigne. */
-function hasRoom(load, role) {
+/**
+ * Reste-t-il une place ?
+ *
+ * Pour un rendez-vous administratif, l'effectif global l'emporte : on y pointe
+ * des gens, leur role est sans importance. Pour une session de jeu c'est
+ * l'inverse — le plafond par role fait foi des qu'il est renseigne, sinon une
+ * session se remplirait de vingt buteurs et ne produirait aucune rencontre,
+ * `generateMatches` ayant besoin des deux camps.
+ */
+function hasRoom(load, role, kind = 'checkin') {
+  const byRole = role && load[role] && load[role].capacity > 0
+  if (kind === 'competition' && byRole) return load[role].used < load[role].capacity
   if (load.total.capacity > 0) return load.total.used < load.total.capacity
-  if (role && load[role]) return load[role].used < load[role].capacity
+  if (byRole) return load[role].used < load[role].capacity
   return false
 }
 
@@ -92,8 +182,13 @@ function categoryFilter(ageCategory) {
 }
 
 /**
- * Attribution automatique : premier créneau de la même catégorie
- * où le rôle du joueur a encore une place libre.
+ * Convocation automatique au rendez-vous administratif : premier creneau de la
+ * meme categorie ou le role du joueur a encore une place libre.
+ *
+ * Ne considere que les creneaux `checkin` — c'est la convocation qui suit
+ * l'acceptation du dossier, une semaine avant le tournoi. L'affectation aux
+ * sessions de jeu est un autre moment : elle passe par `distribute` en masse,
+ * ou par `assign` au cas par cas.
  */
 export async function autoAssign(registrationId, actorId = null) {
   const registrations = await registrationsService()
@@ -101,13 +196,14 @@ export async function autoAssign(registrationId, actorId = null) {
 
   const candidates = await Slot.find({
     editionId: registration.editionId,
+    kind: 'checkin',
     status: { $in: ['planned', 'open'] },
     ...categoryFilter(registration.ageCategory)
   }).sort({ startsAt: 1 })
 
   for (const slot of candidates) {
     const load = await occupancy(slot)
-    if (hasRoom(load, registration.role)) {
+    if (hasRoom(load, registration.role, 'checkin')) {
       await registrations.attachSlot(registration._id, slot._id, actorId)
       bus.emitEvent('slot.assigned', {
         registrationId: String(registration._id),
@@ -121,6 +217,7 @@ export async function autoAssign(registrationId, actorId = null) {
   logger.warn({ registrationId: String(registrationId) }, 'aucun créneau libre : dossier en attente')
   return null
 }
+
 
 /**
  * Construit l'instant exact correspondant a une heure locale.
@@ -174,8 +271,47 @@ function spreadOverDays(grid, needed) {
 }
 
 /**
- * Repartition automatique : cree la grille de rendez-vous demandee puis y place
- * les dossiers acceptes qui attendent une convocation.
+ * Groupes a placer, un par creneau a creer.
+ *
+ * Un rendez-vous administratif accueille `perSlot` convoques sans distinction :
+ * on y controle des identites, le role n'a aucune importance. Une session de jeu
+ * doit au contraire reunir les deux camps — une session de vingt buteurs ne
+ * produit aucune rencontre — donc l'effectif y est coupe en deux files, et
+ * chaque session prend sa part de chacune.
+ */
+function groupsFor(kind, perSlot, { waiting, strikers, defenders }) {
+  if (kind !== 'competition') {
+    const groups = []
+    for (let i = 0; i < waiting.length; i += perSlot) groups.push(waiting.slice(i, i + perSlot))
+    return { groups, perRole: null }
+  }
+
+  const strikerSeats = Math.floor(perSlot / 2)
+  const defenderSeats = perSlot - strikerSeats
+  const count = Math.max(
+    Math.ceil(strikers.length / strikerSeats) || 0,
+    Math.ceil(defenders.length / defenderSeats) || 0
+  )
+
+  const groups = []
+  for (let i = 0; i < count; i += 1) {
+    groups.push([
+      ...strikers.slice(i * strikerSeats, (i + 1) * strikerSeats),
+      ...defenders.slice(i * defenderSeats, (i + 1) * defenderSeats)
+    ])
+  }
+  return { groups, perRole: { striker: strikerSeats, defender: defenderSeats } }
+}
+
+/**
+ * Repartition automatique : cree la grille demandee puis y place les dossiers
+ * en attente.
+ *
+ * Deux usages selon `kind`. En `checkin` elle convoque les dossiers acceptes au
+ * rendez-vous administratif, dans la semaine qui precede le tournoi. En
+ * `competition` elle repartit les inscrits sur les sessions de jeu, pendant le
+ * tournoi — ceux-la ont deja signe et paye, il ne s'agit plus que de leur
+ * donner un terrain et une heure.
  *
  * Rien n'est envoye ici. L'organisation relit le calendrier, puis declenche les
  * convocations par l'envoi groupe — une repartition se corrige, un message parti
@@ -192,6 +328,8 @@ export async function distribute(editionId, input, actorId = null) {
     ageCategory,
     venue,
     labelPrefix,
+    kind = 'checkin',
+    pitches = 2,
     dryRun = false
   } = input
 
@@ -207,18 +345,48 @@ export async function distribute(editionId, input, actorId = null) {
     throw badRequest('La plage horaire ne permet aucun rendez-vous').withKey('emptySchedule')
   }
 
-  const waiting = await registrations.listAwaitingSlot(editionId, { ageCategory })
-  const capacity = grid.length * perSlot
-  const needed = Math.min(grid.length, Math.ceil(waiting.length / perSlot) || 0)
+  /*
+   * La grille entiere est validee avant la moindre ecriture : une repartition
+   * qui creerait des rendez-vous administratifs a cheval sur le tournoi doit
+   * echouer d'un bloc, pas apres en avoir pose la moitie.
+   */
+  await assertWindow(editionId, {
+    kind,
+    startsAt: grid[0].startsAt,
+    endsAt: grid[grid.length - 1].endsAt
+  })
+
+  const competition = kind === 'competition'
+  if (competition && perSlot < 2) {
+    throw badRequest(
+      'Une session de jeu accueille au moins un buteur et un défenseur'
+    ).withKey('sessionTooSmall')
+  }
+
+  const [waiting, strikers, defenders] = competition
+    ? [
+        [],
+        await registrations.listAwaitingSession(editionId, { ageCategory, role: 'striker' }),
+        await registrations.listAwaitingSession(editionId, { ageCategory, role: 'defender' })
+      ]
+    : [await registrations.listAwaitingSlot(editionId, { ageCategory }), [], []]
+
+  const pending = competition ? strikers.length + defenders.length : waiting.length
+  const { groups, perRole } = groupsFor(kind, perSlot, { waiting, strikers, defenders })
+  const needed = Math.min(grid.length, groups.length)
   const chosen = needed ? spreadOverDays(grid, needed) : []
+  const used = groups.slice(0, chosen.length)
+  const placed = used.reduce((sum, group) => sum + group.length, 0)
 
   const summary = {
-    waiting: waiting.length,
+    kind,
+    waiting: pending,
+    ...(competition ? { waitingByRole: { striker: strikers.length, defender: defenders.length } } : {}),
     gridSlots: grid.length,
-    gridCapacity: capacity,
+    gridCapacity: grid.length * perSlot,
     slotsUsed: chosen.length,
-    placed: Math.min(waiting.length, chosen.length * perSlot),
-    leftOver: Math.max(0, waiting.length - chosen.length * perSlot),
+    placed,
+    leftOver: Math.max(0, pending - placed),
     firstStartsAt: chosen[0]?.startsAt ?? null,
     lastEndsAt: chosen[chosen.length - 1]?.endsAt ?? null
   }
@@ -226,40 +394,48 @@ export async function distribute(editionId, input, actorId = null) {
   // Apercu : on annonce ce qui se passerait, sans rien ecrire.
   if (dryRun) return { ...summary, dryRun: true, created: [] }
 
-  let cursor = 0
   const created = []
   for (const [index, cell] of chosen.entries()) {
     const slot = await Slot.create({
       editionId,
-      label: `${labelPrefix || 'Rendez-vous'} ${index + 1}`,
+      kind,
+      label: `${labelPrefix || (competition ? 'Session' : 'Rendez-vous')} ${index + 1}`,
       startsAt: cell.startsAt,
       endsAt: cell.endsAt,
-      capacity: { total: perSlot },
+      capacity: { total: perSlot, ...(perRole || {}) },
       ageCategory: ageCategory || undefined,
+      pitches: competition ? pitches : 1,
       venue,
       status: 'planned'
     })
 
-    for (const registration of waiting.slice(cursor, cursor + perSlot)) {
-      await registrations.attachSlot(registration._id, slot._id, actorId)
+    for (const registration of used[index]) {
+      if (competition) await registrations.attachSession(registration._id, slot._id, actorId)
+      else await registrations.attachSlot(registration._id, slot._id, actorId)
       bus.emitEvent('slot.assigned', {
         registrationId: String(registration._id),
         editionId: String(editionId),
-        slotId: String(slot._id)
+        slotId: String(slot._id),
+        kind
       })
     }
-    cursor += perSlot
     created.push(slot)
   }
 
   logger.info(
-    { editionId: String(editionId), slots: created.length, placed: summary.placed },
+    { editionId: String(editionId), kind, slots: created.length, placed: summary.placed },
     'repartition automatique effectuee'
   )
   return { ...summary, dryRun: false, created }
 }
 
-/** Déplacement manuel par le staff, ou demande du candidat avant la limite. */
+/**
+ * Deplacement manuel par le staff, ou demande du candidat avant la limite.
+ *
+ * Sert les deux natures de creneau : sur un `checkin` elle convoque (et fait
+ * passer le dossier en `scheduled`), sur une `competition` elle affecte a une
+ * session sans toucher au statut — l'inscription est deja scellee.
+ */
 export async function assign(slotId, registrationId, actorId, { byCandidate = false } = {}) {
   const slot = await getById(slotId)
   const registrations = await registrationsService()
@@ -274,23 +450,27 @@ export async function assign(slotId, registrationId, actorId, { byCandidate = fa
   }
 
   const load = await occupancy(slot)
-  if (!hasRoom(load, registration.role)) {
+  if (!hasRoom(load, registration.role, slot.kind)) {
     throw conflict('Ce rendez-vous est complet').withKey('slotFull')
   }
 
-  await registrations.attachSlot(registration._id, slot._id, actorId)
+  if (slot.kind === 'competition') {
+    await registrations.attachSession(registration._id, slot._id, actorId)
+  } else {
+    await registrations.attachSlot(registration._id, slot._id, actorId)
+  }
   bus.emitEvent('slot.assigned', {
     registrationId: String(registration._id),
     editionId: String(registration.editionId),
-    slotId: String(slot._id)
+    slotId: String(slot._id),
+    kind: slot.kind
   })
   return slot
 }
 
 export async function roster(slotId) {
   const slot = await getById(slotId)
-  const { rosterForSlot } = await registrationsService()
-  return { slot, players: await rosterForSlot(slot._id) }
+  return { slot, players: await rosterOf(slot) }
 }
 
 /** Scan du QR : renvoie la fiche à contrôler avant encaissement. */
@@ -374,9 +554,15 @@ export async function syncCheckins(operations, staffId) {
   return { applied: results.filter((r) => r.outcome === 'applied').length, results }
 }
 
-/** Récapitulatif de caisse : par créneau et par membre du staff. */
+/**
+ * Recapitulatif de caisse : par rendez-vous et par membre du staff.
+ *
+ * Reserve aux rendez-vous administratifs : c'est la qu'on encaisse, une semaine
+ * avant le tournoi. Une session de jeu n'a pas de caisse.
+ */
 export async function cashReport(slotId) {
   const slot = await getById(slotId)
+  assertKind(slot, 'checkin')
   const { rosterForSlot } = await registrationsService()
   const roster = await rosterForSlot(slot._id)
 
@@ -409,15 +595,33 @@ export async function cashReport(slotId) {
   }
 }
 
-/** Clôture : les inscrits non pointés passent en no_show et libèrent leur place. */
+/**
+ * Cloture d'un creneau. Les absents passent en `no_show` et liberent leur place,
+ * mais « absent » ne veut pas dire la meme chose des deux cotes.
+ *
+ * Sur un rendez-vous administratif, c'est un convoque (`scheduled`) qui ne s'est
+ * pas presente : il n'a ni signe ni paye. Sur une session de jeu, c'est un
+ * inscrit (`checked_in`) qui a signe et paye la semaine precedente puis n'est pas
+ * venu jouer — on ne retient donc que ceux dont aucune rencontre n'a ete jouee,
+ * pour ne pas marquer absent quelqu'un qui etait bien la.
+ */
 export async function close(slotId, actorId) {
   const slot = await getById(slotId)
-  const { markNoShows } = await registrationsService()
-  const noShows = await markNoShows(slot._id, actorId)
+  const registrations = await registrationsService()
+
+  let noShows
+  if (slot.kind === 'competition') {
+    const { playedRegistrationIds } = await import('../results/results.service.js')
+    const played = await playedRegistrationIds(slot._id)
+    noShows = await registrations.markCompetitionNoShows(slot._id, actorId, played)
+  } else {
+    noShows = await registrations.markNoShows(slot._id, actorId)
+  }
+
   slot.status = 'closed'
   slot.closedAt = new Date()
   await slot.save()
-  bus.emitEvent('slot.closed', { slotId: String(slot._id), noShows })
+  bus.emitEvent('slot.closed', { slotId: String(slot._id), kind: slot.kind, noShows })
   return { slot, noShows }
 }
 

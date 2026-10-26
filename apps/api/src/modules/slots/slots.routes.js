@@ -5,6 +5,7 @@ import {
   checkinScanSchema,
   checkinSyncSchema,
   common,
+  SLOT_KINDS,
   slotAssignSchema,
   slotDistributeSchema,
   slotSchema,
@@ -70,11 +71,17 @@ router.post(
  */
 export const editionRouter = Router({ mergeParams: true })
 
+/**
+ * `?kind=checkin|competition` sépare les deux grilles : l'écran de check-in ne
+ * doit proposer que des rendez-vous administratifs, celui de saisie des
+ * résultats que des sessions de jeu. Sans filtre, la liste complète est rendue.
+ */
 editionRouter.get(
   '/',
   requireRole('staff'),
+  validate({ query: z.object({ kind: z.enum(SLOT_KINDS).optional() }) }),
   asyncHandler(async (req, res) =>
-    ok(res, await service.listForEdition(req.params.editionId))
+    ok(res, await service.listForEdition(req.params.editionId, { kind: req.validatedQuery.kind }))
   )
 )
 

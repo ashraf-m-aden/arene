@@ -62,6 +62,27 @@ export const DEFAULT_TEMPLATES = {
       ar: 'تذكير {{prenom}}: ننتظركم غدًا في {{lieu}}. لا تنسوا بطاقتكم وهويتكم وكشف درجاتكم الأصلي و{{frais}} فرنك.'
     }
   },
+  /*
+   * Session de jeu. Ni frais ni piece d'identite a rappeler : tout cela a ete
+   * fait au rendez-vous administratif, une semaine plus tot. Le joueur n'a plus
+   * besoin que de son dossard et de son horaire.
+   */
+  session_assigned: {
+    channels: ['email'],
+    subject: { fr: 'Votre session de jeu — {{edition}}', ar: 'موعد مباراتكم — {{edition}}' },
+    body: {
+      fr: '{{prenom}}, vous jouez le {{date}}, à {{lieu}}. Votre inscription est déjà validée : venez avec votre dossard. Détails : {{lien}}',
+      ar: '{{prenom}}، تلعبون يوم {{date}} في {{lieu}}. تسجيلكم مُثبَّت بالفعل: أحضروا رقمكم. التفاصيل: {{lien}}'
+    }
+  },
+  session_reminder: {
+    channels: ['email'],
+    subject: { fr: 'Rappel — vous jouez demain', ar: 'تذكير — تلعبون غدًا' },
+    body: {
+      fr: 'Rappel {{prenom}} : vous jouez demain à {{lieu}}. Pensez à votre dossard et à une tenue de sport.',
+      ar: 'تذكير {{prenom}}: تلعبون غدًا في {{lieu}}. لا تنسوا رقمكم ولباسًا رياضيًا.'
+    }
+  },
   registration_qualified: {
     channels: ['email'],
     subject: { fr: 'Qualification pour la finale — {{edition}}', ar: 'التأهل للنهائي — {{edition}}' },

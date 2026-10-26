@@ -1,6 +1,7 @@
 import {
   AGE_RANGES,
   ATTEMPTS_PER_MATCH,
+  CHECKIN_LEAD_TIME_DAYS,
   DEFAULT_GRADE_THRESHOLD,
   EDITION_TRANSITIONS,
   REGISTRATION_TRANSITIONS
@@ -96,6 +97,22 @@ export function computeMatchScore(attempts = []) {
   }
 }
 
+/**
+ * Date a laquelle les rendez-vous administratifs doivent etre termines :
+ * `CHECKIN_LEAD_TIME_DAYS` avant le premier jour de tournoi.
+ *
+ * Indicative et non bloquante — c'est la cible que l'organisation se donne et
+ * que la repartition automatique prend par defaut. Ce qui est reellement
+ * interdit, c'est de valider apres le coup d'envoi : cette regle vit dans
+ * `registrations.service.checkIn`.
+ *
+ * @returns {Date|null} null si l'edition n'a pas encore de date de tournoi.
+ */
+export function checkinDeadline(edition, leadDays = CHECKIN_LEAD_TIME_DAYS) {
+  if (!edition?.startsAt) return null
+  return new Date(new Date(edition.startsAt).getTime() - leadDays * 24 * 60 * 60 * 1000)
+}
+
 export function canTransitionEdition(from, to) {
   return (EDITION_TRANSITIONS[from] || []).includes(to)
 }
@@ -105,24 +122,44 @@ export function canTransitionRegistration(from, to) {
 }
 
 /**
- * Classement des buteurs : buts marqués, puis ratio, puis dernière rencontre jouée.
- * @param {Array<{ goals: number, attempts: number, lastPlayedAt?: Date|string }>} rows
+ * Classement des buteurs : buts, duels gagnés, ratio, force de l'opposition,
+ * puis dernière rencontre jouée.
+ *
+ * Les trois premiers critères ne suffisent pas à l'échelle réelle : sur 3 duels
+ * de 5 tentatives, le maximum est 15 points et tout le monde tire le même
+ * nombre de fois — le ratio est donc identique dès que les buts le sont, et des
+ * joueurs se retrouvent à égalité parfaite pile sur la place qualificative.
+ * `opposition` les sépare sur ce qu'ils ont réellement affronté (somme des
+ * arrêts de leurs défenseurs) : à buts égaux, celui qui a eu le lot le plus
+ * difficile passe devant. `lastPlayedAt` ne reste qu'en dernier recours — c'est
+ * un départage arbitraire, il ne doit jamais décider seul d'une qualification.
+ *
+ * @param {Array<{ goals: number, attempts: number, wins?: number,
+ *   opposition?: number, lastPlayedAt?: Date|string }>} rows
  */
 export function rankStrikers(rows) {
   return [...rows].sort(
     (a, b) =>
       b.goals - a.goals ||
+      b.wins - a.wins ||
       ratio(b.goals, b.attempts) - ratio(a.goals, a.attempts) ||
+      b.opposition - a.opposition ||
       time(a.lastPlayedAt) - time(b.lastPlayedAt)
   )
 }
 
-/** Classement des défenseurs : arrêts, puis ratio, puis dernière rencontre jouée. */
+/**
+ * Classement des défenseurs : arrêts, duels gagnés, ratio, force de
+ * l'opposition, puis dernière rencontre jouée. Symétrique de `rankStrikers` ;
+ * `opposition` y vaut la somme des buts des buteurs affrontés.
+ */
 export function rankDefenders(rows) {
   return [...rows].sort(
     (a, b) =>
       b.stops - a.stops ||
+      b.wins - a.wins ||
       ratio(b.stops, b.attempts) - ratio(a.stops, a.attempts) ||
+      b.opposition - a.opposition ||
       time(a.lastPlayedAt) - time(b.lastPlayedAt)
   )
 }

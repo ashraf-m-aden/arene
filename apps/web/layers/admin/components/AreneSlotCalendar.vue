@@ -177,14 +177,23 @@ function today() {
               @click="emit('create', stepStart(day, step - 1))"
             />
 
-            <!-- Rendez-vous existants, au-dessus -->
+            <!--
+              Rendez-vous existants, au-dessus. Les deux natures cohabitent sur
+              le même agenda mais ne se tiennent pas la même semaine : la teinte
+              les distingue, sans quoi un rendez-vous administratif et une
+              session de jeu se ressemblent trait pour trait.
+            -->
             <button
               v-for="slot in byDay.get(dayKey(day))"
               :key="slot._id"
               type="button"
               class="calendar__slot"
-              :class="`calendar__slot--${fillOf(slot)}`"
+              :class="[
+                `calendar__slot--${fillOf(slot)}`,
+                slot.kind === 'competition' ? 'calendar__slot--session' : ''
+              ]"
               :style="blockStyle(slot)"
+              :title="$t(slot.kind === 'competition' ? 'admin.slotKindCompetition' : 'admin.slotKindCheckin')"
               @click.stop="emit('select', slot)"
             >
               <span class="calendar__slot-time numeric">{{ timeFormatter.format(new Date(slot.startsAt)) }}</span>
@@ -298,6 +307,21 @@ function today() {
 .calendar__slot--empty {
   border-color: var(--color-line);
   background: var(--color-surface-2);
+}
+
+/*
+ * Session de jeu : teinte or, et un liseré à gauche pour rester lisible même
+ * quand l'occupation repeint le fond. L'or est la couleur de la compétition
+ * dans le reste de l'interface ; le vert pelouse reste celle des rendez-vous.
+ */
+.calendar__slot--session {
+  border-color: var(--color-gold);
+  border-inline-start-width: 3px;
+  background: color-mix(in srgb, var(--color-gold) 16%, var(--color-paper));
+
+  &.calendar__slot--empty {
+    background: color-mix(in srgb, var(--color-gold) 8%, var(--color-surface-2));
+  }
 }
 
 .calendar__slot-time {

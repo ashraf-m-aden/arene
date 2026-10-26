@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import { AGE_CATEGORIES, DEFAULT_GRADE_THRESHOLD, EDITION_STATUSES } from '@arene/shared/constants'
+import { checkinDeadline } from '@arene/shared/rules'
 
 const i18n = { fr: { type: String, default: '' }, ar: { type: String, default: '' } }
 
@@ -78,6 +79,21 @@ editionSchema.virtual('isRegistrationOpen').get(function isOpen() {
     this.registrationOpensAt <= now &&
     this.registrationClosesAt >= now
   )
+})
+
+/**
+ * Date a laquelle les rendez-vous administratifs doivent etre termines : une
+ * semaine avant le premier jour de tournoi. Indicative — c'est la cible que
+ * l'organisation se donne, et le defaut de la repartition automatique. Ce qui
+ * est reellement interdit, c'est de valider apres le coup d'envoi.
+ */
+editionSchema.virtual('checkinDeadline').get(function deadline() {
+  return checkinDeadline(this)
+})
+
+/** Le tournoi a-t-il commence ? Au-dela, plus aucune validation n'est acceptee. */
+editionSchema.virtual('hasStarted').get(function hasStarted() {
+  return Boolean(this.startsAt) && new Date(this.startsAt) <= new Date()
 })
 
 editionSchema.set('toJSON', {

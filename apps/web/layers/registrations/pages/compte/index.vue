@@ -91,7 +91,7 @@ async function downloadData(id: string) {
 
           <p v-if="file.schoolId" class="muted">{{ text(file.schoolId.name) }}</p>
 
-          <!-- Le candidat ne connaît que la date et l'heure de son rendez-vous :
+          <!-- Le candidat ne connaît que la date et l'heure de ses rendez-vous :
                ni le libellé du créneau, ni l'organisation interne qui le sous-tend. -->
           <div v-if="file.slotId" class="slot">
             <strong>{{ $t('registrations.account.slot') }}</strong>
@@ -99,6 +99,20 @@ async function downloadData(id: string) {
           </div>
           <p v-else-if="file.status === 'approved'" class="muted">
             {{ $t('registrations.account.noSlot') }}
+          </p>
+
+          <!--
+            La session de jeu est un second rendez-vous, une semaine après le
+            premier : l'inscription s'y joue déjà faite, il n'y a plus ni contrat
+            ni frais. L'afficher à part évite de laisser croire qu'il faut
+            repasser par la caisse.
+          -->
+          <div v-if="file.sessionId" class="slot slot--session">
+            <strong>{{ $t('registrations.account.session') }}</strong>
+            <span class="numeric">{{ date(file.sessionId.startsAt, true) }}</span>
+          </div>
+          <p v-else-if="file.status === 'checked_in'" class="muted">
+            {{ $t('registrations.account.noSession') }}
           </p>
 
           <p v-if="file.bibNumber" class="numeric">
@@ -158,6 +172,11 @@ async function downloadData(id: string) {
   background: var(--color-surface-2);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
+}
+
+/* La session de jeu est le rendez-vous qui compte le jour venu : on la marque. */
+.slot--session {
+  border-inline-start: 3px solid var(--color-gold);
 }
 
 .flags {
