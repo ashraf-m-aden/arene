@@ -194,6 +194,14 @@
     "lycee": "Lycée",
     "universite": "Université"
   },
+  "flag": {
+    "age_out_of_range": "Âge hors de la tranche de la catégorie : {age} ans, alors que {min} à {max} ans sont attendus.",
+    "grade_missing": "La moyenne du bulletin n'est pas renseignée.",
+    "grade_below_threshold": "Moyenne sous le seuil de l'édition : {average}/20, pour {threshold} demandés.",
+    "role_full": "Plus de place pour ce rôle dans cette catégorie au moment de l'envoi.",
+    "duplicate": "Un autre dossier porte les mêmes nom, date de naissance et établissement.",
+    "unknown": "Point à vérifier par l'organisation."
+  },
   "backoffice": {
     "title": "Organisation",
     "dashboard": "Tableau de bord",

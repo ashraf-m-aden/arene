@@ -1,6 +1,6 @@
 /** Mise en forme partagée : textes bilingues, dates, montants, statuts. */
 export function useFormat() {
-  const { locale, t } = useI18n()
+  const { locale, t, te } = useI18n()
 
   /** Texte stocké en double langue dans le document : on prend la langue dispo. */
   const text = (value?: { fr?: string; ar?: string } | string | null) => {
@@ -58,5 +58,34 @@ export function useFormat() {
   const roleLabel = (role?: string) => (role ? t(`role.${role}`) : '')
   const categoryLabel = (category?: string) => (category ? t(`category.${category}`) : '')
 
-  return { text, date, dayMonth, money, number, daysUntil, statusLabel, statusTone, roleLabel, categoryLabel }
+  /**
+   * Signalement d'un contrôle automatique, en clair.
+   *
+   * Les codes (`age_out_of_range`, `grade_below_threshold`…) viennent des règles
+   * partagées et s'affichaient tels quels, jusque dans l'espace du candidat. Le
+   * `detail` du signalement porte les nombres qui rendent la phrase utile : âge
+   * constaté et tranche attendue, moyenne et seuil.
+   *
+   * Un code sans traduction retombe sur une phrase neutre plutôt que de laisser
+   * sortir son nom technique — c'est précisément ce qu'on corrige ici.
+   */
+  const flagLabel = (flag?: { code?: string; detail?: Record<string, unknown> } | null) => {
+    if (!flag?.code) return ''
+    const key = `flag.${flag.code}`
+    return te(key) ? t(key, { ...(flag.detail || {}) }) : t('flag.unknown')
+  }
+
+  return {
+    text,
+    date,
+    dayMonth,
+    money,
+    number,
+    daysUntil,
+    statusLabel,
+    statusTone,
+    roleLabel,
+    categoryLabel,
+    flagLabel
+  }
 }

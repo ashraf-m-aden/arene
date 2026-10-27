@@ -6,7 +6,7 @@ const localePath = useLocalePath()
 const auth = useAuthStore()
 const store = useRegistrationStore()
 const config = useRuntimeConfig()
-const { text, date, statusLabel, statusTone, roleLabel, categoryLabel } = useFormat()
+const { text, date, statusLabel, statusTone, roleLabel, categoryLabel, flagLabel } = useFormat()
 
 useNoIndex(t('registrations.account.title'))
 
@@ -123,11 +123,19 @@ async function downloadData(id: string) {
             {{ file.reviewNotes }}
           </AreneNotice>
 
-          <ul v-if="file.flags?.length" class="flags">
-            <li v-for="flag in file.flags" :key="flag.code" class="badge badge--warning">
-              {{ flag.code }}
-            </li>
-          </ul>
+          <!-- Signalements des contrôles automatiques. Ils s'affichaient par leur
+               code technique (« age_out_of_range ») : illisible, et inquiétant
+               pour un candidat qui ne sait pas que le staff tranche. -->
+          <AreneNotice
+            v-if="file.flags?.length"
+            tone="warning"
+            :title="$t('registrations.account.flags')"
+          >
+            <ul class="flags">
+              <li v-for="flag in file.flags" :key="flag.code">{{ flagLabel(flag) }}</li>
+            </ul>
+            <p class="muted">{{ $t('registrations.account.flagsNote') }}</p>
+          </AreneNotice>
 
           <div class="cluster card__actions">
             <button
@@ -179,10 +187,17 @@ async function downloadData(id: string) {
   border-inline-start: 3px solid var(--color-gold);
 }
 
+/** Signalements : des phrases, pas des pastilles — elles ne tiennent pas en un mot. */
 .flags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-5);
+  /* Le reset efface les puces de tout `ul` porteur d'une classe : on les rend. */
+  list-style: disc;
+  font-size: var(--text-sm);
+
+  li + li {
+    margin-block-start: var(--space-1);
+  }
 }
 
 .card__actions {

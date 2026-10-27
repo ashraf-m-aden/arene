@@ -85,6 +85,7 @@
       "noSession": "Votre horaire de jeu vous sera communiqué par message.",
       "reviewNotes": "Message de l'organisation",
       "flags": "Points signalés",
+      "flagsNote": "Ces points sont signalés à l'organisation, qui décide. Ils ne valent pas refus.",
       "fileNumber": "Dossier n°",
       "bib": "Dossard"
     },

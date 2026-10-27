@@ -7,7 +7,7 @@ const auth = useAuthStore()
 const config = useRuntimeConfig()
 const route = useRoute()
 const editions = useEditionsStore()
-const { text, date, statusLabel, statusTone, roleLabel, categoryLabel } = useFormat()
+const { text, date, statusLabel, statusTone, roleLabel, categoryLabel, flagLabel } = useFormat()
 
 /** Venu depuis une fiche d'édition : on reste sur ce dossier, sans retomber sur l'édition courante. */
 const editionIdParam = computed(() => (route.query.editionId as string | undefined) || '')
@@ -261,9 +261,16 @@ const statuses = [
         </div>
       </dl>
 
-      <ul v-if="selected.flags?.length" class="cluster">
-        <li v-for="flag in selected.flags" :key="flag.code" class="badge badge--warning">
-          {{ flag.code }}
+      <!-- Meme libelle que dans l'espace du candidat ; le code technique reste en
+           infobulle, il sert au support. -->
+      <ul v-if="selected.flags?.length" class="flag-list">
+        <li
+          v-for="flag in selected.flags"
+          :key="flag.code"
+          class="badge badge--warning"
+          :title="flag.code"
+        >
+          {{ flagLabel(flag) }}
         </li>
       </ul>
 
@@ -328,6 +335,13 @@ const statuses = [
 </template>
 
 <style scoped lang="scss">
+/** Signalements : des phrases entieres, qui s'empilent plutot qu'elles ne s'alignent. */
+.flag-list {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
 .filters {
   display: grid;
   gap: var(--space-3);
