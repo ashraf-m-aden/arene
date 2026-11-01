@@ -1,4 +1,5 @@
 import {
+  AGE_CATEGORIES,
   AGE_RANGES,
   ATTEMPTS_PER_MATCH,
   CHECKIN_LEAD_TIME_DAYS,
@@ -33,9 +34,17 @@ export function ageAt(birthDate, reference = new Date()) {
   return age
 }
 
-/** La catégorie suit le niveau d'études déclaré ; l'âge ne sert qu'au contrôle. */
+/**
+ * Catégorie d'une candidature, déduite du niveau de l'établissement : une
+ * catégorie porte le nom du niveau d'études qui y concourt.
+ *
+ * Rend `null` pour un niveau qui n'ouvre aucune catégorie — un lycée, depuis que
+ * l'édition ne recrute plus qu'à l'université. Le référentiel des écoles en
+ * garde la trace (`SCHOOL_TYPES`), mais un dossier ne peut plus s'y rattacher :
+ * le refus est prononcé par `registrations.service.patch`, pas ici.
+ */
 export function categoryFromSchoolType(schoolType) {
-  return schoolType === 'universite' ? 'universite' : 'lycee'
+  return AGE_CATEGORIES.find((category) => category === schoolType) ?? null
 }
 
 export function isAgeEligible(birthDate, ageCategory, reference = new Date()) {
@@ -60,8 +69,17 @@ export function checkEligibility({
 }) {
   const issues = []
 
-  if (!isAgeEligible(birthDate, ageCategory, reference)) {
-    const range = AGE_RANGES[ageCategory]
+  const range = AGE_RANGES[ageCategory]
+  if (!range) {
+    /*
+     * Categorie fermee depuis le depot du dossier — un dossier Lycee rouvert
+     * apres le passage a l'edition universitaire. Il n'y a plus de tranche
+     * d'age a opposer : annoncer « hors de la tranche » avec des bornes vides
+     * n'aiderait ni le candidat ni le staff. Comme tous les controles, c'est un
+     * signalement, pas un refus : le staff tranche.
+     */
+    issues.push({ code: 'category_closed', field: 'ageCategory', detail: { category: ageCategory } })
+  } else if (!isAgeEligible(birthDate, ageCategory, reference)) {
     issues.push({
       code: 'age_out_of_range',
       field: 'player.birthDate',

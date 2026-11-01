@@ -28,9 +28,9 @@ interface DraftState {
   }
   schoolId: string | null
   schoolLabel: string
-  newSchool: { name: { fr: string; ar: string }; type: 'lycee' | 'universite'; city: string } | null
+  newSchool: { name: { fr: string; ar: string }; type: 'universite'; city: string } | null
   role: 'striker' | 'defender' | ''
-  ageCategory: 'lycee' | 'universite' | ''
+  ageCategory: 'universite' | ''
   grades: { average: number | null; term: string; bulletinFileId: string | null; bulletinName: string }
   consents: {
     participation: boolean

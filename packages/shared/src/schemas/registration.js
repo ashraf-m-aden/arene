@@ -22,6 +22,14 @@ export const playerStepSchema = z.object({
     photoFileId: objectId.optional()
   }),
   schoolId: objectId.optional(),
+  /**
+   * Etablissement absent du referentiel, declare par le candidat.
+   *
+   * Son niveau est valide contre `AGE_CATEGORIES` et non contre `SCHOOL_TYPES` :
+   * une categorie porte le nom du niveau d'etudes qui y concourt, et le candidat
+   * ne peut declarer qu'un etablissement dont le niveau ouvre une categorie. Le
+   * referentiel, lui, connait des lycees que plus aucun dossier ne peut viser.
+   */
   newSchool: z
     .object({
       name: i18nText(2, 140),

@@ -4,15 +4,19 @@ const { t } = useI18n()
 const { text, date } = useFormat()
 
 const slug = computed(() => String(route.params.slug))
-const category = ref<'lycee' | 'universite'>('lycee')
 const schoolView = ref<'total' | 'perPlayer'>('total')
 
+/*
+ * Plus d'onglets de categorie : l'edition n'en compte qu'une depuis la
+ * fermeture de la categorie Lycee, et le classement des joueurs comme celui des
+ * ecoles se lisent d'un seul tenant.
+ */
 const { data, refresh } = await useAsyncData(
   `rankings-${slug.value}`,
   async () => {
     const { $api } = useNuxtApp()
     const edition = await $api.get<{ data: any }>(`/editions/${slug.value}`).then((r) => r.data)
-    const query = new URLSearchParams({ limit: '50', ageCategory: category.value })
+    const query = new URLSearchParams({ limit: '50' })
     const [players, schools] = await Promise.all([
       $api
         .get<{ data: any }>(`/editions/${edition._id}/rankings/players?${query}`)
@@ -24,8 +28,7 @@ const { data, refresh } = await useAsyncData(
         .catch(() => ({ data: null, meta: null }))
     ])
     return { edition, players, schools: schools.data, meta: schools.meta }
-  },
-  { watch: [category] }
+  }
 )
 
 const edition = computed(() => data.value?.edition)
@@ -35,9 +38,8 @@ const defenders = computed(() => data.value?.players?.defenders ?? [])
 const schoolRows = computed(() => {
   const schools = data.value?.schools
   if (!schools) return []
-  return schoolView.value === 'perPlayer'
-    ? schools.perPlayer?.[category.value] ?? []
-    : schools[category.value] ?? []
+  const rows = schoolView.value === 'perPlayer' ? schools.perPlayer : schools.total
+  return Array.isArray(rows) ? rows : []
 })
 
 /** En journée de tournoi, la page se remet à jour toute seule. */
@@ -82,18 +84,6 @@ const ratio = (part: number, total: number) =>
 
     <section class="section">
       <div class="container stack">
-        <div class="cluster">
-          <button
-            v-for="option in ['lycee', 'universite']"
-            :key="option"
-            class="btn btn--sm"
-            :class="category === option ? 'btn--ink' : 'btn--ghost'"
-            @click="category = option as 'lycee' | 'universite'"
-          >
-            {{ $t(`category.${option}`) }}
-          </button>
-        </div>
-
         <div class="grid grid--2">
           <div>
             <h2>{{ $t('results.strikers') }}</h2>

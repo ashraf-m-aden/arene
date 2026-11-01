@@ -67,8 +67,12 @@ const info = reactive({
   venueCity: ''
 })
 
+/*
+ * Plafonds de la seule categorie ouverte. Une edition anterieure a la fermeture
+ * de la categorie Lycee en porte encore les quotas en base : ils ne sont plus
+ * modifiables ici, et l'API ne les accepterait pas davantage.
+ */
 const quotas = reactive({
-  lycee: { striker: 0, defender: 0 },
   universite: { striker: 0, defender: 0 }
 })
 
@@ -84,8 +88,6 @@ const slotForm = reactive({
   kind: 'checkin' as 'checkin' | 'competition',
   startsAt: '',
   endsAt: '',
-  /** Vide = rendez-vous ouvert a toutes les categories. */
-  ageCategory: '' as '' | 'lycee' | 'universite',
   pitches: 2,
   total: 20
 })
@@ -108,8 +110,7 @@ const dist = reactive({
   durationMinutes: 60,
   perSlot: 20,
   kind: 'checkin' as 'checkin' | 'competition',
-  pitches: 2,
-  ageCategory: '' as '' | 'lycee' | 'universite'
+  pitches: 2
 })
 
 const preview = ref<any>(null)
@@ -340,8 +341,6 @@ function fillForms() {
   info.rulesAr = edition.value.rules?.text?.ar || ''
   info.venueName = edition.value.venue?.name || ''
   info.venueCity = edition.value.venue?.city || ''
-  quotas.lycee.striker = edition.value.capacity?.lycee?.striker ?? 0
-  quotas.lycee.defender = edition.value.capacity?.lycee?.defender ?? 0
   quotas.universite.striker = edition.value.capacity?.universite?.striker ?? 0
   quotas.universite.defender = edition.value.capacity?.universite?.defender ?? 0
 }
@@ -488,7 +487,6 @@ async function runDistribute(dryRun: boolean) {
         perSlot: dist.perSlot,
         kind: dist.kind,
         pitches: dist.pitches,
-        ageCategory: dist.ageCategory || undefined,
         // Le serveur ne devine pas le fuseau du navigateur : on le lui donne.
         offsetMinutes: -new Date().getTimezoneOffset(),
         venue: edition.value.venue?.name,
@@ -532,7 +530,6 @@ async function createSlot() {
         slotForm.kind === 'competition'
           ? { total: slotForm.total, striker: half, defender: slotForm.total - half }
           : { total: slotForm.total },
-      ageCategory: slotForm.ageCategory || undefined,
       venue: edition.value.venue?.name
     })
     feedback.value = t('admin.slotCreated')
@@ -749,51 +746,28 @@ async function createSlot() {
         aria-labelledby="tab-quotas"
         class="stack"
       >
-        <div class="grid grid--2">
-          <article class="card stack">
-            <h2 class="card__title">{{ $t('category.lycee') }}</h2>
-            <AreneMeter
-              :label="$t('role.striker')"
-              :used="stats?.seats?.lycee?.striker?.used ?? 0"
-              :capacity="quotas.lycee.striker"
-            />
-            <AreneMeter
-              :label="$t('role.defender')"
-              :used="stats?.seats?.lycee?.defender?.used ?? 0"
-              :capacity="quotas.lycee.defender"
-            />
-            <div class="two">
-              <AreneField :label="$t('role.striker')" for="qLs">
-                <input id="qLs" v-model.number="quotas.lycee.striker" class="input numeric" type="number" min="0">
-              </AreneField>
-              <AreneField :label="$t('role.defender')" for="qLd">
-                <input id="qLd" v-model.number="quotas.lycee.defender" class="input numeric" type="number" min="0">
-              </AreneField>
-            </div>
-          </article>
-
-          <article class="card stack">
-            <h2 class="card__title">{{ $t('category.universite') }}</h2>
-            <AreneMeter
-              :label="$t('role.striker')"
-              :used="stats?.seats?.universite?.striker?.used ?? 0"
-              :capacity="quotas.universite.striker"
-            />
-            <AreneMeter
-              :label="$t('role.defender')"
-              :used="stats?.seats?.universite?.defender?.used ?? 0"
-              :capacity="quotas.universite.defender"
-            />
-            <div class="two">
-              <AreneField :label="$t('role.striker')" for="qUs">
-                <input id="qUs" v-model.number="quotas.universite.striker" class="input numeric" type="number" min="0">
-              </AreneField>
-              <AreneField :label="$t('role.defender')" for="qUd">
-                <input id="qUd" v-model.number="quotas.universite.defender" class="input numeric" type="number" min="0">
-              </AreneField>
-            </div>
-          </article>
-        </div>
+        <!-- Une seule catégorie ouverte : la carte occupe toute la largeur. -->
+        <article class="card stack">
+          <h2 class="card__title">{{ $t('category.universite') }}</h2>
+          <AreneMeter
+            :label="$t('role.striker')"
+            :used="stats?.seats?.universite?.striker?.used ?? 0"
+            :capacity="quotas.universite.striker"
+          />
+          <AreneMeter
+            :label="$t('role.defender')"
+            :used="stats?.seats?.universite?.defender?.used ?? 0"
+            :capacity="quotas.universite.defender"
+          />
+          <div class="two">
+            <AreneField :label="$t('role.striker')" for="qUs">
+              <input id="qUs" v-model.number="quotas.universite.striker" class="input numeric" type="number" min="0">
+            </AreneField>
+            <AreneField :label="$t('role.defender')" for="qUd">
+              <input id="qUd" v-model.number="quotas.universite.defender" class="input numeric" type="number" min="0">
+            </AreneField>
+          </div>
+        </article>
 
         <div>
           <button class="btn btn--ink" type="button" :disabled="pending" @click="saveQuotas">
@@ -885,13 +859,6 @@ async function createSlot() {
                 <option value="competition">{{ $t('admin.slotKindCompetition') }}</option>
               </select>
             </AreneField>
-            <AreneField :label="$t('admin.ageCategory')" for="dCat">
-              <select id="dCat" v-model="dist.ageCategory" class="select">
-                <option value="">{{ $t('common.all') }}</option>
-                <option value="lycee">{{ $t('category.lycee') }}</option>
-                <option value="universite">{{ $t('category.universite') }}</option>
-              </select>
-            </AreneField>
           </div>
 
           <!-- Les terrains ne concernent que les sessions de jeu. -->
@@ -941,13 +908,6 @@ async function createSlot() {
           </AreneField>
           <AreneField :label="$t('admin.endsAt')" for="endsAt" required>
             <input id="endsAt" v-model="slotForm.endsAt" class="input numeric" type="datetime-local" required>
-          </AreneField>
-          <AreneField :label="$t('admin.ageCategory')" for="ageCategory">
-            <select id="ageCategory" v-model="slotForm.ageCategory" class="select">
-              <option value="">{{ $t('common.all') }}</option>
-              <option value="lycee">{{ $t('category.lycee') }}</option>
-              <option value="universite">{{ $t('category.universite') }}</option>
-            </select>
           </AreneField>
           <AreneField :label="$t('admin.participants')" for="slotTotal" required>
             <input id="slotTotal" v-model.number="slotForm.total" class="input numeric" type="number" min="1" max="1000" required>

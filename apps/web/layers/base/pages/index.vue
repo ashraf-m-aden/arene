@@ -89,17 +89,14 @@ const { data: live } = await useAsyncData(
 const topStriker = computed(() => live.value?.players?.strikers?.[0] ?? null)
 const topDefender = computed(() => live.value?.players?.defenders?.[0] ?? null)
 
-/** Podium des écoles : la catégorie qui a déjà joué, lycée en priorité. */
-const podiumCategory = computed<'lycee' | 'universite' | null>(() => {
-  const schools = live.value?.schools
-  if (schools?.lycee?.length) return 'lycee'
-  if (schools?.universite?.length) return 'universite'
-  return null
-})
-
+/**
+ * Podium des écoles : les trois premières au total des points. Le classement
+ * n'est plus scindé par niveau d'établissement — l'édition ne recrute qu'à
+ * l'université, toutes les écoles classées concourent l'une contre l'autre.
+ */
 const podium = computed(() => {
-  if (!podiumCategory.value) return []
-  return (live.value?.schools?.[podiumCategory.value] ?? []).slice(0, 3)
+  const rows = live.value?.schools?.total
+  return Array.isArray(rows) ? rows.slice(0, 3) : []
 })
 
 const hasLive = computed(() =>
@@ -562,12 +559,7 @@ useSeoPage({
         </div>
 
         <div v-if="podium.length" class="podium">
-          <h3 class="podium__title">
-            {{ $t('home.podiumTitle') }}
-            <span v-if="podiumCategory" class="badge badge--pitch">
-              {{ $t(`category.${podiumCategory}`) }}
-            </span>
-          </h3>
+          <h3 class="podium__title">{{ $t('home.podiumTitle') }}</h3>
           <ol class="podium__steps">
             <li
               v-for="school in podium"

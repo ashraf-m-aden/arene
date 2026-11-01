@@ -19,7 +19,7 @@ const registration = {
   player: { name: 'Idriss Ahmed Farah' },
   schoolId: { name: { fr: 'Lycée de Balbala', ar: '' } },
   role: 'striker',
-  ageCategory: 'lycee',
+  ageCategory: 'universite',
   grades: { average: 14.5 },
   flags: [{ code: 'gradeBelowThreshold' }],
   slotId: null
@@ -82,7 +82,7 @@ describe('dossier envoyé', () => {
       edition: 'Saison 1',
       dossier: '0ABCDE',
       ecole: 'Lycée de Balbala',
-      categorie: 'lycée',
+      categorie: 'université',
       role: 'buteur',
       moyenne: 14.5,
       signalements: 'gradeBelowThreshold'

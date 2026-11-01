@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import {
+  AGE_CATEGORIES,
   BARRAGE_OPPONENTS,
   BARRAGE_PER_ROLE,
   computeMatchScore,
@@ -70,12 +71,20 @@ export async function generateForSession(
     pitches: slot.pitches
   })
 
+  /*
+   * Categorie de la rencontre. Une session n'en declare pas forcement — depuis
+   * qu'une seule categorie concourt, elles sont ouvertes a tout le monde. On la
+   * prend alors sur les joueurs presents, qui la portent tous : c'est elle que
+   * les classements filtrent et que la composition du barrage lit.
+   */
+  const ageCategory = slot.ageCategory || strikers[0].ageCategory || defenders[0].ageCategory
+
   const docs = pairs.map((pair) => ({
     ...pair,
     editionId: slot.editionId,
     slotId: slot._id,
     phase,
-    ageCategory: slot.ageCategory
+    ageCategory
   }))
 
   const created = await Match.insertMany(docs, { ordered: false })
@@ -313,8 +322,14 @@ export async function schoolRankings(editionId) {
     entry.points += row.wins * SCHOOL_POINTS.qualificationWin
   }
 
-  // Podiums et titres : issus du classement de la phase finale, par catégorie et par rôle.
-  for (const ageCategory of ['lycee', 'universite']) {
+  /*
+   * Podiums et titres : issus du classement de la phase finale, par catégorie et
+   * par rôle. Les catégories sont lues dans les rencontres plutôt que dans
+   * `AGE_CATEGORIES` — une édition passée en comptait deux, et son classement
+   * doit rester juste après la fermeture de la catégorie Lycée.
+   */
+  const finalCategories = await Match.distinct('ageCategory', { editionId: edId, phase: 'finale' })
+  for (const ageCategory of finalCategories) {
     const finals = await playerRankings(edId, { phase: 'finale', ageCategory })
     for (const list of [finals.strikers, finals.defenders]) {
       list.slice(0, 3).forEach((row, index) => {
@@ -338,17 +353,17 @@ export async function schoolRankings(editionId) {
   const byTotal = [...rows].sort((a, b) => b.points - a.points || b.checkedIn - a.checkedIn)
   const byPlayer = [...rows].sort((a, b) => b.pointsPerPlayer - a.pointsPerPlayer)
 
-  const withRank = (list, key) =>
-    list.map((row, index) => ({ ...row, [key]: index + 1 }))
+  const withRank = (list) => list.map((row, index) => ({ ...row, rank: index + 1 }))
 
-  return {
-    lycee: withRank(byTotal.filter((r) => r.type === 'lycee'), 'rank'),
-    universite: withRank(byTotal.filter((r) => r.type === 'universite'), 'rank'),
-    perPlayer: {
-      lycee: withRank(byPlayer.filter((r) => r.type === 'lycee'), 'rank'),
-      universite: withRank(byPlayer.filter((r) => r.type === 'universite'), 'rank')
-    }
-  }
+  /*
+   * Un seul tableau, plus de separation par niveau d'etablissement.
+   *
+   * Le classement etait scinde en « lycee » et « universite » parce que les deux
+   * publics ne concouraient pas l'un contre l'autre. L'edition ne recrute plus
+   * qu'a l'universite : toutes les ecoles classees sont desormais du meme
+   * niveau, et deux listes dont l'une est vide ne disaient plus rien.
+   */
+  return { total: withRank(byTotal), perPlayer: withRank(byPlayer) }
 }
 
 /** Recalcule et met en cache les classements de l'édition. */
@@ -358,7 +373,17 @@ export async function refreshRankings(editionId) {
     schoolRankings(editionId)
   ])
   const editions = await editionsService()
-  await editions.setRankingsCache(editionId, { players, schools: schools.lycee.concat(schools.universite), schoolsByCategory: schools })
+  /*
+   * `schoolsRanking` et non plus `schoolsByCategory` : le nom change avec la
+   * forme. Un cache ecrit avant la fermeture de la categorie Lycee ne porte pas
+   * la nouvelle cle, la route le manque et recalcule — plutot que de servir
+   * deux listes qu'aucun ecran ne sait plus lire.
+   */
+  await editions.setRankingsCache(editionId, {
+    players,
+    schools: schools.total,
+    schoolsRanking: schools
+  })
   return { players, schools }
 }
 
@@ -384,7 +409,7 @@ export async function selectBarrage(
     dryRun = false
   } = {}
 ) {
-  const categories = ageCategory ? [ageCategory] : ['lycee', 'universite']
+  const categories = ageCategory ? [ageCategory] : [...AGE_CATEGORIES]
   const edId = oid(editionId)
   const selection = []
 
@@ -456,7 +481,7 @@ export async function selectBarrage(
  * intermédiaire : la finale reste composable sans barrage.
  */
 export async function selectFinalists(editionId, { ageCategory, dryRun = false } = {}) {
-  const categories = ageCategory ? [ageCategory] : ['lycee', 'universite']
+  const categories = ageCategory ? [ageCategory] : [...AGE_CATEGORIES]
   const registrations = await registrationsService()
   const selection = []
 

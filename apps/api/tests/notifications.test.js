@@ -33,7 +33,7 @@ describe('modèles de messages', () => {
       edition: 'Saison 1',
       dossier: 'A1B2C3',
       ecole: 'Lycée de Balbala',
-      categorie: 'lycée',
+      categorie: 'université',
       role: 'buteur',
       moyenne: 14.5,
       signalements: 'aucun',

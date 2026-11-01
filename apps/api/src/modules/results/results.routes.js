@@ -72,8 +72,8 @@ rankingsRouter.get(
   asyncHandler(async (req, res) => {
     // Les pages publiques lisent le cache ; il est recalculé à chaque résultat saisi.
     const cache = await editionsService.getRankingsCache(req.params.editionId)
-    if (cache?.schoolsByCategory) {
-      return ok(res, cache.schoolsByCategory, { computedAt: cache.computedAt, cached: true })
+    if (cache?.schoolsRanking) {
+      return ok(res, cache.schoolsRanking, { computedAt: cache.computedAt, cached: true })
     }
     return ok(res, await service.schoolRankings(req.params.editionId), { cached: false })
   })

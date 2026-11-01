@@ -84,8 +84,14 @@ const schoolOther = ref(false)
  */
 onMounted(async () => {
   const { $api } = useNuxtApp()
+  /*
+   * Seuls les etablissements du superieur : l'edition ne recrute plus qu'a
+   * l'universite. Le referentiel connait toujours les lycees du pays — ils
+   * gardent leur place dans les classements des editions passees — mais les
+   * proposer ici ouvrait un dossier que l'API refuse au rattachement.
+   */
   const { data } = await $api
-    .get<{ data: any[] }>('/schools?limit=100')
+    .get<{ data: any[] }>('/schools?type=universite&limit=100')
     .catch(() => ({ data: [] as any[] }))
   schools.value = data
 })
@@ -105,17 +111,14 @@ watch(
   { immediate: true }
 )
 
-/** Groupées par type, pour que le candidat trouve sa catégorie d'un coup d'œil. */
-const schoolGroups = computed(() => {
+/**
+ * Une seule liste, par ordre alphabétique. Les établissements étaient regroupés
+ * par niveau pour que le candidat repère sa catégorie ; il n'y en a plus qu'une,
+ * et un unique groupe « Université » n'apportait que du bruit.
+ */
+const schoolOptions = computed(() => {
   const collator = new Intl.Collator('fr', { sensitivity: 'base' })
-  const byType = (type: string) =>
-    schools.value
-      .filter((school) => school.type === type)
-      .sort((a, b) => collator.compare(text(a.name), text(b.name)))
-  return [
-    { type: 'lycee', items: byType('lycee') },
-    { type: 'universite', items: byType('universite') }
-  ].filter((group) => group.items.length)
+  return [...schools.value].sort((a, b) => collator.compare(text(a.name), text(b.name)))
 })
 
 /** Le `select` porte l'identifiant ; le reste du brouillon en découle. */
@@ -131,24 +134,30 @@ const selectedSchoolId = computed({
     store.draft.schoolId = school._id
     store.draft.schoolLabel = text(school.name)
     store.draft.newSchool = null
-    // La catégorie d'âge suit l'établissement : lycée ou université.
+    // La catégorie suit le niveau de l'établissement — tous du supérieur ici.
     store.draft.ageCategory = school.type
   }
 })
 
-const otherSchool = reactive({ name: '', type: 'lycee' as 'lycee' | 'universite' })
+/**
+ * Établissement absent du référentiel. Son niveau n'est plus demandé : seuls les
+ * établissements du supérieur peuvent porter un dossier, l'édition ne recrutant
+ * qu'à l'université. Le staff vérifie l'école déclarée avant de l'ouvrir au
+ * référentiel (`isVerified: false` à la création).
+ */
+const otherSchool = reactive({ name: '' })
 
 watch(
-  () => [schoolOther.value, otherSchool.name, otherSchool.type],
+  () => [schoolOther.value, otherSchool.name],
   () => {
     if (!schoolOther.value || !otherSchool.name) return
     store.draft.schoolId = null
     store.draft.newSchool = {
       name: { fr: otherSchool.name, ar: '' },
-      type: otherSchool.type,
+      type: 'universite',
       city: 'Djibouti'
     }
-    store.draft.ageCategory = otherSchool.type
+    store.draft.ageCategory = 'universite'
   }
 )
 
@@ -316,15 +325,9 @@ function back() {
                 :disabled="schoolOther"
               >
                 <option value="">{{ $t('registrations.player.schoolChoose') }}</option>
-                <optgroup
-                  v-for="group in schoolGroups"
-                  :key="group.type"
-                  :label="$t(`category.${group.type}`)"
-                >
-                  <option v-for="school in group.items" :key="school._id" :value="school._id">
-                    {{ text(school.name) }}
-                  </option>
-                </optgroup>
+                <option v-for="school in schoolOptions" :key="school._id" :value="school._id">
+                  {{ text(school.name) }}
+                </option>
               </select>
             </AreneField>
 
@@ -334,17 +337,9 @@ function back() {
             </label>
 
             <template v-if="schoolOther">
-              <div class="two">
-                <AreneField :label="$t('registrations.player.schoolOtherName')" for="otherName" required>
-                  <input id="otherName" v-model="otherSchool.name" class="input" required>
-                </AreneField>
-                <AreneField :label="$t('registrations.player.schoolOtherType')" for="otherType" required>
-                  <select id="otherType" v-model="otherSchool.type" class="select">
-                    <option value="lycee">{{ $t('category.lycee') }}</option>
-                    <option value="universite">{{ $t('category.universite') }}</option>
-                  </select>
-                </AreneField>
-              </div>
+              <AreneField :label="$t('registrations.player.schoolOtherName')" for="otherName" required>
+                <input id="otherName" v-model="otherSchool.name" class="input" required>
+              </AreneField>
               <p class="field__hint">{{ $t('registrations.player.schoolPending') }}</p>
             </template>
 
@@ -399,14 +394,6 @@ function back() {
                 <span v-if="uploading === 'photo'" class="muted">{{ $t('common.loading') }}</span>
               </label>
             </AreneField>
-
-            <p v-if="store.draft.ageCategory" class="field__hint">
-              {{
-                $t('registrations.player.categoryComputed', {
-                  category: $t(`category.${store.draft.ageCategory}`)
-                })
-              }}
-            </p>
           </template>
 
           <!-- Étape 2 : les notes -->
@@ -525,10 +512,6 @@ function back() {
               <div>
                 <dt>{{ $t('registrations.player.role') }}</dt>
                 <dd>{{ $t(`role.${store.draft.role}`) }}</dd>
-              </div>
-              <div v-if="store.draft.ageCategory">
-                <dt>{{ $t('registrations.staff.filterCategory') }}</dt>
-                <dd>{{ $t(`category.${store.draft.ageCategory}`) }}</dd>
               </div>
               <div>
                 <dt>{{ $t('registrations.staff.declaredAverage') }}</dt>

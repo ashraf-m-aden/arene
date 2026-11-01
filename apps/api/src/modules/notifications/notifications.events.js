@@ -50,7 +50,7 @@ async function buildContext(registrationId, extra = {}) {
 
 /** Libellés du message interne : il part en français, sur la boîte de l'organisation. */
 const ROLE_LABELS = { striker: 'buteur', defender: 'défenseur' }
-const CATEGORY_LABELS = { lycee: 'lycée', universite: 'université' }
+const CATEGORY_LABELS = { universite: 'université' }
 
 /**
  * Prévient l'organisation qu'un dossier attend dans la file de vérification.

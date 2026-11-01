@@ -25,25 +25,29 @@ describe('âge et catégorie', () => {
 
   it('suit le niveau d’études déclaré', () => {
     expect(categoryFromSchoolType('universite')).toBe('universite')
-    expect(categoryFromSchoolType('lycee')).toBe('lycee')
   })
 
-  it('tranche le cas des 18 ans par la catégorie', () => {
-    const birth18 = '2008-01-01'
-    expect(isAgeEligible(birth18, 'lycee', REF)).toBe(true)
-    expect(isAgeEligible(birth18, 'universite', REF)).toBe(true)
+  it('n’ouvre aucune catégorie à un lycée', () => {
+    // L'édition ne recrute plus qu'à l'université ; le référentiel connaît
+    // toujours les lycées, mais aucun dossier ne peut s'y rattacher.
+    expect(categoryFromSchoolType('lycee')).toBeNull()
+  })
+
+  it('accepte les bornes de la catégorie, incluses', () => {
+    expect(isAgeEligible('2009-01-01', 'universite', REF)).toBe(true) // 17 ans
+    expect(isAgeEligible('2001-01-01', 'universite', REF)).toBe(true) // 25 ans
   })
 
   it('refuse un âge hors bornes', () => {
-    expect(isAgeEligible('2013-01-01', 'lycee', REF)).toBe(false)
-    expect(isAgeEligible('2000-01-01', 'universite', REF)).toBe(false)
+    expect(isAgeEligible('2010-01-01', 'universite', REF)).toBe(false) // 16 ans
+    expect(isAgeEligible('2000-01-01', 'universite', REF)).toBe(false) // 26 ans
   })
 })
 
 describe('contrôles automatiques à l’envoi', () => {
   const base = {
     birthDate: '2009-03-10',
-    ageCategory: 'lycee',
+    ageCategory: 'universite',
     gradeAverage: 14.5,
     gradeThreshold: 12,
     reference: REF
@@ -68,6 +72,18 @@ describe('contrôles automatiques à l’envoi', () => {
   it('signale une moyenne manquante', () => {
     const { issues } = checkEligibility({ ...base, gradeAverage: undefined })
     expect(issues.map((i) => i.code)).toContain('grade_missing')
+  })
+
+  it('signale une catégorie fermée plutôt qu’un âge hors bornes vide', () => {
+    /*
+     * Dossier Lycée rouvert après le passage à l'édition universitaire : sa
+     * catégorie n'a plus de tranche d'âge. Signaler `age_out_of_range` donnerait
+     * un message sans bornes — « alors que à ans sont attendus ».
+     */
+    const { ok, issues } = checkEligibility({ ...base, ageCategory: 'lycee' })
+    expect(ok).toBe(false)
+    expect(issues.map((i) => i.code)).toEqual(['category_closed'])
+    expect(issues[0].detail).toMatchObject({ category: 'lycee' })
   })
 })
 

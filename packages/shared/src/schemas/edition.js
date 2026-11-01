@@ -23,11 +23,10 @@ const editionBase = z.object({
     startsAt: isoDate.optional(),
     endsAt: isoDate.optional(),
     capacity: z.object({
-      lycee: roleCapacity,
       universite: roleCapacity
     }),
     fee: z.coerce.number().int().min(0).max(1000000),
-    ageCategories: z.array(z.enum(AGE_CATEGORIES)).min(1).default(['lycee', 'universite']),
+    ageCategories: z.array(z.enum(AGE_CATEGORIES)).min(1).default([...AGE_CATEGORIES]),
     rules: z
       .object({
         gradeThreshold: z.coerce.number().min(0).max(20).default(DEFAULT_GRADE_THRESHOLD),

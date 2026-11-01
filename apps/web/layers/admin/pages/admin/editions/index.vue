@@ -33,10 +33,24 @@ const form = reactive({
   venueName: '',
   venueCity: 'Djibouti',
   capacity: {
-    lycee: { striker: 50, defender: 50 },
     universite: { striker: 50, defender: 50 }
   }
 })
+
+/**
+ * Total des places d'une édition, toutes catégories et tous rôles confondus.
+ *
+ * Parcourt la capacité plutôt que de nommer les catégories : une édition
+ * antérieure à la fermeture de la catégorie Lycée en porte deux, et son total
+ * doit rester juste dans la liste.
+ */
+function totalSeats(edition: any) {
+  return Object.values(edition.capacity ?? {}).reduce(
+    (sum: number, byRole: any) =>
+      sum + Object.values(byRole ?? {}).reduce((s: number, seats: any) => s + (Number(seats) || 0), 0),
+    0
+  )
+}
 
 function stripDiacritics(value: string) {
   return Array.from(value)
@@ -255,12 +269,6 @@ async function createEdition() {
       <fieldset class="quotas">
         <legend>{{ $t('editions.capacity') }}</legend>
         <div class="quotas__grid">
-          <AreneField :label="`${$t('category.lycee')} · ${$t('role.striker')}`" for="qls">
-            <input id="qls" v-model.number="form.capacity.lycee.striker" class="input numeric" type="number" min="0">
-          </AreneField>
-          <AreneField :label="`${$t('category.lycee')} · ${$t('role.defender')}`" for="qld">
-            <input id="qld" v-model.number="form.capacity.lycee.defender" class="input numeric" type="number" min="0">
-          </AreneField>
           <AreneField :label="`${$t('category.universite')} · ${$t('role.striker')}`" for="qus">
             <input id="qus" v-model.number="form.capacity.universite.striker" class="input numeric" type="number" min="0">
           </AreneField>
@@ -305,14 +313,7 @@ async function createEdition() {
             <td class="numeric">
               {{ date(edition.registrationOpensAt) }} → {{ date(edition.registrationClosesAt) }}
             </td>
-            <td class="numeric">
-              {{
-                (edition.capacity?.lycee?.striker ?? 0) +
-                  (edition.capacity?.lycee?.defender ?? 0) +
-                  (edition.capacity?.universite?.striker ?? 0) +
-                  (edition.capacity?.universite?.defender ?? 0)
-              }}
-            </td>
+            <td class="numeric">{{ totalSeats(edition) }}</td>
             <td>
               <NuxtLink :to="localePath(`/admin/editions/${edition.slug}`)" class="btn btn--quiet btn--sm">
                 {{ $t('admin.openEdition') }}

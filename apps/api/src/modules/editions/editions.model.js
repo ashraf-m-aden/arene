@@ -27,11 +27,17 @@ const editionSchema = new mongoose.Schema(
     startsAt: Date,
     endsAt: Date,
     capacity: {
-      lycee: roleCapacity,
       universite: roleCapacity
     },
     fee: { type: Number, default: 0 },
-    ageCategories: { type: [String], enum: AGE_CATEGORIES, default: ['lycee', 'universite'] },
+    /**
+     * Categories ouvertes par cette edition. Sans `enum`, comme
+     * `Registration.ageCategory` : une edition anterieure a la fermeture d'une
+     * categorie doit rester enregistrable (changement de statut, mise en cache
+     * du classement) le temps que la migration la normalise. Les ecritures
+     * passent par `editionSchema`, qui borne la valeur.
+     */
+    ageCategories: { type: [String], default: () => [...AGE_CATEGORIES] },
     rules: {
       gradeThreshold: { type: Number, default: DEFAULT_GRADE_THRESHOLD },
       requiresOriginalBulletin: { type: Boolean, default: true },
@@ -52,7 +58,19 @@ const editionSchema = new mongoose.Schema(
     coverImage: String,
     /** Classement mis en cache, recalculé à chaque result.recorded / registration.checked_in. */
     rankings: {
+      /** Liste plate, lue par la fiche publique d'une école pour y trouver son rang. */
       schools: { type: mongoose.Schema.Types.Mixed, default: null },
+      /**
+       * Classement des écoles tel que la page publique le sert : points totaux
+       * et points par joueur.
+       *
+       * Déclaré ici, et c'est le point : une voie absente du schéma ne se relit
+       * pas à travers le document. L'ancien `schoolsByCategory` ne l'était pas,
+       * si bien que `getRankingsCache(...).schoolsByCategory` valait toujours
+       * `undefined` et que la route recalculait à chaque visite en annonçant
+       * pourtant `cached: true`.
+       */
+      schoolsRanking: { type: mongoose.Schema.Types.Mixed, default: null },
       players: { type: mongoose.Schema.Types.Mixed, default: null },
       computedAt: Date
     },

@@ -126,13 +126,16 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
 
 - **Compte permanent** : le candidat s'inscrit lui-même ; son `User` survit aux éditions, une
   `Registration` est créée par édition (`editionId` + `candidateId`).
-- **Catégories** : Lycée (15–18 ans) et Université (18–23 ans). La catégorie suit le niveau
-  d'études déclaré, l'âge sert de contrôle — ce qui tranche le cas des 18 ans.
+- **Public** : les étudiants du supérieur, de 17 à 25 ans révolus. Une seule catégorie reste
+  ouverte (`AGE_CATEGORIES`, `AGE_RANGES`) : la catégorie Lycée est fermée, un lycée du
+  référentiel n'ouvre plus de candidature. L'axe `ageCategory` subsiste dans le modèle — quotas,
+  créneaux et classements s'y déclinent — pour qu'un second public se rouvre sans toucher aux
+  services.
 - **Seuil scolaire** : moyenne d'au moins 12/20 (`rules.gradeThreshold`, par édition).
 - **Pièces en photo ou en scan** : bulletin et photo d'identité sont déposés en ligne, jamais
   attendus en version papier au dépôt du dossier.
 - **Aucun refus automatique** : un dossier hors critères part au staff avec ses signalements
-  (âge, moyenne, rôle complet, doublon).
+  (âge, catégorie fermée, moyenne, rôle complet, doublon).
 - **Double confirmation** : une première vérification des pièces à distance, puis une
   confirmation en présentiel qui atteste que le candidat existe réellement — contrôle
   d'identité, contrat papier signé, frais encaissés, dossard remis.
@@ -150,8 +153,8 @@ Ces règles sont aujourd'hui écrites en dur dans `packages/shared/src/constants
 
 - **Rôles** : buteur et défenseur (`PLAYER_ROLES`), le plafond de places se décline par rôle en
   plus de la catégorie.
-- **Rencontres** : 5 tentatives, 3 adversaires par buteur en qualification, 2 finalistes par rôle
-  et par catégorie, finale croisée (4 rencontres par catégorie).
+- **Rencontres** : 5 tentatives, 3 adversaires par buteur en qualification, 2 finalistes par rôle,
+  finale croisée (4 rencontres, 2 champions).
 - **Classement des écoles** : présence 1, victoire 2, finaliste 5, podium 15/10/6, champion +25 ;
   deux vues, points totaux et points par joueur inscrit.
 

@@ -15,11 +15,14 @@ const pending = ref(false)
 const error = ref('')
 const feedback = ref('')
 
+/*
+ * Segment des destinataires : statut et role. La categorie n'y figure plus —
+ * l'edition n'en compte qu'une, le filtre ne retirait personne.
+ */
 const broadcast = reactive({
   channels: ['email'] as string[],
   status: '',
   role: '',
-  ageCategory: '',
   subjectFr: '',
   subjectAr: '',
   bodyFr: '',
@@ -83,7 +86,6 @@ async function sendBroadcast() {
     const segment: Record<string, string> = {}
     if (broadcast.status) segment.status = broadcast.status
     if (broadcast.role) segment.role = broadcast.role
-    if (broadcast.ageCategory) segment.ageCategory = broadcast.ageCategory
 
     const { data } = await $api.post<{ data: any }>('/notifications/broadcast', {
       editionId: edition._id,
@@ -206,7 +208,7 @@ function toggleChannel(channel: string) {
           </button>
         </div>
 
-        <div class="three">
+        <div class="two">
           <AreneField :label="$t('registrations.staff.filterStatus')" for="bStatus">
             <select id="bStatus" v-model="broadcast.status" class="select">
               <option value="">{{ $t('common.all') }}</option>
@@ -220,13 +222,6 @@ function toggleChannel(channel: string) {
               <option value="">{{ $t('common.all') }}</option>
               <option value="striker">{{ $t('role.striker') }}</option>
               <option value="defender">{{ $t('role.defender') }}</option>
-            </select>
-          </AreneField>
-          <AreneField :label="$t('registrations.staff.filterCategory')" for="bCategory">
-            <select id="bCategory" v-model="broadcast.ageCategory" class="select">
-              <option value="">{{ $t('common.all') }}</option>
-              <option value="lycee">{{ $t('category.lycee') }}</option>
-              <option value="universite">{{ $t('category.universite') }}</option>
             </select>
           </AreneField>
         </div>
@@ -311,12 +306,4 @@ function toggleChannel(channel: string) {
   }
 }
 
-.three {
-  display: grid;
-  gap: var(--space-3);
-
-  @include from(md) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
 </style>

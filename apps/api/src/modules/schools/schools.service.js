@@ -1,3 +1,4 @@
+import { SCHOOL_TYPES } from '@arene/shared'
 import { badRequest, conflict, notFound } from '../../core/errors.js'
 import { slugify } from '../../core/utils/text.js'
 import bus from '../../core/events.js'
@@ -102,7 +103,7 @@ export async function importCsv(content) {
   const report = { created: 0, skipped: 0, errors: [] }
   for (const [index, row] of rows.entries()) {
     const [nameFr, nameAr, type, city] = row.split(/[;,]/).map((c) => c?.trim())
-    if (!nameFr || !['lycee', 'universite'].includes(type)) {
+    if (!nameFr || !SCHOOL_TYPES.includes(type)) {
       report.errors.push({ line: index + 2, row, reason: 'nom ou type invalide' })
       continue
     }

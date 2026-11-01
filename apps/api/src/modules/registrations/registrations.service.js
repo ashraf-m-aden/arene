@@ -88,6 +88,27 @@ export async function createDraft({ editionId, locale }, candidateId) {
   }
 }
 
+/**
+ * Rattachement a un etablissement, d'ou decoule la categorie du dossier.
+ *
+ * L'edition ne recrute plus qu'a l'universite : un etablissement d'un autre
+ * niveau n'ouvre aucune categorie et le rattachement est refuse. Le referentiel
+ * continue pourtant de decrire les lycees du pays — c'est ici, et non dans la
+ * liste des ecoles, que la restriction se joue. Le formulaire ne propose que des
+ * etablissements du superieur : un refus signale un identifiant force ou une
+ * ecole mal typee dans le referentiel, que le staff corrige.
+ */
+function attachSchool(registration, school) {
+  const category = categoryFromSchoolType(school.type)
+  if (!category) {
+    throw badRequest(
+      'Cette édition est réservée aux étudiants du supérieur'
+    ).withKey('schoolNotEligible')
+  }
+  registration.schoolId = school._id
+  registration.ageCategory = category
+}
+
 /** Mise à jour d'une étape du formulaire ; le brouillon est enregistré à chaque étape. */
 export async function patch(id, user, input) {
   const registration = await getById(id, user)
@@ -110,14 +131,10 @@ export async function patch(id, user, input) {
 
   if (input.newSchool) {
     const schools = await schoolsService()
-    const school = await schools.createFromRegistration(input.newSchool)
-    registration.schoolId = school._id
-    registration.ageCategory = categoryFromSchoolType(school.type)
+    attachSchool(registration, await schools.createFromRegistration(input.newSchool))
   } else if (input.schoolId) {
     const schools = await schoolsService()
-    const school = await schools.getById(input.schoolId)
-    registration.schoolId = school._id
-    registration.ageCategory = categoryFromSchoolType(school.type)
+    attachSchool(registration, await schools.getById(input.schoolId))
   }
 
   if (input.player) registration.player = { ...registration.player?.toObject?.(), ...input.player }
@@ -191,8 +208,8 @@ export async function patch(id, user, input) {
  * Un dossier hors critères part quand même au staff, avec ses signalements.
  */
 /**
- * Signalements des controles automatiques : age, moyenne, place restante,
- * doublon. Jamais un refus — une alerte pour le staff, qui tranche.
+ * Signalements des controles automatiques : age, categorie fermee, moyenne,
+ * place restante, doublon. Jamais un refus — une alerte pour le staff, qui tranche.
  *
  * Partage par `submit` et par `patch` : un dossier corrige apres examen
  * repart avec des signalements recalcules, pas avec ceux de la veille.
@@ -312,7 +329,7 @@ export async function review(id, staffId, { decision, reason, randomCheck = fals
     const editions = await editionsService()
     const seats = await editions.seatsLeft(registration.editionId)
     const left = seats?.[registration.ageCategory]?.[registration.role]?.left ?? 0
-    if (left <= 0) throw conflict('Plus de place pour ce rôle dans cette catégorie').withKey('noSeatsLeft')
+    if (left <= 0) throw conflict('Plus de place pour ce rôle').withKey('noSeatsLeft')
     registration.qrToken = crypto.randomBytes(24).toString('base64url')
     const edition = await editions.getById(registration.editionId)
     registration.payment = { ...registration.payment?.toObject?.(), amount: edition.fee, status: 'due' }

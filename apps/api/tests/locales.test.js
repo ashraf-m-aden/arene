@@ -7,7 +7,7 @@ import { checkEligibility } from '@arene/shared'
 /**
  * Les signalements des controles automatiques s'affichent dans l'espace du
  * candidat. Un code sans libelle y sortait tel quel — « age_out_of_range » en
- * toutes lettres sous les yeux d'un lyceen. Ce test tient les deux bouts
+ * toutes lettres sous les yeux d'un candidat. Ce test tient les deux bouts
  * ensemble : tout code produit par les regles partagees doit avoir sa phrase,
  * en francais et en arabe.
  */
@@ -19,7 +19,7 @@ const localeFile = (lang) =>
 const codesFromRules = () =>
   checkEligibility({
     birthDate: '1990-01-01',
-    ageCategory: 'lycee',
+    ageCategory: 'universite',
     gradeAverage: undefined,
     roleSeatsLeft: 0
   }).issues.map((issue) => issue.code)
@@ -32,8 +32,20 @@ describe('libelles des signalements', () => {
     // Moyenne presente mais sous le seuil : exclusif de `grade_missing`.
     ...checkEligibility({
       birthDate: '2008-01-01',
-      ageCategory: 'lycee',
+      ageCategory: 'universite',
       gradeAverage: 8,
+      gradeThreshold: 12
+    }).issues.map((issue) => issue.code),
+    /*
+     * Dossier d'une categorie fermee depuis son depot — un dossier Lycee rouvert
+     * apres le passage a l'edition universitaire. Il n'y a plus de tranche d'age
+     * a lui opposer, et c'est ce code qui le dit plutot qu'un `age_out_of_range`
+     * aux bornes vides.
+     */
+    ...checkEligibility({
+      birthDate: '2008-01-01',
+      ageCategory: 'lycee',
+      gradeAverage: 14,
       gradeThreshold: 12
     }).issues.map((issue) => issue.code)
   ]
@@ -43,6 +55,7 @@ describe('libelles des signalements', () => {
     expect(new Set(codes)).toEqual(
       new Set([
         'age_out_of_range',
+        'category_closed',
         'grade_missing',
         'grade_below_threshold',
         'role_full',
@@ -75,12 +88,12 @@ describe('libelles des signalements', () => {
     // Et ces variables doivent exister dans le detail produit par les regles.
     const { issues } = checkEligibility({
       birthDate: '1990-01-01',
-      ageCategory: 'lycee',
+      ageCategory: 'universite',
       gradeAverage: 8,
       gradeThreshold: 12
     })
     const detail = Object.fromEntries(issues.map((issue) => [issue.code, issue.detail || {}]))
-    expect(detail.age_out_of_range).toMatchObject({ age: expect.any(Number), min: 15, max: 18 })
+    expect(detail.age_out_of_range).toMatchObject({ age: expect.any(Number), min: 17, max: 25 })
     expect(detail.grade_below_threshold).toMatchObject({ average: 8, threshold: 12 })
   })
 })

@@ -1,10 +1,5 @@
 import mongoose from 'mongoose'
-import {
-  AGE_CATEGORIES,
-  LOCALES,
-  PLAYER_ROLES,
-  REGISTRATION_STATUSES
-} from '@arene/shared/constants'
+import { LOCALES, PLAYER_ROLES, REGISTRATION_STATUSES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 
@@ -28,7 +23,18 @@ const registrationSchema = new mongoose.Schema(
 
     schoolId: { type: ObjectId, ref: 'School', index: true },
     role: { type: String, enum: PLAYER_ROLES },
-    ageCategory: { type: String, enum: AGE_CATEGORIES },
+    /**
+     * Categorie dans laquelle ce dossier a concouru — sans `enum`, et c'est
+     * voulu.
+     *
+     * `save()` valide toutes les voies du document, pas seulement celles qu'on
+     * vient de modifier. Un `enum` ramene a la seule categorie ouverte rendait
+     * donc intouchable tout dossier d'une categorie fermee depuis : plus de
+     * refus, plus de pointage, plus d'anonymisation sur les editions passees.
+     * La valeur ecrite est bornee a l'entree — `categoryFromSchoolType` est son
+     * unique producteur, et les schemas Zod gardent les routes.
+     */
+    ageCategory: { type: String },
 
     grades: {
       average: Number,

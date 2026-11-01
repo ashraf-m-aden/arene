@@ -9,16 +9,38 @@ export const LOCALE_DIR = { fr: 'ltr', ar: 'rtl' }
 
 export const USER_ROLES = /** @type {const} */ (['admin', 'staff', 'candidate'])
 
-export const AGE_CATEGORIES = /** @type {const} */ (['lycee', 'universite'])
+/**
+ * Categories ouvertes a la competition. Une seule : l'edition ne recrute plus
+ * qu'a l'universite.
+ *
+ * L'axe reste un tableau, et les plafonds, les creneaux, les classements et la
+ * composition du barrage continuent de se decliner par categorie. Rouvrir un
+ * second public se fait alors en ajoutant une valeur ici et ses bornes d'age,
+ * sans toucher aux services.
+ */
+export const AGE_CATEGORIES = /** @type {const} */ (['universite'])
 
-/** Bornes d'âge par catégorie, inclusives. Le cas des 18 ans est tranché par l'établissement. */
+/**
+ * Bornes d'age par categorie, inclusives.
+ *
+ * 17 ans parce qu'un bachelier entre a l'universite avant sa majorite ; 25 ans
+ * parce qu'au-dela on sort du public jeune que le tournoi vise. L'age ne decide
+ * pas de la categorie — il n'y en a qu'une —, il la controle.
+ */
 export const AGE_RANGES = {
-  lycee: { min: 15, max: 18 },
-  universite: { min: 18, max: 23 }
+  universite: { min: 17, max: 25 }
 }
 
 export const PLAYER_ROLES = /** @type {const} */ (['striker', 'defender'])
 
+/**
+ * Niveaux du referentiel des ecoles. Le lycee y reste alors qu'il n'ouvre plus
+ * aucune categorie : le referentiel decrit les etablissements du pays, et les
+ * classements des editions passees continuent de les citer.
+ *
+ * Un dossier, en revanche, ne peut se rattacher qu'a un etablissement dont le
+ * niveau nomme une categorie ouverte — voir `categoryFromSchoolType`.
+ */
 export const SCHOOL_TYPES = /** @type {const} */ (['lycee', 'universite'])
 
 export const EDITION_STATUSES = /** @type {const} */ ([

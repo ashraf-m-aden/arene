@@ -32,9 +32,12 @@ export async function buildBadgePdf({ registration, edition, slot }) {
   doc.fillColor(INK).fontSize(22).text(registration.playerName || '—', 32, 110, { width })
   doc.fontSize(11).fillColor('#444444')
   doc.text(
+    /*
+     * Plus de categorie imprimee : l'edition n'en compte qu'une, et le nom de
+     * l'etablissement dit deja qu'on est dans le superieur.
+     */
     [
       registration.role === 'striker' ? 'Buteur' : 'Défenseur',
-      registration.ageCategory === 'lycee' ? 'Lycée' : 'Université',
       registration.schoolId?.name?.fr || ''
     ]
       .filter(Boolean)

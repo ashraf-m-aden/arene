@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { AGE_CATEGORIES, SLOT_KINDS, SLOT_STATUSES } from '@arene/shared/constants'
+import { SLOT_KINDS, SLOT_STATUSES } from '@arene/shared/constants'
 
 const { ObjectId } = mongoose.Schema.Types
 
@@ -30,8 +30,13 @@ const slotSchema = new mongoose.Schema(
       striker: { type: Number, default: 0 },
       defender: { type: Number, default: 0 }
     },
-    /** Optionnelle : un rendez-vous peut melanger les categories. */
-    ageCategory: { type: String, enum: AGE_CATEGORIES },
+    /**
+     * Optionnelle : un rendez-vous peut melanger les categories, et c'est le cas
+     * courant depuis qu'une seule concourt. Sans `enum`, pour la meme raison que
+     * `Registration.ageCategory` : `save()` valide tout le document, et un
+     * creneau d'une categorie fermee doit rester cloturable.
+     */
+    ageCategory: { type: String },
     pitches: { type: Number, default: 2, min: 1 },
     venue: String,
     status: { type: String, enum: SLOT_STATUSES, default: 'planned', index: true },

@@ -14,10 +14,13 @@ const editionIdParam = computed(() => (route.query.editionId as string | undefin
 
 useNoIndex(t('registrations.staff.queueTitle'))
 
+/*
+ * Plus de filtre par categorie : l'edition n'en compte qu'une, une liste
+ * deroulante a choix unique n'aurait rien trie.
+ */
 const filters = reactive({
   status: 'submitted',
   role: '',
-  ageCategory: '',
   q: ''
 })
 
@@ -48,7 +51,7 @@ async function load() {
 }
 
 onMounted(load)
-watch(() => [filters.status, filters.role, filters.ageCategory], load)
+watch(() => [filters.status, filters.role], load)
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(
@@ -154,14 +157,6 @@ const statuses = [
           <option value="">{{ $t('common.all') }}</option>
           <option value="striker">{{ $t('role.striker') }}</option>
           <option value="defender">{{ $t('role.defender') }}</option>
-        </select>
-      </AreneField>
-
-      <AreneField :label="$t('registrations.staff.filterCategory')" for="category">
-        <select id="category" v-model="filters.ageCategory" class="select">
-          <option value="">{{ $t('common.all') }}</option>
-          <option value="lycee">{{ $t('category.lycee') }}</option>
-          <option value="universite">{{ $t('category.universite') }}</option>
         </select>
       </AreneField>
 

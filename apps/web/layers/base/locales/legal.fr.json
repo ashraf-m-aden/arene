@@ -6,8 +6,8 @@
         "a": "Le candidat lui-même, en son nom propre, avec son téléphone et son email."
       },
       {
-        "q": "J'ai 18 ans : lycée ou université ?",
-        "a": "La catégorie suit le niveau d'études déclaré. Un élève de 18 ans en terminale concourt en Lycée ; un étudiant de 18 ans en première année concourt en Université."
+        "q": "Qui peut s'inscrire ?",
+        "a": "Les étudiants inscrits dans un établissement du supérieur, de 17 à 25 ans révolus. L'édition ne comporte plus de catégorie Lycée : un élève de terminale ne peut pas concourir, même majeur."
       },
       {
         "q": "Je n'ai pas d'adresse email, puis-je m'inscrire ?",
@@ -15,7 +15,7 @@
       },
       {
         "q": "Quelle moyenne faut-il ?",
-        "a": "Au moins 12/20 au dernier bulletin du lycée ou au dernier relevé de notes universitaire. Le seuil exact est rappelé sur la page de l'édition."
+        "a": "Au moins 12/20 au dernier relevé de notes universitaire. Le seuil exact est rappelé sur la page de l'édition."
       },
       {
         "q": "Comment déposer le bulletin ?",
@@ -27,7 +27,7 @@
       },
       {
         "q": "Peut-on changer de créneau ?",
-        "a": "Oui, tant qu'il reste de la place dans un autre créneau de la même catégorie, jusqu'à 48 heures avant le début."
+        "a": "Oui, tant qu'il reste de la place dans un autre créneau, jusqu'à 48 heures avant le début."
       },
       {
         "q": "Que deviennent mes documents ?",
@@ -41,7 +41,7 @@
   },
   "about": {
     "paragraphs": [
-      "L'Arène est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux élèves et aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
+      "L'Arène est un tournoi de duels de football 1v1 organisé à Djibouti, réservé aux étudiants qui tiennent leurs résultats scolaires. L'idée est simple : un buteur, un défenseur, cinq tentatives, et une condition d'entrée qui se gagne en classe.",
       "Le format est pensé pour être juste et lisible. Chaque joueur affronte plusieurs adversaires, les classements se calculent sur les buts marqués et les arrêts réalisés, et chaque établissement suit la progression de ses joueurs au classement des écoles.",
       "La plateforme gère le tournoi de bout en bout : inscriptions, vérification des dossiers, convocations, accueil le jour J, résultats, classements et galeries. Les candidats suivent leur dossier depuis leur espace, en français ou en arabe."
     ]

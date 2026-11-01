@@ -16,6 +16,36 @@ La **première édition est le tournoi de duels de football 1v1** — c'est elle
 implémentée aujourd'hui, et c'est pourquoi une bonne partie du code est encore écrite en dur
 pour ce format (voir « Écarts à combler »).
 
+## Un seul public : les étudiants, de 17 à 25 ans
+
+La compétition **ne recrute plus qu'à l'université**. La catégorie Lycée est fermée.
+
+- `AGE_CATEGORIES = ['universite']`, `AGE_RANGES.universite = { min: 17, max: 25 }` (bornes
+  incluses). 17 ans parce qu'un bachelier entre à l'université avant sa majorité ; 25 ans parce
+  qu'au-delà on sort du public jeune visé.
+- **L'axe `ageCategory` reste** dans le modèle, et plafonds, créneaux, classements, barrage et
+  finale continuent de s'en décliner. Le supprimer aurait touché `results.service`,
+  `slots.service`, les agrégations et six écrans pour une valeur unique ; le garder laisse
+  rouvrir un second public en ajoutant une valeur à la constante et ses bornes d'âge.
+- **Un lycée du référentiel n'ouvre plus de candidature.** `categoryFromSchoolType` rend `null`
+  pour un niveau qui ne nomme aucune catégorie ouverte, et `registrations.service.patch` refuse
+  alors le rattachement (`schoolNotEligible`). Le formulaire ne propose d'ailleurs que les
+  établissements du supérieur (`GET /schools?type=universite`).
+- **Le référentiel des écoles garde les lycées** (`SCHOOL_TYPES` inchangé) : il décrit les
+  établissements du pays, et les classements des éditions passées les citent. C'est le
+  rattachement d'un dossier qui est fermé, pas la fiche de l'école.
+- **Aucun écran n'offre plus de choix de catégorie** : un sélecteur à option unique ne trie
+  rien. Les filtres de la file des dossiers, du message groupé, des créneaux admin et les
+  onglets des classements ont disparu ; les libellés qui *affichent* la catégorie d'un dossier
+  restent.
+- **Les créneaux ne déclarent plus de catégorie.** `results.service.generateForSession` prend
+  alors celle des joueurs présents : sans ce repli, les rencontres de qualification partaient
+  sans catégorie et `selectBarrage` ne trouvait plus personne à classer.
+- Les dossiers et rencontres `lycee` des éditions passées **ne sont pas réécrits** : leur
+  catégorie est un fait, et un podium déjà joué ne se recalcule pas. La migration
+  `2026-11-edition-universitaire.js` normalise les éditions et signale les dossiers Lycée encore
+  en cours, sans en refuser aucun — ce refus relève du staff.
+
 ## Le compte candidat est permanent
 
 Le candidat **s'inscrit lui-même** : il n'y a pas de parent ou de tuteur qui crée un compte à sa
@@ -102,8 +132,8 @@ l'autre. Affichage public : premier nom + initiales des suivants
 2. **Première confirmation, à distance** (`staff/dossiers.vue`,
    `registrations.service.review`) : l'organisation examine les pièces. Le dossier passe
    `under_review`, puis `approved`, `rejected` ou `changes_requested`. Un dossier hors critères
-   (âge, moyenne, rôle complet, doublon) n'est **jamais rejeté automatiquement** : il part au
-   staff avec ses signalements (`flags`), qui tranche.
+   (âge, catégorie fermée, moyenne, rôle complet, doublon) n'est **jamais rejeté
+   automatiquement** : il part au staff avec ses signalements (`flags`), qui tranche.
 3. **Convocation au rendez-vous administratif** : un dossier `approved` reçoit un créneau
    (`slotId`, pointant un `Slot` de nature `checkin`) et passe `scheduled`. Ce rendez-vous se
    tient **dans la semaine qui précède le tournoi**, pas le jour du jeu.
@@ -185,11 +215,11 @@ Ce qui en découle, et qui se lit mal dans le code :
 1. **Qualification**, par session de jeu : chaque buteur affronte `OPPONENTS_PER_STRIKER` (3)
    défenseurs de sa session, 5 tentatives par duel.
 2. **Barrage** (`results.service.selectBarrage`), à l'échelle de l'édition : les
-   `BARRAGE_PER_ROLE` (8) meilleurs de chaque rôle et de chaque catégorie se rencontrent dans un
-   tableau fermé de `BARRAGE_OPPONENTS` (4) duels chacun.
+   `BARRAGE_PER_ROLE` (8) meilleurs de chaque rôle se rencontrent dans un tableau fermé de
+   `BARRAGE_OPPONENTS` (4) duels chacun. La boucle reste écrite par catégorie (`AGE_CATEGORIES`),
+   qui n'en compte plus qu'une.
 3. **Finale** (`selectFinalists`) : les `FINALISTS_PER_ROLE` (2) meilleurs de chaque rôle,
-   croisement 2×2 → 4 rencontres par catégorie, et **4 vainqueurs** (un buteur et un défenseur
-   dans chacune des deux catégories).
+   croisement 2×2 → 4 rencontres, et **2 vainqueurs** (un buteur et un défenseur).
 
 **Pourquoi le barrage existe.** En qualification, un buteur n'affronte que 3 défenseurs tirés
 dans un effectif de plusieurs dizaines : le maximum (15 points) est atteint par plusieurs
@@ -226,8 +256,11 @@ dans la réponse sous forme de liste d'identifiants, seulement en total.
   par `registrations.service.checkIn`.
 - `payment.status/amount/receivedBy/receivedAt` : encaissement sur place, au même moment que la
   signature du contrat.
-- `flags` : signalements des contrôles automatiques (âge, moyenne, rôle complet, doublon) —
-  jamais un refus automatique, toujours une alerte pour le staff.
+- `flags` : signalements des contrôles automatiques (âge, catégorie fermée, moyenne, rôle
+  complet, doublon) — jamais un refus automatique, toujours une alerte pour le staff.
+  `category_closed` est le cas d'un dossier déposé sous une catégorie depuis fermée : sa
+  tranche d'âge n'existe plus, et `checkEligibility` le signale ainsi plutôt que d'annoncer
+  « hors de la tranche » avec des bornes vides.
 - `dedupeKey` : même nom + même date de naissance + même école **dans une édition** = doublon.
 
 ## Écran admin — Éditions, quotas, candidatures
@@ -243,9 +276,11 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   `GET /editions/:slug`, qui renvoie le détail complet aux rôles `staff`/`admin`) :
   - Présentation : titre, description (fr/ar), saison, fenêtre d'inscription, lieu, frais,
     moyenne minimale — édition en place via `PATCH /editions/:id`.
-  - Quotas : capacité par catégorie (lycée/université) et par rôle (buteur/défenseur), avec
-    une jauge (`AreneMeter`) comparant places utilisées / places ouvertes
-    (`GET /editions/:id/stats` → `seats`), et un formulaire pour ajuster les quotas.
+  - Quotas : capacité de la seule catégorie ouverte (université) par rôle (buteur/défenseur),
+    avec une jauge (`AreneMeter`) comparant places utilisées / places ouvertes
+    (`GET /editions/:id/stats` → `seats`), et un formulaire pour ajuster les quotas. Une édition
+    antérieure à la fermeture de la catégorie Lycée en garde les quotas en base : ils ne sont
+    plus modifiables, et l'API ne les accepterait pas davantage en écriture.
   - Candidatures : tunnel de statuts (`AreneBarChart`) du dépôt au podium, total de dossiers,
     lien direct vers `/staff/dossiers?editionId=<id>` pour la liste détaillée des dossiers de
     **cette** édition précisément (le filtre `editionId` de query string prime sur l'édition
@@ -280,6 +315,18 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
   et l'écran d'agenda pour une différence qui tient dans un champ.
 - **Pas de rôle parent** : le candidat est titulaire de son dossier. Le parent n'existe que
   comme numéro de contact.
+- **L'axe `ageCategory` survit à la fermeture de la catégorie Lycée** : une seule valeur reste
+  (`AGE_CATEGORIES = ['universite']`) mais le champ, les plafonds par catégorie et les boucles
+  des services restent en place — voir « Un seul public ». Supprimer l'axe aurait réécrit
+  `results.service`, `slots.service`, les agrégations de classement et six écrans pour une
+  valeur unique.
+- **Le classement des écoles n'est plus scindé par niveau d'établissement** : tous les candidats
+  venant du supérieur, `results.service.schoolRankings` rend un seul tableau (`total`,
+  `perPlayer`) au lieu de deux listes dont l'une serait toujours vide. Le cache change de nom au
+  passage (`rankings.schoolsRanking`), et il est **déclaré** dans `editions.model.js` : une voie
+  absente du schéma ne se relit pas à travers le document, si bien que l'ancien
+  `schoolsByCategory` valait toujours `undefined` à la lecture et que la route recalculait à
+  chaque visite en annonçant pourtant `cached: true`.
 
 ## Écarts à combler (cible produit non encore implémentée)
 
@@ -294,7 +341,7 @@ le code**. Ne pas les décrire comme faits.
    `inscription/formulaire.vue`, les locales fr/ar, et `exportRows` (colonne CSV).
 2. **Discipline de l'édition (sportive / intellectuelle)** — `Edition` n'a ni `type` ni
    `discipline`. Toute la mécanique de compétition est écrite pour le 1v1 football :
-   `PLAYER_ROLES = ['striker','defender']`, `capacity.{lycee,universite}.{striker,defender}`,
+   `PLAYER_ROLES = ['striker','defender']`, `capacity.universite.{striker,defender}`,
    `ATTEMPTS_PER_MATCH`, `OPPONENTS_PER_STRIKER`, `MATCH_PHASES`, `ATTEMPT_OUTCOMES`,
    `SCHOOL_POINTS` (tous dans `packages/shared/src/constants.js`), plus `results.service`. Une
    édition intellectuelle demandera au minimum un `Edition.discipline` et de rendre les rôles,

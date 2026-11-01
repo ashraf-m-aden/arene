@@ -14,15 +14,24 @@ import { DEFAULT_TEMPLATES } from './modules/notifications/notifications.templat
 /**
  * Jeu de démonstration : un administrateur, un staff, un candidat,
  * une édition ouverte avec ses créneaux, et un référentiel d'écoles.
- * Idempotent : relancer le script ne duplique rien.
+ * Idempotent : relancer le script ne duplique rien — à la réserve près que les
+ * créneaux sont reconnus par leur libellé, donc en renommer un en crée un
+ * nouveau à côté de l'ancien sur une base déjà semée.
+ */
+
+/*
+ * Les lycees restent dans le referentiel — il decrit les etablissements du pays
+ * et les classements des editions passees les citent — mais ils n'ouvrent plus
+ * de categorie : seuls les etablissements du superieur peuvent porter un
+ * dossier, d'ou leur nombre ici.
  */
 const SCHOOLS = [
-  { fr: 'Lycée d’État de Djibouti', ar: 'ثانوية جيبوتي الحكومية', type: 'lycee' },
-  { fr: 'Lycée Industriel et Commercial', ar: 'الثانوية الصناعية والتجارية', type: 'lycee' },
-  { fr: 'Lycée de Balbala', ar: 'ثانوية بلبلا', type: 'lycee' },
-  { fr: 'Lycée Français de Djibouti', ar: 'الثانوية الفرنسية بجيبوتي', type: 'lycee' },
   { fr: 'Université de Djibouti', ar: 'جامعة جيبوتي', type: 'universite' },
-  { fr: 'Institut Supérieur des Sciences de la Santé', ar: 'المعهد العالي لعلوم الصحة', type: 'universite' }
+  { fr: 'Institut Supérieur des Sciences de la Santé', ar: 'المعهد العالي لعلوم الصحة', type: 'universite' },
+  { fr: 'ISCAE Djibouti', ar: 'المعهد العالي للتجارة والإدارة', type: 'universite' },
+  { fr: 'Institut africain de Djibouti', ar: 'المعهد الأفريقي بجيبوتي', type: 'universite' },
+  { fr: 'Lycée d’État de Djibouti', ar: 'ثانوية جيبوتي الحكومية', type: 'lycee' },
+  { fr: 'Lycée Industriel et Commercial', ar: 'الثانوية الصناعية والتجارية', type: 'lycee' }
 ]
 
 async function upsertUser({ email, phone, role, name, locale = 'fr' }) {
@@ -105,11 +114,10 @@ async function main() {
       startsAt: new Date(now.getTime() + 37 * 86400000),
       endsAt: new Date(now.getTime() + 39 * 86400000),
       capacity: {
-        lycee: { striker: 200, defender: 200 },
-        universite: { striker: 150, defender: 150 }
+        universite: { striker: 200, defender: 200 }
       },
       fee: 1000,
-      ageCategories: ['lycee', 'universite'],
+      ageCategories: ['universite'],
       rules: { gradeThreshold: 12, requiresOriginalBulletin: true },
       venue: {
         name: 'Stade du Ville Djibouti',
@@ -132,16 +140,20 @@ async function main() {
    *
    * Une session porte un plafond par role : les rencontres opposent un buteur a
    * un defenseur, une session qui n'aurait qu'un camp n'en produirait aucune.
+   *
+   * Aucun creneau ne declare de categorie : l'edition n'en compte qu'une, tout
+   * le monde passe par les memes rendez-vous. La rencontre generee prend alors
+   * la categorie des joueurs presents.
    */
   const slotPlan = [
-    { kind: 'checkin', label: 'Validation — Lycée, matin', ageCategory: 'lycee', day: 29, hour: 8 },
-    { kind: 'checkin', label: 'Validation — Lycée, après-midi', ageCategory: 'lycee', day: 29, hour: 15 },
-    { kind: 'checkin', label: 'Validation — Université, matin', ageCategory: 'universite', day: 30, hour: 8 },
-    { kind: 'checkin', label: 'Validation — Université, après-midi', ageCategory: 'universite', day: 30, hour: 15 },
-    { kind: 'competition', label: 'Qualifications — Lycée, matin', ageCategory: 'lycee', day: 37, hour: 8 },
-    { kind: 'competition', label: 'Qualifications — Lycée, après-midi', ageCategory: 'lycee', day: 37, hour: 16 },
-    { kind: 'competition', label: 'Qualifications — Université, matin', ageCategory: 'universite', day: 38, hour: 8 },
-    { kind: 'competition', label: 'Qualifications — Université, après-midi', ageCategory: 'universite', day: 38, hour: 16 }
+    { kind: 'checkin', label: 'Validation — jour 1, matin', day: 29, hour: 8 },
+    { kind: 'checkin', label: 'Validation — jour 1, après-midi', day: 29, hour: 15 },
+    { kind: 'checkin', label: 'Validation — jour 2, matin', day: 30, hour: 8 },
+    { kind: 'checkin', label: 'Validation — jour 2, après-midi', day: 30, hour: 15 },
+    { kind: 'competition', label: 'Qualifications — jour 1, matin', day: 37, hour: 8 },
+    { kind: 'competition', label: 'Qualifications — jour 1, après-midi', day: 37, hour: 16 },
+    { kind: 'competition', label: 'Qualifications — jour 2, matin', day: 38, hour: 8 },
+    { kind: 'competition', label: 'Qualifications — jour 2, après-midi', day: 38, hour: 16 }
   ]
 
   for (const plan of slotPlan) {
@@ -155,7 +167,6 @@ async function main() {
         editionId: edition._id,
         kind: plan.kind,
         label: plan.label,
-        ageCategory: plan.ageCategory,
         startsAt,
         endsAt,
         capacity: competition
