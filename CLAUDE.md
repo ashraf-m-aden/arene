@@ -114,6 +114,14 @@ l'autre. Affichage public : premier nom + initiales des suivants
      (`registrations.service.submit`) mais `playerStepSchema` le laisse optionnel, pour qu'une
      étape s'enregistre avant que le fichier soit déposé. C'est la pièce que le staff compare au
      visage présenté au rendez-vous : sans elle, le contrôle d'identité n'a rien à comparer.
+   - **Le portrait se prend ou se choisit**, comme le bulletin. Le champ portait un
+     `capture="user"` qui ouvrait la caméra frontale d'autorité, alors que le bouton annonce
+     « prendre ou choisir une photo » : sur un téléphone, la galerie était inatteignable. Sans
+     cet attribut, le sélecteur du système offre les deux. En échange, le fichier reçu n'est
+     plus un cliché compressé mais parfois une photo de galerie de dix mégaoctets : l'écran la
+     réduit donc avant l'envoi (`useImageDownscale`, 1800 px de côté), sous la limite du serveur
+     (8 Mo pour un portrait) et sans les métadonnées EXIF, position GPS comprise. Le bulletin
+     n'est **pas** réduit : c'est une page de notes que le staff doit pouvoir lire.
    - **Aucune signature numérique.** Les autorisations (`consents`) sont de simples cases à
      cocher (participation, droit à l'image, vidéos monétisées, authenticité du bulletin). Il
      n'y a pas de champ « nom du signataire » : le contrat se signe plus tard, sur place, sur

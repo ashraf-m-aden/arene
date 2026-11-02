@@ -162,6 +162,8 @@ watch(
 )
 
 /* ── Étape 2 : fichiers ──────────────────────────────────────────────── */
+const { downscale } = useImageDownscale()
+
 async function onFile(event: Event, kind: 'bulletin' | 'photo') {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -169,12 +171,23 @@ async function onFile(event: Event, kind: 'bulletin' | 'photo') {
   uploading.value = kind
   uploadError.value = ''
   try {
-    await store.uploadFile(file, kind)
-    if (kind === 'photo') showPreview(URL.createObjectURL(file))
+    /*
+     * Le portrait est reduit avant l'envoi : choisi dans la galerie, il peut
+     * peser plus que la limite du serveur. Le bulletin n'y passe pas — c'est
+     * une page de notes que le staff doit pouvoir lire, et la reduire reviendrait
+     * a brouiller une moyenne.
+     */
+    const payload = kind === 'photo' ? await downscale(file) : file
+    await store.uploadFile(payload, kind)
+    // L'apercu montre ce qui a reellement ete envoye, pas le fichier d'origine.
+    if (kind === 'photo') showPreview(URL.createObjectURL(payload))
   } catch (error: any) {
     uploadError.value = error.message
   } finally {
     uploading.value = ''
+    // Rechoisir le meme fichier doit relancer l'envoi : sans cela, `change`
+    // ne se declenche pas une seconde fois apres un echec.
+    input.value = ''
   }
 }
 
@@ -360,8 +373,12 @@ function back() {
             </AreneField>
 
             <!-- Photo du visage, distincte du bulletin scanné : c'est elle qui
-                 s'affiche à l'écran du staff au scan du badge. `capture="user"`
-                 ouvre directement la caméra frontale sur un téléphone. -->
+                 s'affiche à l'écran du staff au scan du badge.
+
+                 Pas de `capture="user"` : l'attribut ouvrait la caméra frontale
+                 d'autorité, là où le bouton promet « prendre ou choisir ». Sans
+                 lui, le sélecteur du téléphone offre les deux — la galerie et
+                 l'appareil —, exactement comme pour le bulletin. -->
             <AreneField
               :label="$t('registrations.player.photo')"
               :hint="$t('registrations.player.photoHint')"
@@ -376,7 +393,6 @@ function back() {
                   id="photo"
                   type="file"
                   accept="image/*"
-                  capture="user"
                   hidden
                   @change="onFile($event, 'photo')"
                 >
