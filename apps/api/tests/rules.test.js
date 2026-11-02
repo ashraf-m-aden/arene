@@ -10,6 +10,7 @@ import {
   computeMatchScore,
   generateMatches,
   isAgeEligible,
+  openCategories,
   rankDefenders,
   rankStrikers,
   toE164
@@ -41,6 +42,31 @@ describe('âge et catégorie', () => {
   it('refuse un âge hors bornes', () => {
     expect(isAgeEligible('2010-01-01', 'universite', REF)).toBe(false) // 16 ans
     expect(isAgeEligible('2000-01-01', 'universite', REF)).toBe(false) // 26 ans
+  })
+})
+
+describe('catégories encore ouvertes', () => {
+  /*
+   * Une edition creee avant la fermeture de la categorie Lycee en garde la
+   * trace tant que la migration n'a pas tourne. Sans ce filtre, le tableau de
+   * bord affichait une carte « Lycee » a zero place, pour un public qui ne peut
+   * plus s'inscrire.
+   */
+  it('écarte une catégorie fermée d’une édition non migrée', () => {
+    expect(openCategories({ ageCategories: ['lycee', 'universite'] })).toEqual(['universite'])
+  })
+
+  it('laisse intacte une édition déjà migrée', () => {
+    expect(openCategories({ ageCategories: ['universite'] })).toEqual(['universite'])
+  })
+
+  it('ne rend rien d’une édition qui n’ouvrait que la catégorie fermée', () => {
+    expect(openCategories({ ageCategories: ['lycee'] })).toEqual([])
+  })
+
+  it('supporte une édition sans catégories déclarées', () => {
+    expect(openCategories({})).toEqual([])
+    expect(openCategories(undefined)).toEqual([])
   })
 })
 

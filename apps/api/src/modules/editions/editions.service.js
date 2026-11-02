@@ -1,4 +1,9 @@
-import { canTransitionEdition, EDITION_TRANSITIONS, SEATS_REVEAL_RATIO } from '@arene/shared'
+import {
+  canTransitionEdition,
+  EDITION_TRANSITIONS,
+  openCategories,
+  SEATS_REVEAL_RATIO
+} from '@arene/shared'
 import { badRequest, conflict, notFound } from '../../core/errors.js'
 import { slugify } from '../../core/utils/text.js'
 import bus from '../../core/events.js'
@@ -48,14 +53,25 @@ export async function getCurrent() {
   return null
 }
 
-/** Places restantes par catégorie et par rôle, plafond moins les dossiers qui occupent un siège. */
+/**
+ * Places restantes par catégorie et par rôle, plafond moins les dossiers qui
+ * occupent un siège.
+ *
+ * Seules les catégories **encore ouvertes** sont comptées. Une édition créée
+ * avant la fermeture de la catégorie Lycée en garde la trace dans
+ * `ageCategories` tant que la migration `2026-11-edition-universitaire.js` n'a
+ * pas tourné : le tableau de bord affichait alors une carte « Lycée » à zéro
+ * place, pour un public qui ne peut plus s'inscrire. Filtrer ici et non dans
+ * l'écran corrige d'un coup le tableau de bord, la page publique d'une édition
+ * et le compteur de l'accueil, qui lisent tous cette même réponse.
+ */
 export async function seatsLeft(editionId) {
   const edition = await getById(editionId)
   const { countSeats } = await registrationsService()
   const taken = await countSeats(editionId)
 
   const result = {}
-  for (const category of edition.ageCategories) {
+  for (const category of openCategories(edition)) {
     result[category] = {}
     for (const role of ['striker', 'defender']) {
       const capacity = edition.capacity?.[category]?.[role] ?? 0

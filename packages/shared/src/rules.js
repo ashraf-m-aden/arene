@@ -47,6 +47,18 @@ export function categoryFromSchoolType(schoolType) {
   return AGE_CATEGORIES.find((category) => category === schoolType) ?? null
 }
 
+/**
+ * Catégories qu'une édition ouvre **encore**.
+ *
+ * Une édition créée avant la fermeture d'une catégorie en garde la trace dans
+ * `ageCategories` tant que la migration n'est pas passée. Croiser avec
+ * `AGE_CATEGORIES` évite d'annoncer des places, un quota ou une carte de
+ * tableau de bord pour un public qui ne peut plus s'inscrire.
+ */
+export function openCategories(edition) {
+  return (edition?.ageCategories || []).filter((category) => AGE_CATEGORIES.includes(category))
+}
+
 export function isAgeEligible(birthDate, ageCategory, reference = new Date()) {
   const range = AGE_RANGES[ageCategory]
   if (!range) return false
