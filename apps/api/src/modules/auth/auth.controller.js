@@ -6,6 +6,7 @@ import {
   signRefreshToken
 } from '../../core/middlewares/auth.js'
 import { asyncHandler, created, ok } from '../../core/utils/http.js'
+import { recordAudit } from '../../core/middlewares/audit.js'
 import * as service from './auth.service.js'
 
 /** Une session = un jeton d'accès court dans la réponse + un jeton de rafraîchissement en cookie. */
@@ -62,4 +63,41 @@ export const listStaff = asyncHandler(async (req, res) => {
 
 export const setStaffActive = asyncHandler(async (req, res) => {
   ok(res, await service.setActive(req.params.id, req.body.isActive !== false))
+})
+
+export const searchUsers = asyncHandler(async (req, res) => {
+  ok(res, await service.searchUsers(req.validatedQuery))
+})
+
+/** Aperçu d'impact d'une suppression de compte, tracé comme la suppression. */
+export const userDeletionImpact = asyncHandler(async (req, res) => {
+  const preview = await service.userDeletionImpact(req.params.id, req.user)
+  await recordAudit(req, 'user.deletion_preview', { kind: 'user', id: req.params.id })
+  ok(res, preview)
+})
+
+/**
+ * Suppression définitive d'un compte, tracée en deux temps comme celle d'un
+ * dossier : l'instantané avant (le compte disparu, son nom et son email ne se
+ * retrouvent plus nulle part), la confirmation après le succès — sans quoi une
+ * tentative refusée se lirait comme un effacement.
+ */
+export const destroyUser = asyncHandler(async (req, res) => {
+  const target = { kind: 'user', id: req.params.id }
+  const preview = await service.userDeletionImpact(req.params.id, req.user)
+  await recordAudit(req, 'user.delete_requested', target, {
+    reason: req.body.reason,
+    forced: Boolean(req.body.force),
+    snapshot: preview.user,
+    impact: preview.impact,
+    blockers: [...preview.hard, ...preview.blockers].map((blocker) => blocker.code)
+  })
+
+  const result = await service.destroyUser(req.params.id, req.user, req.body)
+  await recordAudit(req, 'user.delete', target, {
+    email: preview.user.email,
+    reason: req.body.reason,
+    forced: Boolean(req.body.force)
+  })
+  ok(res, result)
 })

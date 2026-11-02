@@ -8,6 +8,7 @@ import {
 import { badRequest, conflict, forbidden, notFound } from '../../core/errors.js'
 import { dedupeKey as buildDedupeKey, toCsv } from '../../core/utils/text.js'
 import bus from '../../core/events.js'
+import logger from '../../core/logger.js'
 import { Registration } from './registrations.model.js'
 
 const editionsService = () => import('../editions/editions.service.js')
@@ -769,6 +770,193 @@ export async function listForRanking(editionId) {
   return Registration.find({ editionId })
     .populate('schoolId', 'name slug type city')
     .select('schoolId role ageCategory status')
+}
+
+/* ─── Suppression définitive d'un dossier ─── */
+
+/**
+ * Actes qu'un compte a posés sur le dossier d'autrui : vérification,
+ * encaissement, contrat signé, pointage, et toute ligne d'historique qu'il
+ * porte.
+ *
+ * `history.by` est volontairement compté sur les dossiers dont le compte n'est
+ * pas le candidat : un candidat signe l'historique de son propre dossier à
+ * chaque étape, et ce n'est pas un acte de staff — ce dossier part de toute
+ * façon avec lui.
+ */
+export async function countActsBy(userId) {
+  return Registration.countDocuments({
+    candidateId: { $ne: userId },
+    $or: [
+      { reviewedBy: userId },
+      { 'payment.receivedBy': userId },
+      { 'contract.signedBy': userId },
+      { checkedInBy: userId },
+      { 'history.by': userId }
+    ]
+  })
+}
+
+const resultsService = () => import('../results/results.service.js')
+const slotsService = () => import('../slots/slots.service.js')
+const notificationsService = () => import('../notifications/notifications.service.js')
+const galleriesService = () => import('../galleries/galleries.service.js')
+const filesService = () => import('../files/files.service.js')
+
+/**
+ * Référence que l'administrateur doit retaper pour confirmer : les six derniers
+ * caractères de l'identifiant, en majuscules — le numéro imprimé sur le badge
+ * et repris dans l'alerte envoyée à l'organisation. Court, visible à l'écran, et
+ * propre à ce dossier : on ne confirme pas la suppression d'un dossier en
+ * croyant en viser un autre.
+ */
+export function deletionReference(registration) {
+  return String(registration._id).slice(-6).toUpperCase()
+}
+
+/**
+ * Ce qu'une suppression emporterait, et ce qui s'y oppose.
+ *
+ * Toujours appelé avant l'ordre de suppression, par l'écran comme par le
+ * service : un effacement définitif ne se décide pas sur un libellé de bouton,
+ * mais sur la liste de ce qui disparaît.
+ */
+export async function deletionImpact(id) {
+  const registration = await getById(id)
+  const [results, slots, notifications, galleries] = await Promise.all([
+    resultsService(),
+    slotsService(),
+    notificationsService(),
+    galleriesService()
+  ])
+
+  const [matches, checkinOperations, messages, galleryItems] = await Promise.all([
+    results.countForRegistration(registration._id),
+    slots.countCheckinOperations(registration._id),
+    notifications.countForRegistration(registration._id),
+    galleries.countIdentifications(registration._id)
+  ])
+
+  const files = [registration.player?.photoFileId, registration.grades?.bulletinFileId].filter(
+    Boolean
+  ).length
+
+  /*
+   * Deux blocages, et tous deux relevent d'un arbitrage humain plutot que d'un
+   * interdit : c'est pourquoi `force` les leve, en les consignant.
+   *
+   * Une rencontre jouee a fait les points de l'adversaire et ceux de son ecole.
+   * Des frais encaisses figurent dans le rapport de caisse du creneau, qui ne
+   * se recoupera plus avec les dossiers presents.
+   */
+  const blockers = []
+  if (matches.played > 0) {
+    blockers.push({ code: 'fileAlreadyCompeted', detail: { played: matches.played } })
+  }
+  if (registration.payment?.status === 'paid') {
+    blockers.push({
+      code: 'paymentReceived',
+      detail: { amount: registration.payment?.amount ?? 0 }
+    })
+  }
+
+  return {
+    registration: {
+      id: registration._id,
+      reference: deletionReference(registration),
+      name: registration.player?.name || '',
+      status: registration.status,
+      bibNumber: registration.bibNumber ?? null,
+      editionId: registration.editionId,
+      school: registration.schoolId ? registration.schoolId.name : null,
+      payment: {
+        status: registration.payment?.status ?? 'due',
+        amount: registration.payment?.amount ?? 0
+      }
+    },
+    impact: {
+      matches: matches.total,
+      playedMatches: matches.played,
+      files,
+      messages,
+      checkinOperations,
+      galleryItems
+    },
+    blockers,
+    confirm: deletionReference(registration)
+  }
+}
+
+/**
+ * Efface un dossier et tout ce qui le désigne. Irréversible, et réservé à
+ * l'administrateur.
+ *
+ * L'ordre des opérations n'est pas indifférent. Les fichiers partent d'abord —
+ * c'est le seul effacement qui sort de la base, et le dossier reste là pour les
+ * retrouver si le stockage refuse. Le dossier lui-même part en dernier : tant
+ * qu'il existe, l'opération est reprenable.
+ *
+ * Aucune transaction : Mongo n'en offre pas sans jeu de réplicas, et la
+ * production n'en a pas. Une panne au milieu laisse donc un dossier amputé
+ * plutôt qu'un dossier intact — préférable à l'inverse (des rencontres
+ * orphelines pointant un dossier disparu), et le journal d'audit dit où
+ * l'opération s'est arrêtée.
+ */
+export async function destroy(id, actor, { reason, confirm, force = false }) {
+  const preview = await deletionImpact(id)
+
+  if (String(confirm).trim() !== preview.confirm) {
+    throw badRequest(
+      `La confirmation attendue est « ${preview.confirm} »`
+    ).withKey('deletionConfirmMismatch')
+  }
+
+  if (preview.blockers.length && !force) {
+    throw conflict('Ce dossier ne peut pas être supprimé sans confirmation explicite', {
+      blockers: preview.blockers
+    }).withKey(preview.blockers[0].code)
+  }
+
+  const registration = await getById(id)
+  const [results, slots, notifications, galleries, files, editions] = await Promise.all([
+    resultsService(),
+    slotsService(),
+    notificationsService(),
+    galleriesService(),
+    filesService(),
+    editionsService()
+  ])
+
+  for (const fileId of [registration.player?.photoFileId, registration.grades?.bulletinFileId]) {
+    if (fileId) await files.remove(fileId)
+  }
+
+  await results.deleteForRegistration(registration._id)
+  await slots.deleteCheckinOperations(registration._id)
+  await notifications.deleteForRegistration(registration._id)
+  await galleries.removeIdentification(registration._id)
+
+  const editionId = registration.editionId
+  await registration.deleteOne()
+
+  /*
+   * Le classement en cache nommait ce joueur et comptait ses points pour son
+   * ecole. Il est vide plutot que recalcule : l'agregation retombera au premier
+   * appel des pages publiques.
+   */
+  await editions.clearRankingsCache(editionId)
+
+  /*
+   * Journal d'exploitation, distinct du journal d'audit que le controleur ecrit :
+   * celui-la sert a comprendre un incident dans les minutes qui suivent, l'autre
+   * a repondre « qui a supprime ce dossier, et pourquoi » des mois plus tard.
+   */
+  logger.warn(
+    { registrationId: String(id), actorId: actor?.id, forced: force, impact: preview.impact },
+    'dossier supprimé définitivement'
+  )
+
+  return { deleted: true, ...preview, forced: Boolean(force), reason }
 }
 
 /** Consentement au droit à l'image, par identifiant de dossier. */

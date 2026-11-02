@@ -404,6 +404,9 @@ useSeoPage({
             </div>
           </dl>
 
+          <!-- Le montant seul laissait croire à un paiement en ligne. -->
+          <p class="scoreboard__note">{{ $t('editions.feeOnSite') }}</p>
+
           <NuxtLink
             :to="localePath(`/editions/${edition.slug}`)"
             class="btn btn--ghost btn--block btn--sm"

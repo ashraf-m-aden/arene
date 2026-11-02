@@ -130,6 +130,8 @@ useSeoPage({
               <span>{{ $t('registrations.originalBulletin') }}</span>
             </li>
           </ul>
+          <!-- Le montant seul laissait croire à un paiement en ligne. -->
+          <p class="muted">{{ $t('editions.feeOnSite') }}</p>
           <NuxtLink :to="localePath(`/editions/${edition.slug}/reglement`)" class="btn btn--ghost btn--sm">
             {{ $t('home.ctaRules') }}
           </NuxtLink>

@@ -131,6 +131,20 @@
   }
 }
 
+/**
+ * Action destructive et irréversible : suppression définitive d'un dossier ou
+ * d'un compte. Pleine couleur, pas une variante discrète — un bouton qui efface
+ * doit se distinguer au premier regard de celui qui enregistre.
+ */
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+
+  &:hover {
+    filter: brightness(0.92);
+  }
+}
+
 .btn--ghost {
   background: transparent;
   color: inherit;

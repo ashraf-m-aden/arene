@@ -138,3 +138,205 @@ export async function getById(id) {
   if (!user) throw notFound('Compte introuvable').withKey('accountNotFound')
   return user
 }
+
+/* ─── Suppression définitive d'un compte ─── */
+
+const registrationsService = () => import('../registrations/registrations.service.js')
+const resultsService = () => import('../results/results.service.js')
+const slotsService = () => import('../slots/slots.service.js')
+const notificationsService = () => import('../notifications/notifications.service.js')
+const editionsService = () => import('../editions/editions.service.js')
+const filesService = () => import('../files/files.service.js')
+
+/**
+ * Recherche de comptes pour l'écran d'administration — tous rôles confondus.
+ *
+ * `listStaff` ne montre que l'organisation ; supprimer le compte d'un candidat
+ * suppose de pouvoir le retrouver, et il n'y a pas d'écran qui les liste. La
+ * recherche porte sur le nom, l'email et le téléphone, et le motif est échappé :
+ * un nom contenant un point ne doit pas se mettre à filtrer n'importe quoi.
+ */
+export async function searchUsers({ q, role, limit = 25 } = {}) {
+  const filter = {}
+  if (role) filter.role = role
+  if (q) {
+    const safe = String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const pattern = new RegExp(safe, 'i')
+    filter.$or = [{ name: pattern }, { email: pattern }, { phone: pattern }]
+  }
+  return User.find(filter).sort({ createdAt: -1 }).limit(limit)
+}
+
+/**
+ * Nombre d'actes qu'un compte a posés sur le dossier d'autrui : vérifications,
+ * encaissements, contrats signés, pointages, scores saisis, transitions
+ * d'édition, mises en liste de suppression.
+ *
+ * C'est le compteur qui décide qu'un compte n'est pas supprimable. Un dossier
+ * garde dans son historique qui l'a accepté et qui a encaissé ses frais ;
+ * effacer ce compte laisserait ces lignes pointer un fantôme, et l'historique
+ * d'un dossier est précisément ce qui permet de répondre « qui a validé ça ? »
+ * des mois plus tard. Pour retirer l'accès d'un membre de l'organisation, il y a
+ * la désactivation, qui préserve la trace.
+ */
+async function countStaffActs(userId) {
+  const [registrations, results, slots, editions, notifications] = await Promise.all([
+    registrationsService(),
+    resultsService(),
+    slotsService(),
+    editionsService(),
+    notificationsService()
+  ])
+
+  const counts = await Promise.all([
+    registrations.countActsBy(userId),
+    results.countEnteredBy(userId),
+    slots.countCheckinOperationsByStaff(userId),
+    editions.countHistoryBy(userId),
+    notifications.countSuppressionsBy(userId)
+  ])
+  return counts.reduce((sum, count) => sum + count, 0)
+}
+
+/**
+ * Ce que la suppression d'un compte emporterait, et ce qui s'y oppose.
+ *
+ * Les blocages se lisent en deux familles. Les `hard` ne se forcent pas : se
+ * supprimer soi-même, retirer le dernier administrateur, effacer un compte qui
+ * porte l'histoire des dossiers d'autrui. Les autres viennent des dossiers du
+ * compte et se lèvent avec `force`, comme pour une suppression de dossier.
+ */
+export async function userDeletionImpact(id, actor) {
+  const user = await getById(id)
+  const [registrations, notifications, files] = await Promise.all([
+    registrationsService(),
+    notificationsService(),
+    filesService()
+  ])
+
+  const own = await registrations.listMine(user._id)
+  const perRegistration = []
+  for (const registration of own) {
+    const preview = await registrations.deletionImpact(registration._id)
+    perRegistration.push({
+      id: preview.registration.id,
+      reference: preview.registration.reference,
+      status: preview.registration.status,
+      blockers: preview.blockers,
+      impact: preview.impact
+    })
+  }
+
+  const [messages, ownedFiles, staffActs, activeAdmins] = await Promise.all([
+    notifications.countForUser(user._id),
+    files.countOwnedBy(user._id),
+    countStaffActs(user._id),
+    User.countDocuments({ role: 'admin', isActive: true })
+  ])
+
+  const hard = []
+  if (actor?.id && String(actor.id) === String(user._id)) {
+    hard.push({ code: 'cannotDeleteSelf' })
+  }
+  if (user.role === 'admin' && user.isActive && activeAdmins <= 1) {
+    hard.push({ code: 'lastActiveAdmin' })
+  }
+  if (staffActs > 0) {
+    hard.push({ code: 'accountHasHistory', detail: { acts: staffActs } })
+  }
+
+  const blockers = perRegistration.flatMap((row) =>
+    row.blockers.map((blocker) => ({ ...blocker, registration: row.reference }))
+  )
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email ?? null,
+      phone: user.phone ?? null,
+      role: user.role,
+      isActive: user.isActive
+    },
+    impact: {
+      registrations: perRegistration.length,
+      messages,
+      files: ownedFiles,
+      staffActs
+    },
+    registrations: perRegistration,
+    hard,
+    blockers,
+    /*
+     * L'email est la reference a retaper : c'est ce qui identifie un compte sans
+     * ambiguite, la ou deux candidats peuvent porter le meme nom. Repli sur le
+     * telephone, puis sur le nom, pour les comptes anciens sans adresse.
+     */
+    confirm: user.email || user.phone || user.name
+  }
+}
+
+/**
+ * Efface un compte, ses dossiers et ses fichiers. Irréversible, et réservé à
+ * l'administrateur.
+ *
+ * Note sur l'accès : le compte parti, le renouvellement de session échoue
+ * aussitôt (`refresh` relit le compte en base), mais le jeton d'accès déjà
+ * délivré reste valable jusqu'à son expiration — un quart d'heure par défaut,
+ * `ACCESS_TOKEN_TTL`. Les jetons ne sont pas vérifiés en base à chaque requête,
+ * et ce n'est pas cette fonctionnalité qui va changer ce choix.
+ */
+export async function destroyUser(id, actor, { reason, confirm, force = false }) {
+  const preview = await userDeletionImpact(id, actor)
+
+  if (String(confirm).trim().toLowerCase() !== String(preview.confirm).trim().toLowerCase()) {
+    throw badRequest(
+      `La confirmation attendue est « ${preview.confirm} »`
+    ).withKey('deletionConfirmMismatch')
+  }
+
+  // Les blocages structurels ne se forcent pas : `force` ne les regarde meme pas.
+  if (preview.hard.length) {
+    throw conflict('Ce compte ne peut pas être supprimé', { blockers: preview.hard }).withKey(
+      preview.hard[0].code
+    )
+  }
+
+  if (preview.blockers.length && !force) {
+    throw conflict('Les dossiers de ce compte s’opposent à la suppression', {
+      blockers: preview.blockers
+    }).withKey(preview.blockers[0].code)
+  }
+
+  const user = await getById(id)
+  const [registrations, notifications, files] = await Promise.all([
+    registrationsService(),
+    notificationsService(),
+    filesService()
+  ])
+
+  /*
+   * Les dossiers d'abord, chacun par le meme chemin qu'une suppression unitaire
+   * — fichiers, rencontres, messages, galeries, cache de classement. La
+   * confirmation est deja faite au niveau du compte : on repasse celle que
+   * chaque dossier attend.
+   */
+  for (const row of preview.registrations) {
+    await registrations.destroy(row.id, actor, {
+      reason,
+      confirm: row.reference,
+      force: true
+    })
+  }
+
+  await notifications.deleteForUser(user._id)
+  await files.removeOwnedBy(user._id)
+  await user.deleteOne()
+
+  logger.warn(
+    { userId: String(id), actorId: actor?.id, forced: force, impact: preview.impact },
+    'compte supprimé définitivement'
+  )
+
+  return { deleted: true, ...preview, forced: Boolean(force), reason }
+}

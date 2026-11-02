@@ -625,6 +625,27 @@ export async function close(slotId, actorId) {
   return { slot, noShows }
 }
 
+/**
+ * Traces de pointage d'un dossier supprimé.
+ *
+ * Elles portent la clé d'idempotence du mode hors ligne : les garder après la
+ * disparition du dossier ferait échouer un rejeu tardif sur un dossier
+ * introuvable, en signalant un doublon là où il n'y a plus rien à encaisser.
+ */
+export async function countCheckinOperations(registrationId) {
+  return CheckinOperation.countDocuments({ registrationId })
+}
+
+export async function deleteCheckinOperations(registrationId) {
+  const result = await CheckinOperation.deleteMany({ registrationId })
+  return result.deletedCount ?? 0
+}
+
+/** Pointages effectués par un compte — un compte qui en porte n'est pas supprimable. */
+export async function countCheckinOperationsByStaff(userId) {
+  return CheckinOperation.countDocuments({ staffId: userId })
+}
+
 /** Rappel de convocation programmé la veille du créneau. */
 export function reminderDelayFor(slot) {
   const target = new Date(slot.startsAt).getTime() - 24 * 60 * 60 * 1000

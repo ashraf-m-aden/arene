@@ -111,9 +111,9 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
 
 | Module | Routes |
 | --- | --- |
-| Auth | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset`, `GET /auth/me` |
+| Auth | `POST /auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/password/forgot`, `/auth/password/reset`, `GET /auth/me`, `GET /auth/users`, `GET /auth/users/:id/deletion-impact`, `DELETE /auth/users/:id` |
 | Éditions | `GET /editions`, `/editions/current`, `/editions/:slug` · `POST /editions`, `PATCH /editions/:id`, `POST /editions/:id/transition`, `GET /editions/:id/stats` |
-| Inscriptions | `POST /registrations`, `PATCH /registrations/:id`, `POST /registrations/:id/submit`, `GET /registrations/mine`, `GET /registrations`, `POST /registrations/:id/review`, `GET /registrations/:id/badge`, `GET /registrations/export` |
+| Inscriptions | `POST /registrations`, `PATCH /registrations/:id`, `POST /registrations/:id/submit`, `GET /registrations/mine`, `GET /registrations`, `POST /registrations/:id/review`, `GET /registrations/:id/badge`, `GET /registrations/export`, `GET /registrations/:id/deletion-impact`, `DELETE /registrations/:id` |
 | Écoles | `GET /schools`, `GET /schools/:slug`, `POST /schools`, `PATCH /schools/:id`, `POST /schools/:id/merge`, `POST /schools/import` |
 | Créneaux et check-in | `GET /editions/:id/slots`, `POST /slots`, `PATCH /slots/:id`, `POST /slots/:id/assign`, `GET /slots/:id/roster`, `POST /checkin/scan`, `POST /checkin/:registrationId`, `POST /checkin/sync`, `GET /slots/:id/cash-report` |
 | Résultats | `POST /slots/:id/matches/generate`, `GET /slots/:id/matches`, `PUT /matches/:id/result`, `GET /editions/:id/rankings/players`, `GET /editions/:id/rankings/schools`, `POST /editions/:id/finals/select` |
@@ -145,6 +145,11 @@ Toutes les routes sont préfixées par `/api/v1`. Extrait :
   une clé d'idempotence et sont rejouées au retour du réseau sans double encaissement.
 - **Droit à l'image** : un participant n'est identifiable dans une galerie que si son dossier
   porte le consentement ; le service refuse l'identification sinon.
+- **Suppression définitive** d'un dossier ou d'un compte, réservée à l'administrateur : aperçu
+  chiffré de ce qui disparaît, motif obligatoire, référence à retaper vérifiée par le serveur,
+  cascade complète (pièces, rencontres, messages, galeries, cache de classement) et double
+  trace d'audit. Un compte qui a agi sur les dossiers d'autrui n'est pas supprimable — on le
+  désactive. Détail dans `CLAUDE.md`, « Supprimer définitivement ».
 
 ### Propres à la première édition (duels 1v1)
 
@@ -163,10 +168,12 @@ Ces règles sont aujourd'hui écrites en dur dans `packages/shared/src/constants
 Bulletins et photos d'identité vivent dans un stockage privé, servis uniquement par des liens
 signés de courte durée ; les métadonnées EXIF (dont la position GPS) sont supprimées à l'envoi.
 Les accès staff aux dossiers sont tracés (`AuditLog`). Les pages publiques n'affichent que le
-prénom, l'initiale du nom et l'école. Le candidat peut télécharger ou supprimer ses propres
-données depuis son espace ; la suppression retire aussi l'identification dans les galeries. À la
-clôture d'une édition, `registrations.anonymizeEdition` et `files.purgeEdition` effacent
-l'identité et les documents, en gardant les résultats.
+prénom, l'initiale du nom et l'école. Le candidat **télécharge** ses propres données depuis son
+espace (`GET /registrations/:id/data`) ; leur **effacement** se demande à l'organisation et
+s'exécute côté administrateur (voir `CLAUDE.md`, « Supprimer définitivement »), ce qui retire
+aussi l'identification dans les galeries. À la clôture d'une édition,
+`registrations.anonymizeEdition` et `files.purgeEdition` effacent l'identité et les documents, en
+gardant les résultats.
 
 Côté applicatif : validation Zod de chaque entrée, `helmet` avec CSP stricte, CORS limité au
 domaine du site, limitation de débit sur l'auth, l'inscription et l'envoi de fichiers, contrôle du
