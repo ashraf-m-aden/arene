@@ -166,6 +166,16 @@
   padding-block-end: var(--space-2);
 }
 
+/**
+ * Le pas est un bouton depuis qu'on peut y revenir d'un clic, et le `<li>` qui
+ * le porte n'a plus de mise en forme propre : sans cette règle il redevient un
+ * `list-item` et réaffiche la puce de la liste à côté de chaque pastille.
+ */
+.steps > li {
+  display: flex;
+  list-style: none;
+}
+
 .steps__item {
   display: flex;
   align-items: center;
@@ -189,6 +199,27 @@
     color: var(--color-text);
     font-size: var(--text-xs);
     font-weight: 700;
+  }
+}
+
+/**
+ * La frise est navigable : chaque pas est un bouton, qui n'emporte donc ni la
+ * bordure ni la police du navigateur. Désactivé, il garde l'apparence d'une
+ * simple étiquette — il dit « pas encore », pas « cliquez ici ».
+ */
+button.steps__item {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &:not(:disabled, .steps__item--active):hover,
+  &:not(:disabled, .steps__item--active):focus-visible {
+    color: var(--color-text);
+    background: var(--color-line);
   }
 }
 

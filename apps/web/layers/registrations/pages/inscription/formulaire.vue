@@ -201,8 +201,16 @@ const belowThreshold = computed(
 /* ── Navigation entre étapes ─────────────────────────────────────────── */
 const stepKeys = ['player', 'grades', 'consents', 'review'] as const
 
-const canContinue = computed(() => {
-  if (step.value === 1) {
+/**
+ * Une étape est « faite » quand ses champs obligatoires sont remplis.
+ *
+ * Se déduit du brouillon, et non d'un compteur de progression : le candidat qui
+ * revient en arrière, ferme l'onglet et revient le lendemain retrouve son
+ * parcours tel qu'il l'avait laissé, parce que c'est le dossier qui dit où il
+ * en est — pas une variable d'écran.
+ */
+function stepDone(target: number) {
+  if (target === 1) {
     return Boolean(
       store.draft.player.birthDate &&
         store.draft.player.gender &&
@@ -212,14 +220,32 @@ const canContinue = computed(() => {
         store.draft.player.photoFileId
     )
   }
-  if (step.value === 2) {
+  if (target === 2) {
     return store.draft.grades.average !== null && Boolean(store.draft.grades.bulletinFileId)
   }
-  if (step.value === 3) {
+  if (target === 3) {
     return Boolean(store.draft.consents.participation && store.draft.consents.bulletinAuthenticity)
   }
   return true
-})
+}
+
+const canContinue = computed(() => stepDone(step.value))
+
+/**
+ * Étapes où le candidat peut sauter directement.
+ *
+ * La première l'est toujours ; les suivantes dès que tout ce qui les précède
+ * est rempli. Revenir sur « Les notes » depuis le récapitulatif pour corriger
+ * une moyenne ne devrait pas demander trois clics sur « Étape précédente ».
+ */
+function reachable(target: number) {
+  // L'etape ou l'on se trouve ne se grise jamais, quel que soit l'etat du reste.
+  if (target === step.value) return true
+  for (let previous = 1; previous < target; previous += 1) {
+    if (!stepDone(previous)) return false
+  }
+  return true
+}
 
 async function next() {
   if (step.value < 4) {
@@ -235,9 +261,46 @@ async function next() {
   }
 }
 
-function back() {
-  if (step.value > 1) step.value = (step.value - 1) as 1 | 2 | 3
+/**
+ * Saut vers une autre étape, par la frise ou par le bouton « Étape précédente ».
+ *
+ * Quitter une étape valide l'enregistre : sans cela, une correction faite juste
+ * avant de revenir en arrière ne partait jamais au serveur. `back()` ne
+ * sauvegardait rien — le brouillon local masquait la perte jusqu'au prochain
+ * appareil.
+ *
+ * Un échec d'enregistrement retient le candidat s'il avance, parce que l'étape
+ * suivante travaille sur ce que le serveur a accepté. Il ne le retient pas s'il
+ * recule : revenir en arrière est souvent la réaction à un problème, et le
+ * brouillon reste de toute façon conservé localement.
+ */
+async function goTo(target: number) {
+  if (target === step.value || !reachable(target)) return
+
+  if (step.value < 4 && stepDone(step.value)) {
+    try {
+      await store.saveStep(step.value as 1 | 2 | 3)
+    } catch {
+      // Le message est deja porte par `store.error`.
+      if (target > step.value) return
+    }
+  }
+
+  step.value = target as 1 | 2 | 3 | 4
 }
+
+function back() {
+  if (step.value > 1) goTo(step.value - 1)
+}
+
+/*
+ * Changer d'etape remet la page en haut. Sur un telephone, sauter du
+ * recapitulatif a la premiere etape laissait le candidat au bas de l'ecran,
+ * devant des champs qu'il croyait avoir deja remplis.
+ */
+watch(step, () => {
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 </script>
 
 <template>
@@ -280,17 +343,30 @@ function back() {
           {{ $t('registrations.reopenWarning') }}
         </AreneNotice>
 
+        <!-- Frise navigable : toute étape dont les précédentes sont remplies se
+             rejoint d'un clic. La coche ne suit plus la position du candidat
+             mais l'état du dossier, pour qu'une étape déjà remplie reste
+             signalée après un retour en arrière. -->
         <ol class="steps" :aria-label="$t('registrations.pitchTitle')">
-          <li
-            v-for="(key, index) in stepKeys"
-            :key="key"
-            class="steps__item"
-            :class="{
-              'steps__item--active': step === index + 1,
-              'steps__item--done': step > index + 1
-            }"
-          >
-            {{ $t(`registrations.steps.${key}`) }}
+          <li v-for="(key, index) in stepKeys" :key="key">
+            <button
+              type="button"
+              class="steps__item"
+              :class="{
+                'steps__item--active': step === index + 1,
+                'steps__item--done': step !== index + 1 && stepDone(index + 1)
+              }"
+              :disabled="!reachable(index + 1)"
+              :aria-current="step === index + 1 ? 'step' : undefined"
+              :title="
+                reachable(index + 1)
+                  ? $t('registrations.stepNav.goTo', { step: $t(`registrations.steps.${key}`) })
+                  : $t('registrations.stepNav.locked')
+              "
+              @click="goTo(index + 1)"
+            >
+              {{ $t(`registrations.steps.${key}`) }}
+            </button>
           </li>
         </ol>
 
@@ -548,7 +624,7 @@ function back() {
 
           <div class="form__actions">
             <button v-if="step > 1" type="button" class="btn btn--ghost" @click="back">
-              {{ $t('common.back') }}
+              {{ $t('registrations.stepNav.previous') }}
             </button>
             <button
               type="submit"

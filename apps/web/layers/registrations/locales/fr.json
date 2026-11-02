@@ -23,6 +23,11 @@
       "consents": "Les autorisations",
       "review": "Récapitulatif"
     },
+    "stepNav": {
+      "previous": "Étape précédente",
+      "goTo": "Aller à l'étape « {step} »",
+      "locked": "Remplissez d'abord les étapes précédentes."
+    },
     "player": {
       "birthDate": "Date de naissance",
       "gender": "Genre",
