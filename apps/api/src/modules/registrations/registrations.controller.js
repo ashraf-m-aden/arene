@@ -66,6 +66,52 @@ export const exportCsv = asyncHandler(async (req, res) => {
   res.send(csv)
 })
 
+/**
+ * Aperçu d'impact : ce qu'une suppression emporterait, et ce qui s'y oppose.
+ * Consulté avant l'ordre de suppression ; il est aussi tracé, parce que
+ * demander l'impact d'un dossier, c'est déjà s'intéresser à son effacement.
+ */
+export const deletionImpact = asyncHandler(async (req, res) => {
+  const preview = await service.deletionImpact(req.params.id)
+  await recordAudit(req, 'registration.deletion_preview', {
+    kind: 'registration',
+    id: req.params.id
+  })
+  ok(res, preview)
+})
+
+/**
+ * Suppression définitive, tracée en deux temps.
+ *
+ * `…_requested` part **avant** l'effacement et porte l'instantané complet : une
+ * fois le dossier parti, plus rien ne permet de reconstituer qui il était. Il
+ * est écrit même si la suppression échoue ensuite — une confirmation qui ne
+ * correspond pas, un blocage non forcé —, et c'est voulu : une tentative sur un
+ * dossier mérite une ligne.
+ *
+ * `…delete` ne part qu'**après** le succès. Sans cette seconde ligne, une
+ * tentative refusée et un effacement réel se ressembleraient dans le journal.
+ */
+export const destroy = asyncHandler(async (req, res) => {
+  const target = { kind: 'registration', id: req.params.id }
+  const preview = await service.deletionImpact(req.params.id)
+  await recordAudit(req, 'registration.delete_requested', target, {
+    reason: req.body.reason,
+    forced: Boolean(req.body.force),
+    snapshot: preview.registration,
+    impact: preview.impact,
+    blockers: preview.blockers.map((blocker) => blocker.code)
+  })
+
+  const result = await service.destroy(req.params.id, req.user, req.body)
+  await recordAudit(req, 'registration.delete', target, {
+    reference: preview.registration.reference,
+    reason: req.body.reason,
+    forced: Boolean(req.body.force)
+  })
+  ok(res, result)
+})
+
 /** Mon espace : téléchargement de ses propres données (RGPD). */
 export const myData = asyncHandler(async (req, res) => {
   const registration = await service.getById(req.params.id, req.user)

@@ -63,6 +63,92 @@ async function toggleStaff(member: any) {
   }
 }
 
+/* ── Comptes : recherche tous rôles, et suppression définitive ────────── */
+
+/*
+ * `/auth/staff` ne montre que l'organisation. Supprimer le compte d'un candidat
+ * suppose de pouvoir le retrouver, et aucun ecran ne les listait : d'ou cette
+ * recherche, qui porte sur le nom, l'email et le telephone.
+ */
+const search = reactive({ q: '', role: '' })
+const found = ref<any[]>([])
+const searched = ref(false)
+const deletion = ref<any>(null)
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+async function runSearch() {
+  if (!search.q.trim() && !search.role) {
+    found.value = []
+    searched.value = false
+    return
+  }
+  error.value = ''
+  try {
+    const query = new URLSearchParams()
+    if (search.q.trim()) query.set('q', search.q.trim())
+    if (search.role) query.set('role', search.role)
+    const { data } = await $api.get<{ data: any[] }>(`/auth/users?${query}`)
+    found.value = data
+    searched.value = true
+  } catch (err: any) {
+    error.value = err.message
+  }
+}
+
+watch(
+  () => [search.q, search.role],
+  () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(runSearch, 350)
+  }
+)
+
+async function openDeletion(user: any) {
+  pending.value = true
+  error.value = ''
+  try {
+    const { data } = await $api.get<{ data: any }>(`/auth/users/${user._id}/deletion-impact`)
+    deletion.value = data
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    pending.value = false
+  }
+}
+
+/** Les blocages arrivent en codes ; `apiError.*` en porte déjà les phrases. */
+function blockerLabel(blocker: { code: string }) {
+  return t(`apiError.${blocker.code}`)
+}
+
+const deletionItems = computed(() => {
+  const impact = deletion.value?.impact
+  if (!impact) return []
+  return [
+    { label: t('danger.impactRegistrations'), value: impact.registrations },
+    { label: t('danger.impactMessages'), value: impact.messages },
+    { label: t('danger.impactFiles'), value: impact.files },
+    { label: t('danger.impactStaffActs'), value: impact.staffActs }
+  ]
+})
+
+async function confirmDeletion(payload: { reason: string; confirm: string; force: boolean }) {
+  if (!deletion.value) return
+  pending.value = true
+  error.value = ''
+  try {
+    await $api.delete(`/auth/users/${deletion.value.user.id}`, payload)
+    feedback.value = t('danger.deleted')
+    deletion.value = null
+    await Promise.all([load(), runSearch()])
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    pending.value = false
+  }
+}
+
 async function importSchools(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -133,14 +219,22 @@ async function importSchools(event: Event) {
                 </span>
               </td>
               <td>
-                <button class="btn btn--quiet btn--sm" @click="toggleStaff(member)">
-                  {{ member.isActive ? $t('admin.deactivate') : $t('admin.activate') }}
-                </button>
+                <div class="cluster">
+                  <button class="btn btn--quiet btn--sm" @click="toggleStaff(member)">
+                    {{ member.isActive ? $t('admin.deactivate') : $t('admin.activate') }}
+                  </button>
+                  <button class="btn btn--quiet btn--sm danger-link" @click="openDeletion(member)">
+                    {{ $t('danger.delete') }}
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- La désactivation n'est pas un demi-effacement : c'est l'outil normal. -->
+      <AreneNotice tone="info">{{ $t('admin.deactivateFirst') }}</AreneNotice>
 
       <form class="card card--flat staff-form" @submit.prevent="createStaff">
         <AreneField :label="$t('auth.name')" for="sName" required>
@@ -166,10 +260,87 @@ async function importSchools(event: Event) {
         </button>
       </form>
     </section>
+
+    <!-- Recherche de comptes, tous rôles : le seul chemin vers un candidat. -->
+    <section class="stack">
+      <h2>{{ $t('admin.accountsTitle') }}</h2>
+      <p class="muted">{{ $t('admin.accountsLead') }}</p>
+
+      <div class="two">
+        <AreneField :label="$t('admin.accountsSearch')" for="uq">
+          <input id="uq" v-model="search.q" class="input" type="search">
+        </AreneField>
+        <AreneField :label="$t('admin.accountsRole')" for="urole">
+          <select id="urole" v-model="search.role" class="select">
+            <option value="">{{ $t('common.all') }}</option>
+            <option value="candidate">candidate</option>
+            <option value="staff">staff</option>
+            <option value="admin">admin</option>
+          </select>
+        </AreneField>
+      </div>
+
+      <div v-if="found.length" class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ $t('auth.name') }}</th>
+              <th>{{ $t('auth.email') }}</th>
+              <th>{{ $t('auth.phone') }}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in found" :key="user._id">
+              <td>
+                <strong>{{ user.name }}</strong>
+                <span class="badge">{{ user.role }}</span>
+              </td>
+              <td>{{ user.email || '—' }}</td>
+              <td class="numeric">{{ user.phone || '—' }}</td>
+              <td>
+                <button class="btn btn--quiet btn--sm danger-link" @click="openDeletion(user)">
+                  {{ $t('danger.delete') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <AreneEmpty v-else-if="searched" :title="$t('admin.accountsEmpty')" />
+    </section>
+
+    <!-- Suppression définitive d'un compte : impact, avertissements, confirmation. -->
+    <AreneDangerPanel
+      v-if="deletion"
+      :title="`${$t('danger.delete')} — ${deletion.user.name}`"
+      :items="deletionItems"
+      :blockers="deletion.blockers.map((b: any) => ({ code: b.code, label: blockerLabel(b) }))"
+      :hard="deletion.hard.map((b: any) => ({ code: b.code, label: blockerLabel(b) }))"
+      :confirm-expected="deletion.confirm"
+      :pending="pending"
+      @confirm="confirmDeletion"
+      @cancel="deletion = null"
+    />
   </div>
 </template>
 
 <style scoped lang="scss">
+.two {
+  display: grid;
+  gap: var(--space-3);
+
+  @include from(sm) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/** Discret dans la grille, mais sans jamais se faire passer pour une action neutre. */
+.danger-link {
+  color: var(--color-danger);
+}
+
 .staff-form {
   display: grid;
   gap: var(--space-3);

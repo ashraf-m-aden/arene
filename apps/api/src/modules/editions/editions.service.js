@@ -167,3 +167,23 @@ export async function getRankingsCache(editionId) {
   const edition = await Edition.findById(editionId).select('rankings')
   return edition?.rankings || null
 }
+
+/**
+ * Vide le classement mis en cache.
+ *
+ * Appelé après la suppression d'un dossier : le cache nomme les joueurs et
+ * leurs écoles, et il citerait encore quelqu'un qui n'existe plus. Le vider
+ * plutôt que le recalculer sur place — le recalcul tombe au premier appel des
+ * pages publiques, et une suppression n'a pas à attendre une agrégation.
+ */
+export async function clearRankingsCache(editionId) {
+  await Edition.updateOne(
+    { _id: editionId },
+    { $set: { rankings: { schools: null, schoolsRanking: null, players: null, computedAt: null } } }
+  )
+}
+
+/** Transitions d'édition portées par un compte : un acte de staff. */
+export async function countHistoryBy(userId) {
+  return Edition.countDocuments({ 'history.by': userId })
+}

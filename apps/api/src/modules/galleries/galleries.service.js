@@ -142,6 +142,11 @@ export async function publish(id, isPublished = true) {
   return gallery
 }
 
+/** Galeries où ce joueur est nommément identifié. */
+export async function countIdentifications(registrationId) {
+  return Gallery.countDocuments({ 'items.featuredRegIds': registrationId })
+}
+
 /** Retire un joueur de toutes les galeries (suppression de données demandée par le candidat). */
 export async function removeIdentification(registrationId) {
   const result = await Gallery.updateMany(

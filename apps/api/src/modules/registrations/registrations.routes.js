@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import {
   common,
+  deletionSchema,
   registrationDraftSchema,
   registrationPatchSchema,
   registrationQuerySchema,
@@ -56,6 +57,26 @@ router.post(
   validate({ params: common.idParam, body: reviewSchema }),
   controller.review
 )
+/*
+ * Suppression definitive : l'administrateur seul. Le staff accepte, refuse,
+ * demande une correction — il ne fait pas disparaitre un dossier. Les deux
+ * routes vont de pair : l'ecran lit l'impact, puis confirme avec la reference
+ * que cet impact annonce.
+ */
+router.get(
+  '/:id/deletion-impact',
+  requireRole('admin'),
+  validate({ params: common.idParam }),
+  controller.deletionImpact
+)
+router.delete(
+  '/:id',
+  requireRole('admin'),
+  writeLimiter,
+  validate({ params: common.idParam, body: deletionSchema }),
+  controller.destroy
+)
+
 router.get('/:id/badge', validate({ params: common.idParam }), controller.badge)
 router.get('/:id/data', validate({ params: common.idParam }), controller.myData)
 router.get('/:id', validate({ params: common.idParam }), controller.detail)

@@ -556,3 +556,38 @@ export async function listForPhase(editionId, phase, ageCategory) {
 export async function listFinals(editionId, ageCategory) {
   return listForPhase(editionId, 'finale', ageCategory)
 }
+
+/**
+ * Rencontres d'un dossier, dans les deux rôles. `played` compte celles dont le
+ * score est saisi : c'est ce chiffre qui bloque une suppression, parce qu'elles
+ * ont fait les points de l'adversaire et ceux de son école.
+ */
+export async function countForRegistration(registrationId) {
+  const id = oid(registrationId)
+  const either = { $or: [{ strikerRegId: id }, { defenderRegId: id }] }
+  const [total, played] = await Promise.all([
+    Match.countDocuments(either),
+    Match.countDocuments({ ...either, strikerScore: { $ne: null } })
+  ])
+  return { total, played }
+}
+
+/**
+ * Efface les rencontres d'un dossier supprimé.
+ *
+ * Les garder n'était pas une option : `strikerRegId` et `defenderRegId` sont
+ * obligatoires, et une rencontre pointant un dossier disparu sort des
+ * classements sans nom ni école. Le prix est connu et annoncé avant l'ordre de
+ * suppression : les scores que l'adversaire a faits dans ces duels s'en vont
+ * avec elles, d'où le recalcul du classement juste après.
+ */
+export async function deleteForRegistration(registrationId) {
+  const id = oid(registrationId)
+  const result = await Match.deleteMany({ $or: [{ strikerRegId: id }, { defenderRegId: id }] })
+  return result.deletedCount ?? 0
+}
+
+/** Rencontres saisies par un compte — un compte qui en porte n'est pas supprimable. */
+export async function countEnteredBy(userId) {
+  return Match.countDocuments({ enteredBy: oid(userId) })
+}

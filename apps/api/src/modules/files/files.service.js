@@ -174,6 +174,24 @@ export async function remove(fileId) {
   await file.deleteOne()
 }
 
+/**
+ * Fichiers déposés par un compte supprimé.
+ *
+ * Le bulletin et le portrait partent déjà avec le dossier qui les porte ; ce
+ * balayage attrape le reste — une pièce téléversée puis jamais rattachée, un
+ * brouillon abandonné. Sans lui, les octets survivaient au compte dans le
+ * stockage privé, sans plus personne pour en demander la suppression.
+ */
+export async function countOwnedBy(ownerId) {
+  return FileDoc.countDocuments({ owner: ownerId })
+}
+
+export async function removeOwnedBy(ownerId) {
+  const files = await FileDoc.find({ owner: ownerId }).select('_id')
+  for (const file of files) await remove(file._id)
+  return files.length
+}
+
 /** Purge de fin d'édition : bulletins et photos d'identité effacés. */
 export async function purgeEdition(editionId) {
   const files = await FileDoc.find({ editionId, kind: { $in: ['bulletin', 'photo'] } })

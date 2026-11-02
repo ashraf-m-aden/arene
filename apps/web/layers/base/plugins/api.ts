@@ -143,8 +143,14 @@ export default defineNuxtPlugin((nuxtApp) => {
       call<T>(url, { ...options, method: 'PATCH', body: body as any }),
     put: <T>(url: string, body?: unknown, options?: FetchOptions) =>
       call<T>(url, { ...options, method: 'PUT', body: body as any }),
-    delete: <T>(url: string, options?: FetchOptions) =>
-      call<T>(url, { ...options, method: 'DELETE' }),
+    /*
+     * `DELETE` accepte un corps, comme `POST`. Les suppressions définitives en
+     * ont besoin : elles transportent le motif et la confirmation retapée, que
+     * l'API exige. Les passer en paramètres d'URL aurait écrit le motif dans les
+     * journaux d'accès du serveur.
+     */
+    delete: <T>(url: string, body?: unknown, options?: FetchOptions) =>
+      call<T>(url, { ...options, method: 'DELETE', body: body as any }),
     raw: call
   }
 

@@ -96,8 +96,9 @@ l'autre. Affichage public : premier nom + initiales des suivants
   refuse d'aller plus loin si un candidat porte deux dossiers déjà engagés — ce cas relève du
   staff, pas d'un script.
 - **Le candidat ne peut pas supprimer son dossier.** Un dossier engage l'organisation (place
-  réservée, rendez-vous, vérification déjà faite) : son retrait passe par le staff. Il n'existe
-  ni route `DELETE /registrations/:id` ni bouton dans l'espace candidat.
+  réservée, rendez-vous, vérification déjà faite) : son retrait passe par l'organisation. Il n'y
+  a aucun bouton de suppression dans l'espace candidat. `DELETE /registrations/:id` existe
+  désormais mais est réservé à l'**administrateur** — voir « Supprimer définitivement ».
 
 ## Parcours de candidature (de bout en bout)
 
@@ -294,6 +295,91 @@ Accessible aux comptes `admin` via `/admin/editions` (lien dans la nav back-offi
 - **`AreneBarChart`** (`base/components/AreneBarChart.vue`) : diagramme en barres horizontales
   générique (label, valeur, teinte), utilisé pour le tunnel de candidatures et la répartition
   des paiements. Pas de dépendance externe — SVG/CSS maison, cohérent avec `AreneMeter`.
+
+## Supprimer définitivement — dossier et compte
+
+Il n'y a **ni corbeille ni restauration** : ce qui part ne revient pas. D'où un parcours en deux
+temps, le même pour un dossier et pour un compte.
+
+**Qui.** L'**administrateur seul** (`requireRole('admin')`). Le staff accepte, refuse, demande une
+correction — il ne fait pas disparaître un dossier. Le candidat n'a aucun bouton : son dossier
+engage l'organisation, son retrait passe par elle.
+
+| | Dossier | Compte |
+| --- | --- | --- |
+| Aperçu | `GET /registrations/:id/deletion-impact` | `GET /auth/users/:id/deletion-impact` |
+| Suppression | `DELETE /registrations/:id` | `DELETE /auth/users/:id` |
+| Service | `registrations.service.destroy` | `auth.service.destroyUser` |
+| Référence à retaper | numéro de dossier (6 derniers caractères, comme le badge) | email du compte |
+
+**Les trois garde-fous**, portés par `deletionSchema` et donc par l'API, pas par l'écran :
+
+1. **`reason`**, dix caractères au moins. L'objet s'en va ; le journal d'audit est tout ce qui
+   restera pour expliquer le geste.
+2. **`confirm`**, qui doit reprendre mot pour mot la référence annoncée par l'aperçu. Une
+   confirmation gardée côté écran n'est qu'un décor — `curl` la contourne. C'est le serveur qui
+   compare.
+3. **`force`**, qui ne lève que les blocages d'arbitrage. Les blocages structurels l'ignorent.
+
+**Blocages d'un dossier** (levables par `force`, et consignés) : `fileAlreadyCompeted` — une
+rencontre jouée a fait les points de l'adversaire et ceux de son école ; `paymentReceived` — des
+frais encaissés figurent au rapport de caisse du créneau, qui ne se recoupera plus.
+
+**Blocages d'un compte** (jamais levables) : `cannotDeleteSelf`, `lastActiveAdmin`, et
+`accountHasHistory` — un compte qui a vérifié, encaissé, fait signer, pointé, saisi un score,
+transité une édition ou supprimé un destinataire. L'historique d'un dossier est précisément ce
+qui répond à « qui a validé ça ? » des mois plus tard : effacer ce compte le ferait pointer un
+fantôme. Pour retirer l'accès d'un membre de l'organisation, il y a la **désactivation**
+(`PATCH /auth/staff/:id`), qui préserve la trace. `countStaffActs` agrège ces actes ; il exclut
+volontairement l'historique qu'un candidat pose sur **son propre** dossier, qui n'est pas un acte
+de staff.
+
+**Ce que la cascade emporte.** Chaque module efface ce qui lui appartient, par son service — un
+module ne touche jamais le modèle d'un autre :
+
+| Emporté | Par |
+| --- | --- |
+| Bulletin et portrait (octets compris) | `files.service.remove` |
+| Rencontres, dans les deux rôles | `results.service.deleteForRegistration` |
+| Traces de pointage hors ligne | `slots.service.deleteCheckinOperations` |
+| Messages envoyés | `notifications.service.deleteForRegistration` |
+| Identification dans les galeries | `galleries.service.removeIdentification` |
+| Classement mis en cache de l'édition | `editions.service.clearRankingsCache` |
+
+Supprimer un **compte** passe par la suppression de chacun de ses dossiers (même chemin), puis
+ses messages et ses fichiers orphelins.
+
+Ce qui **reste** volontairement : les entrées de la liste de suppression d'envoi (elles protègent
+la réputation du domaine et ne désignent plus personne), et le **journal d'audit**.
+
+**L'audit, en deux lignes.** `…delete_requested` part **avant** l'effacement avec l'instantané
+complet — une fois l'objet parti, plus rien ne permet de reconstituer qui il était — et il est
+écrit même si la suppression échoue ensuite. `…delete` ne part qu'**après** le succès. Sans cette
+seconde ligne, une tentative refusée et un effacement réel se ressembleraient dans le journal.
+`…deletion_preview` trace la consultation de l'impact, dans la même logique que la traçabilité
+des accès aux bulletins.
+
+**Conséquence à connaître** : l'instantané d'audit **conserve le nom et l'email** du compte ou du
+dossier effacé. C'est volontaire — c'est la seule chose qui permette de répondre « qui a été
+supprimé, par qui, pourquoi » —, mais cela veut dire que `AuditLog` est le point où une demande
+d'effacement ne va pas jusqu'au bout. Si un jour il faut purger cela aussi, c'est là qu'il
+faudra regarder, et ce sera un arbitrage entre responsabilité et effacement, pas un oubli.
+
+**Pas de transaction** : Mongo n'en offre pas sans jeu de réplicas, et la production n'en a pas.
+Une panne au milieu laisse donc un dossier amputé plutôt qu'un dossier intact — préférable à
+l'inverse, qui laisserait des rencontres pointant un dossier disparu.
+
+**Note sur l'accès.** Le compte supprimé, le renouvellement de session échoue aussitôt
+(`auth.service.refresh` relit le compte en base), mais le **jeton d'accès déjà délivré reste
+valable jusqu'à son expiration** — un quart d'heure par défaut (`ACCESS_TOKEN_TTL`). Les jetons
+ne sont pas vérifiés en base à chaque requête, et cette fonctionnalité n'a pas changé ce choix.
+
+**Côté écrans.** `AreneDangerPanel` (base) porte le parcours de confirmation et sert les deux
+cas : impact chiffré, avertissements, case « je passe outre », motif, référence à retaper. Le
+bouton reste fermé tant que tout n'est pas réuni. La suppression d'un dossier vit dans
+`staff/dossiers.vue` (visible pour l'admin seul, à tout statut) ; celle d'un compte dans
+`admin/index.vue`, qui gagne au passage une **recherche de comptes tous rôles**
+(`GET /auth/users`) — sans elle, aucun écran ne permettait de retrouver un candidat.
 
 ## Écarts assumés (décisions d'implémentation)
 

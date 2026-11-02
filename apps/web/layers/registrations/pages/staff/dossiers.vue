@@ -103,6 +103,65 @@ async function submitDecision() {
   }
 }
 
+/* ── Suppression définitive : l'administrateur seul ──────────────────── */
+
+/*
+ * Le staff accepte, refuse, demande une correction. Il ne fait pas disparaitre
+ * un dossier : l'API reserve la route a l'admin, et l'action n'apparait donc pas
+ * aux autres plutot que d'echouer une fois cliquee.
+ */
+const canDelete = computed(() => auth.isAdmin)
+const deletion = ref<any>(null)
+
+async function openDeletion(file: any) {
+  pending.value = true
+  error.value = ''
+  try {
+    const { data } = await $api.get<{ data: any }>(`/registrations/${file._id}/deletion-impact`)
+    deletion.value = data
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    pending.value = false
+  }
+}
+
+/** Les blocages arrivent en codes ; `apiError.*` en porte déjà les phrases. */
+function blockerLabel(blocker: { code: string }) {
+  return t(`apiError.${blocker.code}`)
+}
+
+const deletionItems = computed(() => {
+  const impact = deletion.value?.impact
+  if (!impact) return []
+  return [
+    { label: t('danger.impactMatches'), value: impact.matches },
+    { label: t('danger.impactPlayed'), value: impact.playedMatches },
+    { label: t('danger.impactFiles'), value: impact.files },
+    { label: t('danger.impactMessages'), value: impact.messages },
+    { label: t('danger.impactCheckins'), value: impact.checkinOperations },
+    { label: t('danger.impactGalleries'), value: impact.galleryItems }
+  ]
+})
+
+async function confirmDeletion(payload: { reason: string; confirm: string; force: boolean }) {
+  if (!deletion.value) return
+  pending.value = true
+  error.value = ''
+  try {
+    await $api.delete(`/registrations/${deletion.value.registration.id}`, payload)
+    feedback.value = t('danger.deleted')
+    deletion.value = null
+    // Le dossier ouvert dans le panneau de décision vient peut-être de partir.
+    selected.value = null
+    await load()
+  } catch (err: any) {
+    error.value = err.message
+  } finally {
+    pending.value = false
+  }
+}
+
 async function exportCsv() {
   const editionId = editionIdParam.value || (await editions.fetchCurrent())?._id
   if (!editionId) return
@@ -221,6 +280,14 @@ const statuses = [
                 >
                   {{ $t('common.continue') }}
                 </button>
+                <!-- Suppression définitive : visible pour l'admin, à tout statut. -->
+                <button
+                  v-if="canDelete"
+                  class="btn btn--quiet btn--sm danger-link"
+                  @click="openDeletion(file)"
+                >
+                  {{ $t('danger.delete') }}
+                </button>
               </div>
             </td>
           </tr>
@@ -229,6 +296,18 @@ const statuses = [
     </div>
 
     <AreneEmpty v-else-if="!pending" :title="$t('registrations.staff.empty')" />
+
+    <!-- Suppression définitive d'un dossier : impact, avertissements, confirmation. -->
+    <AreneDangerPanel
+      v-if="deletion"
+      :title="`${$t('danger.delete')} — ${deletion.registration.name} (${deletion.registration.reference})`"
+      :items="deletionItems"
+      :blockers="deletion.blockers.map((b: any) => ({ code: b.code, label: blockerLabel(b) }))"
+      :confirm-expected="deletion.confirm"
+      :pending="pending"
+      @confirm="confirmDeletion"
+      @cancel="deletion = null"
+    />
 
     <!-- Panneau de décision -->
     <aside v-if="selected" class="decision card">
@@ -341,6 +420,11 @@ const statuses = [
   display: grid;
   gap: var(--space-3);
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+/** Discret dans la grille, mais sans jamais se faire passer pour une action neutre. */
+.danger-link {
+  color: var(--color-danger);
 }
 
 .decision {

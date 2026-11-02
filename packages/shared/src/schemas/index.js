@@ -1,5 +1,6 @@
 export * as common from './common.js'
 export * from './auth.js'
+export * from './deletion.js'
 export * from './edition.js'
 export * from './registration.js'
 export * from './school.js'

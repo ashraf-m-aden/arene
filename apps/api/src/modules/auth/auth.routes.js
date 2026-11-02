@@ -1,15 +1,17 @@
 import { Router } from 'express'
 import {
   createStaffSchema,
+  deletionSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  userQuerySchema,
   common
 } from '@arene/shared'
 import { requireAuth, requireRole } from '../../core/middlewares/auth.js'
 import { validate, validateBody } from '../../core/middlewares/validate.js'
-import { authLimiter } from '../../core/middlewares/rateLimit.js'
+import { authLimiter, writeLimiter } from '../../core/middlewares/rateLimit.js'
 import * as controller from './auth.controller.js'
 
 export const router = Router()
@@ -45,6 +47,30 @@ router.patch(
   requireRole('admin'),
   validate({ params: common.idParam }),
   controller.setStaffActive
+)
+
+/*
+ * Comptes, tous roles confondus. `/staff` ne montre que l'organisation : pour
+ * supprimer le compte d'un candidat, encore faut-il pouvoir le retrouver.
+ */
+router.get(
+  '/users',
+  requireRole('admin'),
+  validate({ query: userQuerySchema }),
+  controller.searchUsers
+)
+router.get(
+  '/users/:id/deletion-impact',
+  requireRole('admin'),
+  validate({ params: common.idParam }),
+  controller.userDeletionImpact
+)
+router.delete(
+  '/users/:id',
+  requireRole('admin'),
+  writeLimiter,
+  validate({ params: common.idParam, body: deletionSchema }),
+  controller.destroyUser
 )
 
 export default router

@@ -208,6 +208,37 @@ export async function listSuppressions({ channel, page = 1, limit = 50 } = {}) {
   return { items, meta: { page, limit, total } }
 }
 
+/**
+ * Messages liés à un dossier ou à un compte supprimé.
+ *
+ * Ils citent le candidat en clair — objet, corps rendu, adresse — et sont donc
+ * emportés par la suppression. Les entrées de la liste de suppression, elles,
+ * restent : elles protègent la réputation d'envoi du domaine et n'ont plus de
+ * lien avec une personne une fois le compte parti.
+ */
+export async function countForRegistration(registrationId) {
+  return Notification.countDocuments({ registrationId })
+}
+
+export async function deleteForRegistration(registrationId) {
+  const result = await Notification.deleteMany({ registrationId })
+  return result.deletedCount ?? 0
+}
+
+export async function countForUser(userId) {
+  return Notification.countDocuments({ userId })
+}
+
+export async function deleteForUser(userId) {
+  const result = await Notification.deleteMany({ userId })
+  return result.deletedCount ?? 0
+}
+
+/** Mises en liste de suppression décidées par un compte : un acte de staff. */
+export async function countSuppressionsBy(userId) {
+  return Suppression.countDocuments({ suppressedBy: userId })
+}
+
 /** Réhabilite un destinataire : à n'utiliser qu'après vérification humaine. */
 export async function unsuppress(id) {
   const removed = await Suppression.findByIdAndDelete(id)
